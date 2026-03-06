@@ -1,0 +1,25 @@
+# Java(Engine A)
+target/
+*.jar
+*.class
+
+# C#Engine B)
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+
+#React
+node_modules/
+dist/
+build/
+.env.local
+
+#Editor / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*~
+.nvim/
+session.vim
