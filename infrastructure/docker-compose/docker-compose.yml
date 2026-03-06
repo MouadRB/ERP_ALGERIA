@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+
+  # BACKING INFRASTRUCTURE
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: erp-postgres
+    environment:
+      POSTGRES_USER: erp_admin
+      POSTGRES_PASSWORD: local_dev_password
+      POSTGRES_DB: erp_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erp_admin -d erp_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: erp-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: erp-opensearch
+    environment:
+      - discovery.type=single-node
+      - "DISABLE_SECURITY_PLUGIN=true"
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: erp-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/erp_db
+      KC_DB_USERNAME: erp_admin
+      KC_DB_PASSWORD: local_dev_password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../auth/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+  # APPLICATION SERVICES
+
+  mdm-service:
+    build:
+      context: ../../mdm-service
+      dockerfile: Dockerfile
+    container_name: erp-mdm-service
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
+      - SPRING_DATASOURCE_USERNAME=erp_admin
+      - SPRING_DATASOURCE_PASSWORD=local_dev_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  engine-a:
+    build:
+      context: ../../engine-a
+      dockerfile: Dockerfile
+    container_name: erp-engine-a
+    ports:
+      - "8082:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
+      - SPRING_DATASOURCE_USERNAME=erp_admin
+      - SPRING_DATASOURCE_PASSWORD=local_dev_password
+      - MDM_SERVICE_URL=http://mdm-service:8080
+      - ENGINE_B_URL=http://engine-b:8080
+      - REDIS_HOST=redis
+      - OPENSEARCH_URIS=http://opensearch:9200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mdm-service:
+        condition: service_started
+
+  engine-b:
+    build:
+      context: ../../engine-b
+      dockerfile: Dockerfile
+    container_name: erp-engine-b
+    ports:
+      - "8083:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=erp_db;Username=erp_admin;Password=local_dev_password;
+      - MdmService__BaseUrl=http://mdm-service:8080
+      - EngineA__BaseUrl=http://engine-a:8080
+      - Redis__Configuration=redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mdm-service:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    container_name: erp-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_ENGINE_A_URL=http://localhost:8082
+      - REACT_APP_ENGINE_B_URL=http://localhost:8083
+      - REACT_APP_KEYCLOAK_URL=http://localhost:8080
+    depends_on:
+      - engine-a
+      - engine-b
+
+volumes:
+  pgdata:
+  opensearch-data:
