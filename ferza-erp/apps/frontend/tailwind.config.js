@@ -1,0 +1,1 @@
+export default{content:['./index.html','./src/**/*.{js,jsx}'],theme:{extend:{colors:{navy:'#0D47A1','navy-hover':'#1565C0','navy-light':'#E3F2FD',sidebar:'#0D2137','page-bg':'#F0F4F8',soft:'#7C3AED',hard:'#2563EB'},fontFamily:{sans:['DM Sans','system-ui','sans-serif'],arabic:['Cairo','system-ui','sans-serif'],mono:['JetBrains Mono','monospace']}}},plugins:[]}
