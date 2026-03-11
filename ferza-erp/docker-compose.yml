@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports: ["8080:8080"]
+    command: start-dev
+  bff:
+    build: ./apps/bff
+    ports: ["4000:4000"]
+    env_file: [".env.example"]
+    environment: { USE_MOCK: "true", FRONTEND_URL: "http://localhost:5173" }
+    depends_on: [keycloak]
+  frontend:
+    build: ./apps/frontend
+    ports: ["5173:5173"]
+    env_file: [".env.example"]
+    depends_on: [bff]

@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+body{font-family:'DM Sans',system-ui,sans-serif;background-color:#F0F4F8;color:#0F172A;margin:0}
+.arabic{font-family:'Cairo',system-ui,sans-serif;direction:rtl;text-align:right}
+.mono{font-family:'JetBrains Mono',monospace}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#F1F5F9}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:0.5}}
+.pulse-red{animation:pulse-red 1s ease-in-out infinite}

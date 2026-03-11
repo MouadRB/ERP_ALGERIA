@@ -1,0 +1,3 @@
+export const calculateBusinessHoursRemaining=(expiresAt,now=new Date())=>{const d=new Date(expiresAt)-now;return d<=0?0:Math.floor(d/1000)}
+export const getCountdownColor=(s)=>{const m=s/60;if(m<20)return{text:'#DC2626',bg:'#FEE2E2',pulse:true};if(m<60)return{text:'#D97706',bg:'#FEF3C7',pulse:false};return{text:'#0D47A1',bg:'#E3F2FD',pulse:false}}
+export const formatCountdown=(s)=>{if(s<=0)return 'Expiré';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;if(h>0)return `${h}h ${m.toString().padStart(2,'0')}m`;return `${m.toString().padStart(2,'0')}m ${sec.toString().padStart(2,'0')}s`}
