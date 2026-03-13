@@ -1,0 +1,41 @@
+name: Engine B CI
+
+on:
+  push:
+    paths:
+      - 'engine-b/**'
+  pull_request:
+    paths:
+      - 'engine-b/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        working-directory: engine-b
+        run: dotnet restore
+
+      - name: Build
+        working-directory: engine-b
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        working-directory: engine-b
+        run: dotnet test --no-build --configuration Release --verbosity normal --results-directory ./test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-b-test-results
+          path: engine-b/test-results/

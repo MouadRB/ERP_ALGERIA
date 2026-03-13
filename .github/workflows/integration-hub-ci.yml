@@ -1,14 +1,12 @@
-name: Engine A CI
+name: Integration Hub CI
 
 on:
   push:
     paths:
-      - 'engine-a/**'
-      - 'mdm-service/**'
+      - 'integration-hub/**'
   pull_request:
     paths:
-      - 'engine-a/**'
-      - 'mdm-service/**'
+      - 'integration-hub/**'
 
 jobs:
   build-and-test:
@@ -25,19 +23,13 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build and test Engine A
-        working-directory: engine-a
-        run: mvn clean verify
-
-      - name: Build and test MDM Service
-        working-directory: mdm-service
+      - name: Build and test Integration Hub
+        working-directory: integration-hub
         run: mvn clean verify
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: engine-a-test-results
-          path: |
-            engine-a/target/surefire-reports/
-            mdm-service/target/surefire-reports/
+          name: integration-hub-test-results
+          path: integration-hub/target/surefire-reports/
