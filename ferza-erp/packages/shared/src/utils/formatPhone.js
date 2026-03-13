@@ -1,1 +1,0 @@
-export const formatPhone=(p)=>{if(!p)return '—';const d=p.replace(/\D/g,'');if(d.startsWith('213')&&d.length===12)return `+213 ${d.slice(3,7)} ${d.slice(7,10)} ${d.slice(10)}`;if(d.startsWith('0')&&d.length===10)return `+213 ${d.slice(1,5)} ${d.slice(5,8)} ${d.slice(8)}`;return p}
