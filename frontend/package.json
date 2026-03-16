@@ -1,0 +1,11 @@
+{
+  "name": "ferza-erp",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "corepack pnpm -r --parallel --filter @ferza/web --filter @ferza/bff dev",
+    "build": "corepack pnpm --filter @ferza/web build",
+    "lint": "corepack pnpm --filter @ferza/web lint",
+    "typecheck": "corepack pnpm -r run typecheck"
+  }
+}
