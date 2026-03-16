@@ -26,6 +26,10 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
+        
+      - name: Install dependencies
+        run: pnpm install
+        working-directory: frontend/apps/web  
 
       - name: Lint
         working-directory: frontend
