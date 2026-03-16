@@ -35,6 +35,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        
+      - name: Install web app dependencies
+        working-directory: frontend/apps/web
+        run: npm ci
 
       - name: Lint
         run: pnpm run lint
