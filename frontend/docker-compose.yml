@@ -1,0 +1,5 @@
+version: "3.9"
+services:
+  placeholder:
+    image: node:20-alpine
+    command: ["sh", "-c", "echo 'Compose placeholder for Ferza ERP'"]
