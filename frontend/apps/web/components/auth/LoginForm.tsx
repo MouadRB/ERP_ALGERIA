@@ -124,14 +124,14 @@ export default function LoginForm({ locale }: LoginFormProps) {
 
       <Stack component="form" spacing={2.2} onSubmit={handleSubmit}>
         <FormControl fullWidth>
-          <InputLabel id="role-label">Role d'acces</InputLabel>
+          <InputLabel id="role-label">Role d&apos;acces</InputLabel>
           <Select
             labelId="role-label"
             value={role}
             onChange={(event: SelectChangeEvent<string>) => setRole(event.target.value)}
             input={
               <OutlinedInput
-                label="Role d'acces"
+                label="Role d&apos;acces"
                 startAdornment={
                   <InputAdornment position="start">
                     <PersonOutlineRounded sx={{ color: "#7B6BC6" }} />

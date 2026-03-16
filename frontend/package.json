@@ -6,6 +6,7 @@
     "dev": "corepack pnpm -r --parallel --filter @ferza/web --filter @ferza/bff dev",
     "build": "corepack pnpm --filter @ferza/web build",
     "lint": "corepack pnpm --filter @ferza/web lint",
-    "typecheck": "corepack pnpm -r run typecheck"
+    "typecheck": "corepack pnpm -r run typecheck",
+    "postinstall": "node scripts/postinstall.js"
   }
 }
