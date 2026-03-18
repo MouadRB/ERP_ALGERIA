@@ -1,20 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-const locales = ["fr", "ar"];
+const locales = ['fr', 'ar'];
+const PUBLIC_PATHS = ['/login', '/403', '/404'];
 
-export function middleware(request: NextRequest) {
+export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
+  // Skip Next.js internals
   if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/favicon.ico")
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/favicon.ico')
   ) {
     return NextResponse.next();
   }
 
+  // ─── Locale prefix ───────────────────────────────────────────────────────
   const hasLocale = locales.some(
-    (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)
+    (locale) =>
+      pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
 
   if (!hasLocale) {
@@ -23,19 +27,28 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const requestHeaders = new Headers(request.headers);
-  const matchedLocale =
-    locales.find((locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)) ??
-    locales[0];
-  requestHeaders.set("x-next-intl-locale", matchedLocale);
+  // ─── Auth guard (real mode only) ─────────────────────────────────────────
+  const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
+  if (!useMock) {
+    const locale = pathname.split('/')[1];
+    const pathWithoutLocale = pathname.replace(`/${locale}`, '');
+    const isPublicPath = PUBLIC_PATHS.some(
+      (p) => pathWithoutLocale === p || pathWithoutLocale.startsWith(`${p}/`),
+    );
 
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders
+    if (!isPublicPath) {
+      const session = request.cookies.get('ferza_session');
+      if (!session) {
+        const loginUrl = request.nextUrl.clone();
+        loginUrl.pathname = `/${locale}/login`;
+        return NextResponse.redirect(loginUrl);
+      }
     }
-  });
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico).*)"]
+  matcher: ['/((?!_next|favicon.ico).*)'],
 };

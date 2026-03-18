@@ -1,12 +1,26 @@
-"use client";
+'use client';
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse } from '@ferza/shared';
+
+interface QuarantinePayload {
+  sku: string;
+  quantity: number;
+  reason: string;
+}
 
 export const useQuarantine = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (payload: { sku: string }) => ({
-      ...payload,
-      status: "quarantined"
-    })
+    mutationFn: (payload: QuarantinePayload) =>
+      fetchBFF<ApiResponse<unknown>>('/bff/inventory/quarantine', {
+        method: 'POST',
+        body: payload,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    },
   });
 };

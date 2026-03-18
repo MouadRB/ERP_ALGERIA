@@ -1,3 +1,2 @@
-const transformRapports = (payload) => payload;
-
-module.exports = { transformRapports };
+const transformOverview = (raw) => raw;
+module.exports = { transformOverview };

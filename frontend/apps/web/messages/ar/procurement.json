@@ -1,3 +1,29 @@
 {
-  "title": "الشراء"
+  "title": "التوريد",
+  "bcs": "أوامر الشراء",
+  "suppliers": "الموردون",
+  "newBC": "أمر شراء جديد",
+  "status": {
+    "Draft": "مسودة",
+    "PendingApproval": "في انتظار الموافقة",
+    "Approved": "موافق عليه",
+    "SentToSupplier": "أُرسل للمورد",
+    "PartiallyReceived": "مستلم جزئياً",
+    "FullyReceived": "مستلم بالكامل",
+    "Invoiced": "مُفوتر",
+    "Rejected": "مرفوض",
+    "Cancelled": "ملغى"
+  },
+  "sod": {
+    "title": "فصل المهام",
+    "createdBy": "أُنشئ بواسطة",
+    "approvedBy": "وافق عليه",
+    "violation": "لا يمكنك الموافقة على أمر شراء قمت بإنشائه.",
+    "notAuthorized": "فقط SUPERADMIN و FINANCE_DIRECTOR يمكنهم الموافقة."
+  },
+  "actions": {
+    "approve": "موافقة",
+    "reject": "رفض",
+    "receive": "استلام"
+  }
 }

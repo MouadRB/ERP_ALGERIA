@@ -1,4 +1,31 @@
 {
-  "appName": "منصة فرزة",
-  "loading": "جار التحميل..."
+  "appName": "فيرزا ERP",
+  "loading": "جارٍ التحميل...",
+  "error": "حدث خطأ.",
+  "notFound": "غير موجود.",
+  "save": "حفظ",
+  "cancel": "إلغاء",
+  "confirm": "تأكيد",
+  "delete": "حذف",
+  "search": "بحث",
+  "filter": "تصفية",
+  "export": "تصدير",
+  "import": "استيراد",
+  "actions": "إجراءات",
+  "status": "الحالة",
+  "createdAt": "تاريخ الإنشاء",
+  "updatedAt": "تاريخ التعديل",
+  "riskLevels": {
+    "LOW": "منخفض",
+    "MEDIUM": "متوسط",
+    "HIGH": "مرتفع"
+  },
+  "yes": "نعم",
+  "no": "لا",
+  "close": "إغلاق",
+  "back": "رجوع",
+  "next": "التالي",
+  "previous": "السابق",
+  "of": "من",
+  "rowsPerPage": "صفوف في الصفحة"
 }

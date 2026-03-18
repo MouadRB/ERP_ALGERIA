@@ -1,14 +1,20 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse, Order } from '@ferza/shared';
 
-const mockOrders = [
-  { id: "ORD-001", customer: "John Doe", status: "pending", total: 120 }
-];
+interface UseOMSOrdersParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+}
 
-export const useOMSOrders = () => {
+export const useOMSOrders = (params: UseOMSOrdersParams = {}) => {
   return useQuery({
-    queryKey: ["oms", "orders"],
-    queryFn: async () => mockOrders
+    queryKey: ['oms', 'orders', params],
+    queryFn: () =>
+      fetchBFF<ApiResponse<Order[]>>('/bff/oms', { params }),
   });
 };

@@ -1,12 +1,15 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse } from '@ferza/shared';
 
-const mockSales = [{ id: "SALE-001", total: 120 }];
-
-export const useRapportsVentes = () => {
+export const useRapportsVentes = (params: Record<string, unknown> = {}) => {
   return useQuery({
-    queryKey: ["rapports", "ventes"],
-    queryFn: async () => mockSales
+    queryKey: ['rapports', 'ventes', params],
+    queryFn: () =>
+      fetchBFF<ApiResponse<unknown>>('/bff/rapports', {
+        params: { module: 'ventes', ...params },
+      }),
   });
 };

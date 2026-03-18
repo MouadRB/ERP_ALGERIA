@@ -1,12 +1,20 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse, Customer } from '@ferza/shared';
 
-const mockCustomers = [{ id: "CUST-001", name: "Jane Doe", segment: "vip" }];
+interface UseCRMCustomersParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  segment?: string;
+}
 
-export const useCRMCustomers = () => {
+export const useCRMCustomers = (params: UseCRMCustomersParams = {}) => {
   return useQuery({
-    queryKey: ["crm", "customers"],
-    queryFn: async () => mockCustomers
+    queryKey: ['crm', 'customers', params],
+    queryFn: () =>
+      fetchBFF<ApiResponse<Customer[]>>('/bff/crm', { params }),
   });
 };

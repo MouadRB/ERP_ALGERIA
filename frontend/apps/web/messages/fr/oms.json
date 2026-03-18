@@ -1,3 +1,37 @@
 {
-  "title": "OMS"
+  "title": "Gestion des commandes",
+  "queue": "File d'attente",
+  "orders": "Commandes",
+  "newOrder": "Nouvelle commande",
+  "status": {
+    "Draft": "Brouillon",
+    "AwaitingValidation": "En attente de validation",
+    "Confirmed": "Confirmée",
+    "AwaitingPickup": "En attente d'enlèvement",
+    "HandedToCarrier": "Remise au transporteur",
+    "OutForDelivery": "En cours de livraison",
+    "DeliveredCOD_Confirmed": "Livrée — COD confirmé",
+    "COD_Remitted": "COD remis",
+    "DeliveryFailed_Absent": "Échec livraison — absent",
+    "ReturnInTransit_Refused": "Retour en transit — refusée",
+    "LostInTransit": "Perdue en transit",
+    "Returned": "Retournée",
+    "Cancelled": "Annulée"
+  },
+  "columns": {
+    "reference": "Référence",
+    "customer": "Client",
+    "wilaya": "Wilaya",
+    "total": "Total TTC",
+    "status": "Statut",
+    "carrier": "Transporteur",
+    "deliveryAttempts": "Tentatives",
+    "risk": "Risque",
+    "createdAt": "Date de création"
+  },
+  "actions": {
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "assignCarrier": "Affecter transporteur"
+  }
 }

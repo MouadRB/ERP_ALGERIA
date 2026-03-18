@@ -1,27 +1,38 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState, useCallback } from 'react';
 
-type ToastState = {
-  open: boolean;
+export type ToastSeverity = 'success' | 'error' | 'warning' | 'info';
+
+interface Toast {
+  id: string;
   message: string;
-  severity: "success" | "info" | "warning" | "error";
-};
+  severity: ToastSeverity;
+}
 
-export const useToast = () => {
-  const [toast, setToast] = useState<ToastState>({
-    open: false,
-    message: "",
-    severity: "info"
-  });
+interface UseToastReturn {
+  toasts: Toast[];
+  showToast: (message: string, severity?: ToastSeverity) => void;
+  dismissToast: (id: string) => void;
+}
 
-  const showToast = (message: string, severity: ToastState["severity"] = "info") => {
-    setToast({ open: true, message, severity });
-  };
+export const useToast = (): UseToastReturn => {
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const closeToast = () => {
-    setToast((prev) => ({ ...prev, open: false }));
-  };
+  const showToast = useCallback(
+    (message: string, severity: ToastSeverity = 'info') => {
+      const id = `toast-${Date.now()}`;
+      setToasts((prev) => [...prev, { id, message, severity }]);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 4000);
+    },
+    [],
+  );
 
-  return { toast, showToast, closeToast };
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  return { toasts, showToast, dismissToast };
 };

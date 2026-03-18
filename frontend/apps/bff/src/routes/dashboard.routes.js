@@ -1,9 +1,16 @@
-const express = require("express");
+const express = require('express');
+const dashboardService = require('../services/dashboard.service');
 
 const router = express.Router();
 
-router.get("/", (_req, res) => {
-  res.json({ data: [{ id: "dashboard", status: "ok" }] });
+// Dashboard is accessible to all authenticated roles
+router.get('/', async (req, res, next) => {
+  try {
+    const data = await dashboardService.getDashboard();
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;
