@@ -1,3 +1,35 @@
 module.exports = [
-  { id: "NTF-001", message: "New order assigned" }
+  {
+    id: 'NTF-001',
+    type: 'order_high_risk',
+    titleFr: 'Commande à risque élevé',
+    titleAr: 'طلب عالي المخاطر',
+    bodyFr: 'La commande ORD-2025-00005 a un score de fraude de 0.72.',
+    bodyAr: 'الطلب ORD-2025-00005 لديه نقاط احتيال 0.72.',
+    referenceId: 'ORD-2025-00005',
+    read: false,
+    createdAt: '2025-03-14T17:55:00.000Z',
+  },
+  {
+    id: 'NTF-002',
+    type: 'bc_pending_approval',
+    titleFr: 'BC en attente d\'approbation',
+    titleAr: 'أمر شراء في انتظار الموافقة',
+    bodyFr: 'Le bon de commande BC-2025-001 est en attente de votre approbation.',
+    bodyAr: 'أمر الشراء BC-2025-001 في انتظار موافقتك.',
+    referenceId: 'BC-2025-001',
+    read: false,
+    createdAt: '2025-03-14T10:05:00.000Z',
+  },
+  {
+    id: 'NTF-003',
+    type: 'low_stock_alert',
+    titleFr: 'Stock bas — SKU-ELEC-020',
+    titleAr: 'مخزون منخفض — SKU-ELEC-020',
+    bodyFr: 'L\'aspirateur Rowenta est en dessous du seuil de réapprovisionnement (4 unités, seuil: 5).',
+    bodyAr: 'المكنسة الكهربائية روونتا أقل من حد إعادة الطلب (4 وحدات، الحد: 5).',
+    referenceId: 'SKU-ELEC-020',
+    read: true,
+    createdAt: '2025-03-12T11:35:00.000Z',
+  },
 ];

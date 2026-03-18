@@ -1,9 +1,20 @@
-"use client";
+'use client';
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse, Product } from '@ferza/shared';
 
 export const useCreateProduct = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (payload: { name: string }) => ({ id: "PRD-NEW", ...payload })
+    mutationFn: (body: Partial<Product>) =>
+      fetchBFF<ApiResponse<Product>>('/bff/pim', {
+        method: 'POST',
+        body,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pim', 'products'] });
+    },
   });
 };

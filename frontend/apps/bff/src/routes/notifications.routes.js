@@ -1,10 +1,15 @@
-const express = require("express");
-const notificationsMock = require("../mocks/notifications.mock");
+const express = require('express');
+const notificationsService = require('../services/notifications.service');
 
 const router = express.Router();
 
-router.get("/", (_req, res) => {
-  res.json({ data: notificationsMock });
+router.get('/', async (req, res, next) => {
+  try {
+    const result = await notificationsService.getNotifications(req.user.id);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

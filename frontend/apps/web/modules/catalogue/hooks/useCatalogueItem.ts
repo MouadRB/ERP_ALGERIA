@@ -1,12 +1,14 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-
-const mockCatalogue = [{ id: "CAT-001", title: "Main Catalogue", status: "active" }];
+import { useQuery } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse } from '@ferza/shared';
 
 export const useCatalogueItem = (id: string) => {
   return useQuery({
-    queryKey: ["catalogue", "item", id],
-    queryFn: async () => mockCatalogue.find((item) => item.id === id) ?? null
+    queryKey: ['catalogue', 'item', id],
+    queryFn: () =>
+      fetchBFF<ApiResponse<unknown>>(`/bff/catalogue/${id}`),
+    enabled: Boolean(id),
   });
 };

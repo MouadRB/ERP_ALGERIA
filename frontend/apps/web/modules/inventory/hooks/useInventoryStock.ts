@@ -1,12 +1,19 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse, InventoryItem } from '@ferza/shared';
 
-const mockStock = [{ sku: "SKU-001", name: "Sample Item", quantity: 42 }];
+interface UseInventoryStockParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}
 
-export const useInventoryStock = () => {
+export const useInventoryStock = (params: UseInventoryStockParams = {}) => {
   return useQuery({
-    queryKey: ["inventory", "stock"],
-    queryFn: async () => mockStock
+    queryKey: ['inventory', 'stock', params],
+    queryFn: () =>
+      fetchBFF<ApiResponse<InventoryItem[]>>('/bff/inventory', { params }),
   });
 };

@@ -89,11 +89,21 @@ export default function LoginForm({ locale }: LoginFormProps) {
         mfaCode: selectedRole?.mfaRequired ? mfaCode.trim() : undefined
       };
 
-      const response = await postBFF<LoginResponse>("/auth/login", payload);
+      const response = await postBFF<LoginResponse>("/bff/auth/login", payload);
 
       if (typeof window !== "undefined") {
         localStorage.setItem("ferza.mock.user", JSON.stringify(response.data.user));
         localStorage.setItem("ferza.mock.token", response.data.token);
+
+        const isSecure = window.location.protocol === "https:";
+        const cookieParts = [
+          `ferza_session=${encodeURIComponent(response.data.token)}`,
+          "Path=/",
+          "SameSite=Lax",
+          "Max-Age=604800"
+        ];
+        if (isSecure) cookieParts.push("Secure");
+        document.cookie = cookieParts.join("; ");
       }
 
       router.push(`/${locale}/dashboard`);

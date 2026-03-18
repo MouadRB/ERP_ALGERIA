@@ -22,6 +22,12 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@ferza/shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "@ferza/shared/*": [
+        "../../packages/shared/src/*"
       ]
     },
     "plugins": [

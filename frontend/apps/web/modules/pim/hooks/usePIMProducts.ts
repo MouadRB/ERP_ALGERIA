@@ -1,14 +1,20 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse, Product } from '@ferza/shared';
 
-const mockProducts = [
-  { id: "PRD-001", name: "Sample Product", status: "active", price: 99 }
-];
+interface UsePIMProductsParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+}
 
-export const usePIMProducts = () => {
+export const usePIMProducts = (params: UsePIMProductsParams = {}) => {
   return useQuery({
-    queryKey: ["pim", "products"],
-    queryFn: async () => mockProducts
+    queryKey: ['pim', 'products', params],
+    queryFn: () =>
+      fetchBFF<ApiResponse<Product[]>>('/bff/pim', { params }),
   });
 };

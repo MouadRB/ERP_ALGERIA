@@ -1,9 +1,20 @@
-"use client";
+'use client';
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse, Customer } from '@ferza/shared';
 
 export const useCreateCustomer = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (payload: { name: string }) => ({ id: "CUST-NEW", ...payload })
+    mutationFn: (body: Partial<Customer>) =>
+      fetchBFF<ApiResponse<Customer>>('/bff/crm', {
+        method: 'POST',
+        body,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crm', 'customers'] });
+    },
   });
 };

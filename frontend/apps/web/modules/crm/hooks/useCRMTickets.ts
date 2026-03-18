@@ -1,12 +1,24 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
+import { fetchBFF } from '@/lib/fetchBFF';
+import type { ApiResponse } from '@ferza/shared';
 
-const mockTickets = [{ id: "TCK-001", subject: "Support request", status: "open" }];
+interface Ticket {
+  id: string;
+  customerId: string;
+  subject: string;
+  status: 'open' | 'pending' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high';
+  createdAt: string;
+}
 
-export const useCRMTickets = () => {
+export const useCRMTickets = (customerId?: string) => {
   return useQuery({
-    queryKey: ["crm", "tickets"],
-    queryFn: async () => mockTickets
+    queryKey: ['crm', 'tickets', customerId],
+    queryFn: () =>
+      fetchBFF<ApiResponse<Ticket[]>>('/bff/crm/tickets', {
+        params: customerId ? { customerId } : {},
+      }),
   });
 };

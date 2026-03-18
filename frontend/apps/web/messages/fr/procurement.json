@@ -1,3 +1,29 @@
 {
-  "title": "Approvisionnement"
+  "title": "Approvisionnement",
+  "bcs": "Bons de commande",
+  "suppliers": "Fournisseurs",
+  "newBC": "Nouveau BC",
+  "status": {
+    "Draft": "Brouillon",
+    "PendingApproval": "En attente d'approbation",
+    "Approved": "Approuvé",
+    "SentToSupplier": "Envoyé au fournisseur",
+    "PartiallyReceived": "Partiellement reçu",
+    "FullyReceived": "Entièrement reçu",
+    "Invoiced": "Facturé",
+    "Rejected": "Rejeté",
+    "Cancelled": "Annulé"
+  },
+  "sod": {
+    "title": "Séparation des tâches",
+    "createdBy": "Créé par",
+    "approvedBy": "Approuvé par",
+    "violation": "Vous ne pouvez pas approuver un BC que vous avez créé.",
+    "notAuthorized": "Seuls SUPERADMIN et FINANCE_DIRECTOR peuvent approuver un BC."
+  },
+  "actions": {
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "receive": "Réceptionner"
+  }
 }

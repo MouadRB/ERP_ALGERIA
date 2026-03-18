@@ -1,3 +1,37 @@
 {
-  "title": "طلبات"
+  "title": "إدارة الطلبات",
+  "queue": "قائمة الانتظار",
+  "orders": "الطلبات",
+  "newOrder": "طلب جديد",
+  "status": {
+    "Draft": "مسودة",
+    "AwaitingValidation": "في انتظار التحقق",
+    "Confirmed": "مؤكد",
+    "AwaitingPickup": "في انتظار الاستلام",
+    "HandedToCarrier": "سُلّم للناقل",
+    "OutForDelivery": "قيد التوصيل",
+    "DeliveredCOD_Confirmed": "تم التوصيل — COD مؤكد",
+    "COD_Remitted": "COD محوّل",
+    "DeliveryFailed_Absent": "فشل التوصيل — غائب",
+    "ReturnInTransit_Refused": "إرجاع في الطريق — مرفوض",
+    "LostInTransit": "مفقود في الطريق",
+    "Returned": "مُرجَع",
+    "Cancelled": "ملغى"
+  },
+  "columns": {
+    "reference": "المرجع",
+    "customer": "الزبون",
+    "wilaya": "الولاية",
+    "total": "الإجمالي",
+    "status": "الحالة",
+    "carrier": "الناقل",
+    "deliveryAttempts": "المحاولات",
+    "risk": "المخاطرة",
+    "createdAt": "تاريخ الإنشاء"
+  },
+  "actions": {
+    "confirm": "تأكيد",
+    "cancel": "إلغاء",
+    "assignCarrier": "تعيين ناقل"
+  }
 }

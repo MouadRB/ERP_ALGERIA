@@ -1,4 +1,31 @@
 {
   "appName": "Ferza ERP",
-  "loading": "Chargement..."
+  "loading": "Chargement...",
+  "error": "Une erreur est survenue.",
+  "notFound": "Introuvable.",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "confirm": "Confirmer",
+  "delete": "Supprimer",
+  "search": "Rechercher",
+  "filter": "Filtrer",
+  "export": "Exporter",
+  "import": "Importer",
+  "actions": "Actions",
+  "status": "Statut",
+  "createdAt": "Créé le",
+  "updatedAt": "Modifié le",
+  "riskLevels": {
+    "LOW": "Faible",
+    "MEDIUM": "Moyen",
+    "HIGH": "Élevé"
+  },
+  "yes": "Oui",
+  "no": "Non",
+  "close": "Fermer",
+  "back": "Retour",
+  "next": "Suivant",
+  "previous": "Précédent",
+  "of": "sur",
+  "rowsPerPage": "Lignes par page"
 }

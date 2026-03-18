@@ -6,3 +6,15 @@ export interface ApiResponse<T> {
     pageSize?: number;
   };
 }
+
+export interface ApiError {
+  code: string;                // e.g. "VALIDATION_ERROR", "FORBIDDEN", "SOD_VIOLATION"
+  message: string;
+  field?: string;              // For validation errors — which field
+}
+
+export interface PaginationParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}

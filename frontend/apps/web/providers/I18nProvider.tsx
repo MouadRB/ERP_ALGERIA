@@ -1,3 +1,5 @@
+'use client';
+
 import { NextIntlClientProvider } from "next-intl";
 
 type I18nProviderProps = {
