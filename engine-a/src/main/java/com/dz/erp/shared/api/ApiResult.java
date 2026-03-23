@@ -1,5 +1,6 @@
 package com.dz.erp.shared.api;
 
+import com.dz.erp.shared.config.MessageResolver;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.data.domain.Page;
 
@@ -9,29 +10,29 @@ import java.util.Map;
 
 /**
  * Common API response — every endpoint returns this exact shape.
- *
+ * <p>
  * Success (single):
  * {
- *   "success": true,
- *   "data": { ... },
- *   "message": "SKU registered successfully",
- *   "timestamp": "2026-03-01T10:00:00Z"
+ * "success": true,
+ * "data": { ... },
+ * "message": "SKU registered successfully",
+ * "timestamp": "2026-03-01T10:00:00Z"
  * }
- *
+ * <p>
  * Success (list with pagination):
  * {
- *   "success": true,
- *   "data": [ ... ],
- *   "pagination": { "page": 0, "size": 25, "totalElements": 100, "totalPages": 4 },
- *   "timestamp": "2026-03-01T10:00:00Z"
+ * "success": true,
+ * "data": [ ... ],
+ * "pagination": { "page": 0, "size": 25, "totalElements": 100, "totalPages": 4 },
+ * "timestamp": "2026-03-01T10:00:00Z"
  * }
- *
+ * <p>
  * Error:
  * {
- *   "success": false,
- *   "message": "SKU not found: SKU-999",
- *   "errors": { "skuCode": "required" },
- *   "timestamp": "2026-03-01T10:00:00Z"
+ * "success": false,
+ * "message": "SKU not found: SKU-999",
+ * "errors": { "skuCode": "required" },
+ * "timestamp": "2026-03-01T10:00:00Z"
  * }
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -50,7 +51,7 @@ public record ApiResult<T>(
     }
 
     public static <T> ApiResult<T> ok(T data, String message) {
-        return new ApiResult<>(true, data, message, null, null, Instant.now());
+        return new ApiResult<>(true, data, MessageResolver.resolve(message), null, null, Instant.now());
     }
 
     // ── Paged ──
@@ -63,11 +64,11 @@ public record ApiResult<T>(
     // ── Error ──
 
     public static <T> ApiResult<T> error(String message) {
-        return new ApiResult<>(false, null, message, null, null, Instant.now());
+        return new ApiResult<>(false, null, MessageResolver.resolve(message), null, null, Instant.now());
     }
 
     public static <T> ApiResult<T> error(String message, Map<String, String> fieldErrors) {
-        return new ApiResult<>(false, null, message, null, fieldErrors, Instant.now());
+        return new ApiResult<>(false, null, MessageResolver.resolve(message), null, fieldErrors, Instant.now());
     }
 
     // ── Pagination info ──

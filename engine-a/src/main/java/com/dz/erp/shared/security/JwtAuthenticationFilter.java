@@ -32,11 +32,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
                                     FilterChain chain) throws ServletException, IOException {
+        String path = req.getServletPath();
+        if (path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui")) {
+            chain.doFilter(req, res);
+            return;
+        }
         try {
             String header = req.getHeader("Authorization");
             if (header != null && header.startsWith("Bearer ")) {
+                String jwt = header.substring(7);
+
                 var claims = Jwts.parser().verifyWith(signingKey).build()
-                        .parseSignedClaims(header.substring(7)).getPayload();
+                        .parseSignedClaims(jwt).getPayload();
 
                 String tenantId = claims.get("tenant_id", String.class);
                 TenantContext.setTenantId(tenantId != null ? tenantId : "default");
@@ -50,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 var authorities = roles.stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r)).toList();
                 SecurityContextHolder.getContext().setAuthentication(
-                        new UsernamePasswordAuthenticationToken(user, null, authorities));
+                        new UsernamePasswordAuthenticationToken(user, jwt, authorities));
             }
         } catch (Exception ex) {
             log.debug("Invalid JWT: {}", ex.getMessage());
