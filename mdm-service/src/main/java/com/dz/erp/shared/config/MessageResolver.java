@@ -1,4 +1,4 @@
-package com.erp.enginea.shared.config;
+package com.dz.erp.shared.config;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
