@@ -9,8 +9,7 @@ import org.springframework.stereotype.Component;
 
         private static MessageSource messageSource;
 
-        public MessageResolver(MessageSource ms) {
-            MessageResolver.messageSource = ms;
+        public MessageResolver(MessageSource ms) {MessageResolver.messageSource = ms;
         }
 
         public static String resolve(String key, Object... params) {

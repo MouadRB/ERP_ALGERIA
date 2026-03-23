@@ -64,7 +64,7 @@ public record ApiResult<T>(
     // ── Error ──
 
     public static <T> ApiResult<T> error(String message) {
-        return new ApiResult<>(false, null, MessageResolver.resolve(message), null, null, Instant.now());
+        return new ApiResult<>(false, null,MessageResolver.resolve(message), null, null, Instant.now());
     }
 
     public static <T> ApiResult<T> error(String message, Map<String, String> fieldErrors) {
