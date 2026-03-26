@@ -15,6 +15,7 @@
   "status": "الحالة",
   "createdAt": "تاريخ الإنشاء",
   "updatedAt": "تاريخ التعديل",
+  "autoCancel": "إلغاء تلقائي",
   "riskLevels": {
     "LOW": "منخفض",
     "MEDIUM": "متوسط",

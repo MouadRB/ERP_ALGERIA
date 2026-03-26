@@ -2,13 +2,15 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchBFF } from '@/lib/fetchBFF';
-import type { ApiResponse, Order } from '@ferza/shared';
+import type { Order } from '@ferza/shared';
 
-export const useOMSOrder = (id: string) => {
-  return useQuery({
+interface OrderResponse {
+  data: Order;
+}
+
+export const useOMSOrder = (id: string) =>
+  useQuery({
     queryKey: ['oms', 'order', id],
-    queryFn: () =>
-      fetchBFF<ApiResponse<Order>>(`/bff/oms/${id}`),
-    enabled: Boolean(id),
+    queryFn:  () => fetchBFF<OrderResponse>(`/bff/oms/${id}`),
+    enabled:  Boolean(id),
   });
-};

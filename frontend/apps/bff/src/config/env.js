@@ -20,7 +20,7 @@ const env = {
     nameAr: process.env.MOCK_USER_NAME_AR ?? 'هارون مطور',
   },
 
-  corsOrigin: (process.env.CORS_ORIGIN ?? 'http://localhost:3000').split(','),
+  corsOrigin: (process.env.CORS_ORIGIN ?? 'http://localhost:3000,http://localhost:3000').split(','),
 };
 
 module.exports = env;
