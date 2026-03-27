@@ -24,6 +24,7 @@ interface UseOMSOrdersParams extends Record<string, ParamValue> {
   source?:   string;
   attempts?: number;
   hasCarrier?: boolean;
+  customerId?: string;
 }
 
 export const useOMSOrders = (params: UseOMSOrdersParams = {}) =>

@@ -132,6 +132,7 @@ router.get(
       attempts: numberOptional,
       hasCarrier: booleanOptional,
       sort: z.enum(['date_desc', 'montant', 'statut', 'wilaya']).optional(),
+      customerId: z.string().optional(),
     }),
   ),
   async (req, res, next) => {

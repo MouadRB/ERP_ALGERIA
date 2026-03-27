@@ -1,4 +1,24 @@
 const OPERATORS = require('./oms-operators.mock');
+const CRM_CUSTOMERS = require('./crm.mock');
+
+// Maps each order index (0–52) to a customerId.
+// Distribution is intentional: CUST-001 gets good-status orders → VIP segment;
+// CUST-008/013/015 get bad-status orders → À risque / Liste noire.
+const ORDER_CUSTOMER_MAP = [
+  /* 0-8  AwaitingValidation */ 'CUST-013','CUST-002','CUST-003','CUST-004','CUST-005','CUST-006','CUST-007','CUST-008','CUST-014',
+  /* 9-15 Confirmed          */ 'CUST-001','CUST-001','CUST-002','CUST-003','CUST-004','CUST-015','CUST-005',
+  /* 16-19 AwaitingPickup    */ 'CUST-006','CUST-007','CUST-008','CUST-009',
+  /* 20-24 HandedToCarrier   */ 'CUST-010','CUST-011','CUST-012','CUST-013','CUST-009',
+  /* 25-29 OutForDelivery    */ 'CUST-001','CUST-002','CUST-003','CUST-004','CUST-005',
+  /* 30-35 DeliveredCOD_Conf */ 'CUST-001','CUST-001','CUST-001','CUST-006','CUST-007','CUST-002',
+  /* 36-37 COD_Remitted      */ 'CUST-001','CUST-001',
+  /* 38-40 DeliveryFailed    */ 'CUST-008','CUST-004','CUST-010',
+  /* 41-42 ReturnInTransit   */ 'CUST-012','CUST-014',
+  /* 43    LostInTransit     */ 'CUST-011',
+  /* 44-45 Returned          */ 'CUST-003','CUST-005',
+  /* 46-50 Cancelled         */ 'CUST-006','CUST-007','CUST-009','CUST-010','CUST-011',
+  /* 51-52 Draft             */ 'CUST-002','CUST-015',
+];
 
 const BASE_DATE = new Date('2026-03-25T12:00:00Z');
 const CARRIERS = ['Yalidine', 'Maystro', 'Ecotrack', 'Procolis'];
@@ -292,9 +312,11 @@ function buildOrder(idx, status) {
       : ['LOW', 'MEDIUM', 'HIGH'][idx % 3];
   const fraudScore = riskLevel === 'HIGH' ? 0.78 : riskLevel === 'MEDIUM' ? 0.42 : 0.08;
 
-  const customerName = pick(NAMES, idx);
+  const customerId = ORDER_CUSTOMER_MAP[idx] || `CUST-${String((idx % 15) + 1).padStart(3, '0')}`;
+  const crmCust = CRM_CUSTOMERS.find((c) => c.id === customerId) || CRM_CUSTOMERS[0];
+  const customerName = { fr: crmCust.nameFr, ar: crmCust.nameAr };
   const wilaya = pick(WILAYAS, idx);
-  const phone = makePhone(idx);
+  const phone = crmCust.phone;
 
   const items = makeItems(idx);
   const totals = computeTotals(items);
@@ -371,6 +393,7 @@ function buildOrder(idx, status) {
   return {
     id,
     reference,
+    customerId,
     status,
     customerPhone: phone,
     customerNameFr: customerName.fr,

@@ -55,9 +55,10 @@ const sortOrders = (orders, sort) => {
 
 const filterOrders = (
   orders,
-  { status, carrier, wilaya, search, dateFrom, dateTo, codMin, codMax, riskLevel, source, attempts, hasCarrier, sort },
+  { status, carrier, wilaya, search, dateFrom, dateTo, codMin, codMax, riskLevel, source, attempts, hasCarrier, sort, customerId },
 ) => {
   let filtered = orders;
+  if (customerId) filtered = filtered.filter((o) => o.customerId === customerId);
   if (status) filtered = filtered.filter((o) => o.status === status);
   if (carrier) filtered = filtered.filter((o) => o.carrier === carrier);
   if (wilaya) {
@@ -129,6 +130,7 @@ const getOrders = async ({
   attempts,
   hasCarrier,
   sort,
+  customerId,
 } = {}) => {
   if (env.useMock) {
     const all = mockOrders();
@@ -146,6 +148,7 @@ const getOrders = async ({
       attempts,
       hasCarrier,
       sort,
+      customerId,
     });
     const total = filtered.length;
     const start = (page - 1) * pageSize;

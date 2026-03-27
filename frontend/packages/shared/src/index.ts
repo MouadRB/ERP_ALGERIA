@@ -12,6 +12,7 @@ export * from './types/order.types';
 export * from './types/bc.types';
 export * from './types/product.types';
 export * from './types/customer.types';
+export * from './types/ticket.types';
 export * from './types/inventory.types';
 export * from './types/session.types';
 export * from './types/api.types';
