@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
  *
  * Example:
  *   Event: SKU_REGISTERED
- *   Target "engine-b"         (routes: {"*": "http://..."})                       → row created ✓
+ *   Target "engine-b"         (routes: {"DEFAULT": "http://..."})                  → row created ✓
  *   Target "engine-b-crm"     (routes: {"SKU_REGISTERED": "http://...", ...})     → row created ✓
  *   Target "payment-gateway"  (routes: {"ORDER_CREATED": "http://..."})           → skipped ✗
  *

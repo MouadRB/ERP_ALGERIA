@@ -1,5 +1,6 @@
 package com.dz.erp.shared.api;
 
+import com.dz.erp.shared.config.MessageResolver;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.data.domain.Page;
 
@@ -50,7 +51,7 @@ public record ApiResult<T>(
     }
 
     public static <T> ApiResult<T> ok(T data, String message) {
-        return new ApiResult<>(true, data, message, null, null, Instant.now());
+        return new ApiResult<>(true, data, MessageResolver.resolve(message), null, null, Instant.now());
     }
 
     // ── Paged ──
@@ -63,11 +64,11 @@ public record ApiResult<T>(
     // ── Error ──
 
     public static <T> ApiResult<T> error(String message) {
-        return new ApiResult<>(false, null, message, null, null, Instant.now());
+        return new ApiResult<>(false, null,MessageResolver.resolve(message), null, null, Instant.now());
     }
 
     public static <T> ApiResult<T> error(String message, Map<String, String> fieldErrors) {
-        return new ApiResult<>(false, null, message, null, fieldErrors, Instant.now());
+        return new ApiResult<>(false, null, MessageResolver.resolve(message), null, fieldErrors, Instant.now());
     }
 
     // ── Pagination info ──

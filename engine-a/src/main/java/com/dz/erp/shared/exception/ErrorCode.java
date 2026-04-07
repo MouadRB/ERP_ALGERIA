@@ -6,54 +6,45 @@ import org.springframework.http.HttpStatus;
 
 @Getter @RequiredArgsConstructor
 public enum ErrorCode {
-    // ── SKU ──
-    SKU_NOT_FOUND("sku.not.found", HttpStatus.NOT_FOUND),
-    SKU_DUPLICATE("sku.duplicate", HttpStatus.CONFLICT),
-    SKU_INVALID_TRANSITION("sku.invalid.status.transition", HttpStatus.UNPROCESSABLE_ENTITY),
-    SKU_SOD_VIOLATION("sku.sod.violation", HttpStatus.FORBIDDEN),
-    SKU_ALREADY_ACTIVE("sku.already.active", HttpStatus.CONFLICT),
-    SKU_ALREADY_DISCONTINUED("sku.already.discontinued", HttpStatus.CONFLICT),
-    SKU_NOT_EDITABLE("sku.not.editable", HttpStatus.UNPROCESSABLE_ENTITY),
 
-    // ── Supplier ──
-    SUPPLIER_NOT_FOUND("supplier.not.found", HttpStatus.NOT_FOUND),
-    SUPPLIER_DUPLICATE("supplier.duplicate", HttpStatus.CONFLICT),
-    SUPPLIER_INVALID_TRANSITION("supplier.invalid.status.transition", HttpStatus.UNPROCESSABLE_ENTITY),
-    SUPPLIER_SOD_VIOLATION("supplier.sod.violation", HttpStatus.FORBIDDEN),
-    SUPPLIER_ALREADY_ACTIVE("supplier.already.active", HttpStatus.CONFLICT),
-    SUPPLIER_ALREADY_SUSPENDED("supplier.already.suspended", HttpStatus.CONFLICT),
-    SUPPLIER_ALREADY_BLACKLISTED("supplier.already.blacklisted", HttpStatus.CONFLICT),
-    SUPPLIER_NOT_EDITABLE("supplier.not.editable", HttpStatus.UNPROCESSABLE_ENTITY),
+    // ── Product ──
+    PRODUCT_NOT_FOUND("product.not.found", HttpStatus.NOT_FOUND),
+    PRODUCT_DUPLICATE_SKU("product.duplicate.sku", HttpStatus.CONFLICT),
+    PRODUCT_INVALID_TRANSITION("product.invalid.transition", HttpStatus.UNPROCESSABLE_ENTITY),
+    PRODUCT_SOD_VIOLATION("product.sod.violation", HttpStatus.FORBIDDEN),
+    PRODUCT_NOT_EDITABLE("product.not.editable", HttpStatus.UNPROCESSABLE_ENTITY),
+    PRODUCT_SKU_NOT_ACTIVE("product.sku.not.active", HttpStatus.UNPROCESSABLE_ENTITY),
+    PRODUCT_SKU_IS_DISCONTINUED("product.sku.is.discountinued", HttpStatus.UNPROCESSABLE_ENTITY),
+    PRODUCT_SKU_PENDING_MDM_ACTIVATION("product.sku.pending.mdm.activation", HttpStatus.UNPROCESSABLE_ENTITY),
+    PRODUCT_FLAGGED("product.flagged", HttpStatus.UNPROCESSABLE_ENTITY),
+    PRODUCT_SUPPLIER_NOT_ACTIVE("product.supplier.not.active", HttpStatus.UNPROCESSABLE_ENTITY),
+    PRODUCT_SUPPLIER_NOT_FOUND("product.supplier.not.found", HttpStatus.UNPROCESSABLE_ENTITY),
+    PRODUCT_NO_PRINCIPAL_IMAGE("product.no.principal.image", HttpStatus.UNPROCESSABLE_ENTITY),
+    product_supplier_not_found("product.supplier.not.found", HttpStatus.NOT_FOUND),
+    // ── Variant ──
+    VARIANT_NOT_FOUND("variant.not.found", HttpStatus.NOT_FOUND),
+    VARIANT_DUPLICATE_SKU("variant.duplicate.sku", HttpStatus.CONFLICT),
+    VARIANT_HAS_STOCK("variant.has.stock", HttpStatus.UNPROCESSABLE_ENTITY),
+    ATTRIBUTE_NOT_FOUND("attribute.not.found", HttpStatus.NOT_FOUND),
 
-    // ── Tax Rules ──
-    TAX_RULE_NOT_FOUND("tax.rule.not.found", HttpStatus.NOT_FOUND),
-    TAX_RULE_DUPLICATE("tax.rule.duplicate", HttpStatus.CONFLICT),
-    TAX_RULE_INVALID_TRANSITION("tax.rule.invalid.transition", HttpStatus.UNPROCESSABLE_ENTITY),
-    TAX_RULE_SOD_VIOLATION("tax.rule.sod.violation", HttpStatus.FORBIDDEN),
-    TAX_RULE_NOT_EDITABLE("tax.rule.not.editable", HttpStatus.UNPROCESSABLE_ENTITY),
-    TAX_RULE_NO_ACTIVE_RULE("tax.rule.no.active.rule", HttpStatus.NOT_FOUND),
+    // ── Media ──
+    MEDIA_LIMIT_EXCEEDED("media.limit.exceeded", HttpStatus.UNPROCESSABLE_ENTITY),
+    MEDIA_TOO_LARGE("media.too.large", HttpStatus.UNPROCESSABLE_ENTITY),
 
-    // ── Wilaya ──
-    WILAYA_NOT_FOUND("wilaya.not.found", HttpStatus.NOT_FOUND),
-    WILAYA_DUPLICATE("wilaya.duplicate", HttpStatus.CONFLICT),
-    WILAYA_INVALID_TRANSITION("wilaya.invalid.transition", HttpStatus.UNPROCESSABLE_ENTITY),
-    WILAYA_SOD_VIOLATION("wilaya.sod.violation", HttpStatus.FORBIDDEN),
-    WILAYA_NOT_EDITABLE("wilaya.not.editable", HttpStatus.UNPROCESSABLE_ENTITY),
-    WILAYA_NOT_DELIVERABLE("wilaya.not.deliverable", HttpStatus.UNPROCESSABLE_ENTITY),
+    // ── Pricing ──
+    PRICE_NOT_SET("price.not.set", HttpStatus.NOT_FOUND),
+    PRICE_TAX_RULE_NOT_FOUND("price.tax.rule.not.found", HttpStatus.NOT_FOUND),
 
-    // ── Bin Locations ──
-    BIN_NOT_FOUND("bin.not.found", HttpStatus.NOT_FOUND),
-    BIN_DUPLICATE("bin.duplicate", HttpStatus.CONFLICT),
-    BIN_INVALID_TRANSITION("bin.invalid.transition", HttpStatus.UNPROCESSABLE_ENTITY),
-    BIN_SOD_VIOLATION("bin.sod.violation", HttpStatus.FORBIDDEN),
-    BIN_NOT_EDITABLE("bin.not.editable", HttpStatus.UNPROCESSABLE_ENTITY),
-    BIN_AT_CAPACITY("bin.at.capacity", HttpStatus.UNPROCESSABLE_ENTITY),
+    // ── Logistics ──
+    WILAYA_ALREADY_RESTRICTED("wilaya.already.restricted", HttpStatus.CONFLICT),
 
     // ── Generic ──
     INTERNAL_ERROR("error.internal", HttpStatus.INTERNAL_SERVER_ERROR),
     UNAUTHORIZED("error.unauthorized", HttpStatus.UNAUTHORIZED),
     FORBIDDEN("error.forbidden", HttpStatus.FORBIDDEN),
     BAD_REQUEST("error.bad.request", HttpStatus.BAD_REQUEST);
+
+
 
     private final String messageKey;
     private final HttpStatus httpStatus;

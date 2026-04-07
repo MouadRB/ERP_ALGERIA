@@ -18,13 +18,13 @@ public class I18nConfig {
         s.setBasenames("i18n/messages");
         s.setDefaultEncoding("UTF-8");
         s.setFallbackToSystemLocale(false);
-        s.setDefaultLocale(Locale.FRENCH);
+        s.setDefaultLocale(Locale.ENGLISH);
         return s;
     }
     @Bean
     public LocaleResolver localeResolver() {
         var r = new AcceptHeaderLocaleResolver();
-        r.setDefaultLocale(Locale.FRENCH);
+        r.setDefaultLocale(Locale.ENGLISH);
         r.setSupportedLocales(List.of(Locale.ENGLISH, Locale.FRENCH, Locale.forLanguageTag("ar")));
         return r;
     }
