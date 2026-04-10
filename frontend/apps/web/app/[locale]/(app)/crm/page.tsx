@@ -4,9 +4,29 @@ import * as React      from 'react';
 import { Alert, Box }  from '@mui/material';
 import { useRouter, useParams } from 'next/navigation';
 import type { Customer } from '@ferza/shared';
-import * as XLSX from 'xlsx';
 
 import { fetchBFF }    from '@/lib/fetchBFF';
+
+// ─── CSV export (no external library) ────────────────────────────────────────
+function downloadCSV(rows: Record<string, unknown>[], filename: string) {
+  if (!rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const escape  = (v: unknown) => {
+    const s = String(v ?? '').replace(/"/g, '""');
+    return /[",\n\r]/.test(s) ? `"${s}"` : s;
+  };
+  const csv = [
+    headers.map(escape).join(','),
+    ...rows.map((row) => headers.map((h) => escape(row[h])).join(',')),
+  ].join('\r\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 import { useCRMStats } from '@/modules/crm/hooks/useCRMStats';
 
 import AlertBanner      from '@/modules/crm/components/stats/AlertBanner';
@@ -73,8 +93,7 @@ export default function CRMPage() {
     const doExport = async () => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let rows: Record<string, any>[] = [];
-        let sheetName = '';
+        let rows: Record<string, unknown>[] = [];
         let filename = '';
         const date = new Date().toISOString().slice(0, 10);
 
@@ -93,8 +112,7 @@ export default function CRMPage() {
             'Taux Retour':     `${c.tauxRetour ?? 0}%`,
             'Risque':          c.riskLevel,
           }));
-          sheetName = 'Clients';
-          filename = `crm-clients-${date}.xlsx`;
+          filename = `crm-clients-${date}.csv`;
         } else if (activeTab === 1) {
           const res = await fetchBFF<{ data: Array<{ id: string; customerNameFr: string; customerPhone: string; category: string; status: string; priority: string; agentName: string | null; escalated: boolean; createdAt: string }> }>('/bff/crm/tickets', { params: { pageSize: 100 } });
           const tickets = res.data ?? [];
@@ -110,8 +128,7 @@ export default function CRMPage() {
             'Escaladé':  t.escalated ? 'Oui' : 'Non',
             'Créé le':   t.createdAt.slice(0, 10),
           }));
-          sheetName = 'Tickets';
-          filename = `crm-tickets-${date}.xlsx`;
+          filename = `crm-tickets-${date}.csv`;
         } else if (activeTab === 2) {
           const res = await fetchBFF<{ data: Customer[] }>('/bff/crm', { params: { blacklisted: true, pageSize: 100 } });
           const customers = res.data ?? [];
@@ -124,16 +141,12 @@ export default function CRMPage() {
             'Motif':          c.blacklistMotif ?? '',
             'Date Blacklist': c.blacklistedAt ?? '',
           }));
-          sheetName = 'Liste Noire';
-          filename = `crm-liste-noire-${date}.xlsx`;
+          filename = `crm-liste-noire-${date}.csv`;
         } else {
           return;
         }
 
-        const ws = XLSX.utils.json_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
-        XLSX.writeFile(wb, filename);
+        downloadCSV(rows, filename);
       } catch { /* silent */ }
     };
     doExport();

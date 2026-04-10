@@ -1,7 +1,15 @@
 'use client';
+
 import { useQuery } from '@tanstack/react-query';
 import { fetchBFF } from '@/lib/fetchBFF';
-import type { ApiResponse } from '@ferza/shared';
 
-export const useRapportsInventaire = (params: Record<string, unknown> = {}) =>
-  useQuery({ queryKey: ['rapports', 'inventaire', params], queryFn: () => fetchBFF<ApiResponse<unknown>>('/bff/rapports', { params: { module: 'inventaire', ...params } }) });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const useRapportsInventaire = (period = '30d', enabled = true) =>
+  useQuery({
+    queryKey: ['rapports', 'inventaire', { period }],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryFn:  () => fetchBFF<{ data: any }>('/bff/rapports/inventaire', { params: { period } }),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (prev) => prev,
+  });
