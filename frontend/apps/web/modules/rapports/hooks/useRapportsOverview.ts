@@ -2,27 +2,14 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchBFF } from '@/lib/fetchBFF';
-import type { ApiResponse } from '@ferza/shared';
-interface RapportsOverview {
-  period: { from: string; to: string };
-  totalRevenueTTC: number;
-  totalOrders: number;
-  deliveryRate: number;
-  returnRate: number;
-  avgOrderValueTTC: number;
-  codCollectionRate: number;
-  topWilaya: { code: string; name: string; orders: number };
-}
 
-interface UseRapportsOverviewParams {
-  from?: string;
-  to?: string;
-}
-
-export const useRapportsOverview = (params: UseRapportsOverviewParams = {}) => {
-  return useQuery({
-    queryKey: ['rapports', 'overview', params],
-    queryFn: () =>
-      fetchBFF<ApiResponse<RapportsOverview>>('/bff/rapports', { params }),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const useRapportsOverview = (period = '30d', enabled = true) =>
+  useQuery({
+    queryKey: ['rapports', 'overview', { period }],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryFn:  () => fetchBFF<{ data: any }>('/bff/rapports/overview', { params: { period } }),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
-};

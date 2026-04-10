@@ -15,6 +15,7 @@
   "status": "Statut",
   "createdAt": "Créé le",
   "updatedAt": "Modifié le",
+  "autoCancel": "Auto-annulation",
   "riskLevels": {
     "LOW": "Faible",
     "MEDIUM": "Moyen",

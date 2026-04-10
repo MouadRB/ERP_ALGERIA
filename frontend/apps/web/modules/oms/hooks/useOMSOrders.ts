@@ -1,20 +1,35 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { fetchBFF } from '@/lib/fetchBFF';
-import type { ApiResponse, Order } from '@ferza/shared';
+import { fetchBFF, type ParamValue } from '@/lib/fetchBFF';
+import type { Order } from '@ferza/shared';
 
-interface UseOMSOrdersParams {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  status?: string;
+interface OrdersResponse {
+  data: Order[];
+  meta: { total: number; page: number; pageSize: number };
 }
 
-export const useOMSOrders = (params: UseOMSOrdersParams = {}) => {
-  return useQuery({
+interface UseOMSOrdersParams extends Record<string, ParamValue> {
+  page?:     number;
+  pageSize?: number;
+  search?:   string;
+  status?:   string;
+  carrier?:  string;
+  wilaya?:   string;
+  dateFrom?: string;
+  dateTo?:   string;
+  codMin?:   number;
+  codMax?:   number;
+  riskLevel?: string;
+  source?:   string;
+  attempts?: number;
+  hasCarrier?: boolean;
+  customerId?: string;
+}
+
+export const useOMSOrders = (params: UseOMSOrdersParams = {}) =>
+  useQuery({
     queryKey: ['oms', 'orders', params],
-    queryFn: () =>
-      fetchBFF<ApiResponse<Order[]>>('/bff/oms', { params }),
+    queryFn:  () =>
+      fetchBFF<OrdersResponse>('/bff/oms', { params }),
   });
-};

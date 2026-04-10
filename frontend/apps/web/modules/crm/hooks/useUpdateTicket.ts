@@ -1,25 +1,26 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchBFF } from '@/lib/fetchBFF';
-import type { ApiResponse } from '@ferza/shared';
+import { fetchBFF }  from '@/lib/fetchBFF';
+import type { ApiResponse, Ticket } from '@ferza/shared';
+import { invalidateCRMQueries } from './invalidateCRM';
 
-interface UpdateTicketPayload {
-  id: string;
-  status: 'open' | 'pending' | 'resolved' | 'closed';
+export interface UpdateTicketPayload {
+  id:          string;
+  customerId?: string;
+  status?:     string;
+  agentId?:    string;
+  agentName?:  string;
+  escalated?:  boolean;
+  lastAction?: string;
+  note?:       { content: string; author: string };
 }
 
 export const useUpdateTicket = () => {
-  const queryClient = useQueryClient();
-
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status }: UpdateTicketPayload) =>
-      fetchBFF<ApiResponse<unknown>>(`/bff/crm/tickets/${id}`, {
-        method: 'PATCH',
-        body: { status },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm', 'tickets'] });
-    },
+    mutationFn: ({ id, customerId: _cid, ...body }: UpdateTicketPayload) =>
+      fetchBFF<ApiResponse<Ticket>>(`/bff/crm/tickets/${id}`, { method: 'PATCH', body }),
+    onSuccess: (_data, { customerId }) => invalidateCRMQueries(qc, customerId),
   });
 };

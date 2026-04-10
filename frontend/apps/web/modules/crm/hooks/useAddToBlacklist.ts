@@ -1,26 +1,24 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchBFF } from '@/lib/fetchBFF';
+import { fetchBFF }  from '@/lib/fetchBFF';
 import type { ApiResponse, Customer } from '@ferza/shared';
+import { invalidateCRMQueries } from './invalidateCRM';
 
 interface BlacklistPayload {
-  id: string;
-  reason: string;
+  id:     string;
+  motif:  string;
+  reason?: string;
 }
 
 export const useAddToBlacklist = () => {
-  const queryClient = useQueryClient();
-
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, reason }: BlacklistPayload) =>
+    mutationFn: ({ id, motif, reason }: BlacklistPayload) =>
       fetchBFF<ApiResponse<Customer>>(`/bff/crm/${id}/blacklist`, {
         method: 'PATCH',
-        body: { reason },
+        body: { motif, reason },
       }),
-    onSuccess: (_data, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['crm', 'customers'] });
-      queryClient.invalidateQueries({ queryKey: ['crm', 'customer', id] });
-    },
+    onSuccess: (_data, { id }) => invalidateCRMQueries(qc, id),
   });
 };

@@ -2,14 +2,14 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchBFF } from '@/lib/fetchBFF';
-import type { ApiResponse } from '@ferza/shared';
 
-export const useRapportsVentes = (params: Record<string, unknown> = {}) => {
-  return useQuery({
-    queryKey: ['rapports', 'ventes', params],
-    queryFn: () =>
-      fetchBFF<ApiResponse<unknown>>('/bff/rapports', {
-        params: { module: 'ventes', ...params },
-      }),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const useRapportsVentes = (period = '30d', enabled = true) =>
+  useQuery({
+    queryKey: ['rapports', 'ventes', { period }],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    queryFn:  () => fetchBFF<{ data: any }>('/bff/rapports/ventes', { params: { period } }),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
-};

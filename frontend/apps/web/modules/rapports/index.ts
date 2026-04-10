@@ -1,8 +1,16 @@
-export * from "./hooks/useRapportsOverview";
-export * from "./hooks/useRapportsVentes";
-export * from "./hooks/useRapportsProduits";
-export * from "./hooks/useRapportsInventaire";
-export * from "./hooks/useRapportsClients";
-export * from "./hooks/useRapportsAppro";
-export * from "./hooks/useRapportsCrossModule";
-export * from "./hooks/useRapportsMargins";
+// ─── Hooks ──────────────────────────────────────────────────────────────────
+export { useRapportsOverview }    from './hooks/useRapportsOverview';
+export { useRapportsVentes }      from './hooks/useRapportsVentes';
+export { useRapportsProduits }    from './hooks/useRapportsProduits';
+export { useRapportsInventaire }  from './hooks/useRapportsInventaire';
+export { useRapportsClients }     from './hooks/useRapportsClients';
+export { useRapportsAppro }       from './hooks/useRapportsAppro';
+export { useRapportsCrossModule } from './hooks/useRapportsCrossModule';
+
+// ─── Context ────────────────────────────────────────────────────────────────
+export { PeriodProvider, usePeriod } from './context/PeriodContext';
+export type { PeriodPreset, PeriodContextValue } from './context/PeriodContext';
+
+// ─── Utils ──────────────────────────────────────────────────────────────────
+export * from './utils/formatters';
+export * from './utils/chartColors';

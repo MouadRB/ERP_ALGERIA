@@ -2,16 +2,19 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fetchBFF } from '@/lib/fetchBFF';
-import type { ApiResponse, Order } from '@ferza/shared';
+import type { Order } from '@ferza/shared';
 
+interface OrdersResponse {
+  data: Order[];
+  meta: { total: number; page: number; pageSize: number };
+}
 
-export const useOMSQueue = () => {
-  return useQuery({
-    queryKey: ['oms', 'queue'],
-    queryFn: () =>
-      fetchBFF<ApiResponse<Order[]>>('/bff/oms', {
+export const useOMSQueue = () =>
+  useQuery({
+    queryKey:        ['oms', 'queue'],
+    queryFn:         () =>
+      fetchBFF<OrdersResponse>('/bff/oms', {
         params: { status: 'AwaitingValidation', pageSize: 50 },
       }),
-    refetchInterval: 30_000, // Poll every 30s — queue is time sensitive
+    refetchInterval: 30_000,
   });
-};

@@ -8,4 +8,4 @@ const getNotifications = async (userId) => {
   return res.json();
 };
 
-module.exports = { getNotifications };
+module.exports = { getNotifications }; 
