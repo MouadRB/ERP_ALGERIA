@@ -16,22 +16,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up .NET 8
+      - name: Set up .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Restore dependencies
         working-directory: engine-b
-        run: dotnet restore
+        run: dotnet restore engine-b.csproj
 
       - name: Build
         working-directory: engine-b
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build engine-b.csproj --no-restore --configuration Release
 
       - name: Run tests
         working-directory: engine-b
-        run: dotnet test --no-build --configuration Release --verbosity normal --results-directory ./test-results
+        run: dotnet test engine-b.csproj --no-build --configuration Release --verbosity normal --results-directory ./test-results
 
       - name: Upload test results
         if: always()

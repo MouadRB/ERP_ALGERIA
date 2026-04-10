@@ -12,7 +12,7 @@ import java.util.UUID;
 public interface OutboxJpaRepository extends JpaRepository<OutboxEventEntity, UUID> {
 
     @Query("SELECT e FROM OutboxEventEntity e WHERE e.status IN (com.dz.erp.shared.outbox.OutboxStatus.NEW, com.dz.erp.shared.outbox.OutboxStatus.FAILED) " +
-           "AND e.nextRetryAt <= :now ORDER BY e.createdAt ASC LIMIT :batch")
+            "AND e.nextRetryAt <= :now ORDER BY e.createdAt ASC LIMIT :batch")
     List<OutboxEventEntity> findPending(@Param("now") Instant now, @Param("batch") int batch);
 
     List<OutboxEventEntity> findByStatus(OutboxStatus status);

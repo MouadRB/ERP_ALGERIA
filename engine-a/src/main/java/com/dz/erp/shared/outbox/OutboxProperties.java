@@ -14,7 +14,7 @@ import java.util.Map;
  * Reads targets from application.yml.
  *
  * Each target has a routes map: eventType → url.
- * Use "*" as a key to catch all events not explicitly listed.
+ * Use "DEFAULT" as a key to catch all events not explicitly listed.
  *
  * Example:
  *
@@ -23,7 +23,7 @@ import java.util.Map;
  *     targets:
  *       - name: engine-b
  *         routes:
- *           "*": http://localhost:8082/api/events/ingest
+ *           DEFAULT: http://localhost:8082/api/events/ingest
  *
  *       - name: payment-gateway
  *         routes:
@@ -56,7 +56,7 @@ public class OutboxProperties {
 
         /**
          * Does this target want this event type?
-         * Match if: exact key exists OR "*" wildcard exists.
+         * Match if: exact key exists OR "DEFAULT" wildcard exists.
          */
         public boolean accepts(String eventType) {
             return routes.containsKey(eventType) || routes.containsKey("DEFAULT");
@@ -64,7 +64,7 @@ public class OutboxProperties {
 
         /**
          * Get the URL for this event type.
-         * Exact match first, then "*" fallback, then null.
+         * Exact match first, then "DEFAULT" fallback, then null.
          */
         public String urlFor(String eventType) {
             String url = routes.get(eventType);
