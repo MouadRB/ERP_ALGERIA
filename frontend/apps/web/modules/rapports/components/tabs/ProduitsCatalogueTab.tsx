@@ -94,7 +94,7 @@ function LoadingSkeleton() {
 /*  Donut categories colors                                            */
 /* ------------------------------------------------------------------ */
 
-const DONUT_COLORS = [CATEGORICAL[0], CATEGORICAL[1], CATEGORICAL[2], CATEGORICAL[5], CATEGORICAL[3], '#f97316'];
+const DONUT_COLORS = [CATEGORICAL[0], CATEGORICAL[1], CATEGORICAL[2], CATEGORICAL[5], CATEGORICAL[3], '#fd8c73'];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -110,15 +110,15 @@ function relativeTime(isoStr: string): string {
 }
 
 function slateBarColor(idx: number): string {
-  if (idx < 2) return '#1E293B';
-  if (idx < 6) return '#475569';
-  return '#94A3B8';
+  if (idx < 2) return '#c9d1d9';
+  if (idx < 6) return '#8b949e';
+  return '#8b949e';
 }
 
 function orangeBarColor(idx: number): string {
-  if (idx < 2) return '#C2410C';
-  if (idx < 5) return '#EA580C';
-  return '#F97316';
+  if (idx < 2) return '#d29922';
+  if (idx < 5) return '#fd8c73';
+  return '#fd8c73';
 }
 
 /* ------------------------------------------------------------------ */
@@ -180,7 +180,7 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
             </ResponsiveContainer>
 
             <Typography variant="h6" textAlign="center" fontWeight={700}>{d.totalSKUs} SKUs</Typography>
-            <Typography variant="caption" display="block" textAlign="center" sx={{ color: '#64748B' }}>
+            <Typography variant="caption" display="block" textAlign="center" sx={{ color: 'text.secondary' }}>
               Taux publication: {d.tauxPublication.toFixed(0)}% · Indexation OpenSearch: {d.totalSKUs} produits · Latence: {osHealth.latencyMs}ms
             </Typography>
           </Paper>
@@ -204,11 +204,11 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
                     <Cell key={idx} fill={entry.taux < 90 ? CATEGORICAL[2] : CATEGORICAL[1]} />
                   ))}
                 </Bar>
-                <ReferenceLine x={avgTaux} stroke="#ef4444" strokeDasharray="5 5" />
+                <ReferenceLine x={avgTaux} stroke="#f85149" strokeDasharray="5 5" />
               </BarChart>
             </ResponsiveContainer>
 
-            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#64748B' }}>
+            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
               Accessoires: 8 produits bloqués (brouillons OCR non validés)
             </Typography>
           </Paper>
@@ -236,7 +236,7 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Box>
                     <Typography variant="subtitle2" fontWeight={600}>{row.nameFr}</Typography>
-                    <Typography variant="caption" sx={{ color: '#64748B' }}>{row.sku}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>{row.sku}</Typography>
                   </Box>
                   <Button size="small" sx={{ textTransform: 'none', fontSize: 11 }}>Voir BC</Button>
                 </Box>
@@ -278,7 +278,7 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
                     <Cell key={idx} fill={slateBarColor(idx)} />
                   ))}
                 </Bar>
-                <Line type="monotone" dataKey="marge" name="Marge %" stroke="#10B981" strokeWidth={2} dot={{ r: 3, fill: '#FFFFFF', stroke: '#10B981', strokeWidth: 2 }} />
+                <Line type="monotone" dataKey="marge" name="Marge %" stroke="#2ea043" strokeWidth={2} dot={{ r: 3, fill: '#FFFFFF', stroke: '#2ea043', strokeWidth: 2 }} />
               </ComposedChart>
             </ResponsiveContainer>
 
@@ -309,14 +309,14 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
                 <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
                 <Bar dataKey="tauxRetour" name="Taux Retour" barSize={16}>
                   {d.tauxRetourProduits.map((row: any, idx: number) => (
-                    <Cell key={idx} fill={row.tauxRetour >= d.returnThreshold ? '#EF4444' : '#94A3B8'} />
+                    <Cell key={idx} fill={row.tauxRetour >= d.returnThreshold ? '#f85149' : '#8b949e'} />
                   ))}
                 </Bar>
-                <ReferenceLine x={d.returnThreshold} stroke="#B91C1C" strokeDasharray="5 5" label={{ value: `Seuil ${d.returnThreshold}%`, position: 'top', fill: '#B91C1C', fontSize: 11 }} />
+                <ReferenceLine x={d.returnThreshold} stroke="#f85149" strokeDasharray="5 5" label={{ value: `Seuil ${d.returnThreshold}%`, position: 'top', fill: '#f85149', fontSize: 11 }} />
               </BarChart>
             </ResponsiveContainer>
 
-            <Typography variant="caption" sx={{ color: '#64748B' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               Seuil PIM signalement: {d.returnThreshold}%
             </Typography>
             <Alert severity="error" sx={{ mt: 1, borderRadius: 1.5, '& .MuiAlert-message': { fontSize: 11 } }}>
@@ -345,25 +345,25 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
                 <Typography variant="subtitle2" fontWeight={600} gutterBottom>{ch.channel}</Typography>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
                   <Box textAlign="center">
-                    <Typography variant="h6" fontWeight={700} sx={{ color: '#0F172A' }}>{fmtNumber(ch.commandes)}</Typography>
-                    <Typography variant="caption" sx={{ color: '#64748B' }}>Commandes</Typography>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>{fmtNumber(ch.commandes)}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Commandes</Typography>
                   </Box>
                   <Box textAlign="center">
-                    <Typography variant="h6" fontWeight={700} sx={{ color: '#0F172A' }}>{ch.tauxLivraison.toFixed(0)}%</Typography>
-                    <Typography variant="caption" sx={{ color: '#64748B' }}>Taux livraison</Typography>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>{ch.tauxLivraison.toFixed(0)}%</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Taux livraison</Typography>
                   </Box>
                   <Box textAlign="center">
-                    <Typography variant="h6" fontWeight={700} sx={{ color: '#0F172A' }}>{fmtDZDShort(ch.panierMoyen)}</Typography>
-                    <Typography variant="caption" sx={{ color: '#64748B' }}>Panier moyen</Typography>
+                    <Typography variant="h6" fontWeight={700} sx={{ color: 'text.primary' }}>{fmtDZDShort(ch.panierMoyen)}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Panier moyen</Typography>
                   </Box>
                 </Box>
               </Box>
             ))}
 
-            <Typography variant="caption" sx={{ color: '#10B981', display: 'block', mt: 1 }}>
+            <Typography variant="caption" sx={{ color: 'success.main', display: 'block', mt: 1 }}>
               WhatsApp: taux livraison supérieur (+4 pts) car clients plus engagés.
             </Typography>
-            <Typography variant="caption" sx={{ color: '#64748B' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               Phase 2 — Marketplace Jumia.dz non actif · Estimé Q4 2026
             </Typography>
           </Paper>
@@ -392,7 +392,7 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
               </BarChart>
             </ResponsiveContainer>
 
-            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#64748B' }}>
+            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
               + {Math.max(0, d.totalLacunes - 5)} autres requêtes sans résultat
             </Typography>
 
@@ -400,7 +400,7 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
               Chaque requête sans résultat = client perdu. Revenu potentiel manqué: ~890 000 DZD/mois. Action: Ajouter ces produits dans PIM.
             </Alert>
 
-            <Button fullWidth variant="outlined" sx={{ mt: 1.5, textTransform: 'none', borderColor: '#CBD5E1' }}>
+            <Button fullWidth variant="outlined" sx={{ mt: 1.5, textTransform: 'none', borderColor: 'divider' }}>
               Signaler à PIM Manager
             </Button>
           </Paper>
@@ -416,7 +416,7 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
             </Box>
 
             <Box display="flex" alignItems="center" gap={1} mb={2}>
-              <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: osHealth.status === 'green' ? '#22c55e' : '#f59e0b' }} />
+              <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: osHealth.status === 'green' ? 'success.main' : 'warning.main' }} />
               <Typography variant="body2">
                 En ligne · {osHealth.latencyMs}ms latence · {osHealth.docsIndexed} docs
               </Typography>
@@ -425,19 +425,19 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
             <Grid container spacing={2}>
               <Grid item xs={6}>
                 <Typography variant="h5" fontWeight={700} color="success.main">{osHealth.docsIndexed}</Typography>
-                <Typography variant="caption" sx={{ color: '#64748B' }}>Documents indexés</Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>Documents indexés</Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography variant="h5" fontWeight={700} color="success.main">{osHealth.latencyMs}ms</Typography>
-                <Typography variant="caption" sx={{ color: '#64748B' }}>Latence moyenne</Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>Latence moyenne</Typography>
               </Grid>
               <Grid item xs={6}>
                 <Typography variant="h5" fontWeight={700}>{osHealth.score.toFixed(2)}</Typography>
-                <Typography variant="caption" sx={{ color: '#64748B' }}>Score pertinence /1.0</Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>Score pertinence /1.0</Typography>
               </Grid>
               <Grid item xs={6}>
-                <Typography fontWeight={700} sx={{ fontSize: '0.875rem', color: '#64748B' }}>{relativeTime(osHealth.lastReindex)}</Typography>
-                <Typography variant="caption" sx={{ color: '#64748B' }}>Dernière ré-indexation</Typography>
+                <Typography fontWeight={700} sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>{relativeTime(osHealth.lastReindex)}</Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>Dernière ré-indexation</Typography>
               </Grid>
             </Grid>
 
@@ -447,7 +447,7 @@ export default function ProduitsCatalogueTab({ period }: ProduitsCatalogueTabPro
               </Alert>
             )}
 
-            <Button fullWidth variant="outlined" sx={{ mt: 1.5, textTransform: 'none', borderColor: '#CBD5E1', color: '#334155', '&:hover': { bgcolor: '#F8FAFC', borderColor: '#CBD5E1' } }}>
+            <Button fullWidth variant="outlined" sx={{ mt: 1.5, textTransform: 'none', borderColor: 'divider', color: 'text.secondary', '&:hover': { bgcolor: 'background.paper', borderColor: 'divider' } }}>
               Forcer ré-indexation
             </Button>
 

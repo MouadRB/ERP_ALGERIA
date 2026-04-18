@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, useTheme } from '@mui/material';
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
 import {
   BarChart,
@@ -17,8 +17,8 @@ import type { WilayasData } from '../../hooks/useOMSAnalytics';
 
 /* ── Gradient-like color ramp for bars (1st = darkest) ── */
 const BAR_COLORS = [
-  '#0D47A1', '#1565C0', '#1976D2', '#1E88E5', '#2196F3',
-  '#42A5F5', '#64B5F6', '#90CAF9', '#BBDEFB', '#E3F2FD',
+  '#58a6ff', '#58a6ff', '#58a6ff', '#58a6ff', '#58a6ff',
+  '#58a6ff', '#58a6ff', '#58a6ff', '#58a6ff', 'rgba(88,166,255,0.15)',
 ];
 
 /* ── Props ─────────────────────────────────────────────── */
@@ -45,6 +45,8 @@ function CustomTooltip({ active, payload }: any) {
 
 /* ── Component ─────────────────────────────────────────── */
 export default function WilayasChart({ data, periodLabel }: WilayasChartProps) {
+  const theme = useTheme();
+  const gridStroke = theme.palette.divider;
   // Format data for recharts horizontal bar: yAxis = wilaya name, xAxis = count
   const chartData = data.data.map((w) => ({
     ...w,
@@ -79,7 +81,7 @@ export default function WilayasChart({ data, periodLabel }: WilayasChartProps) {
             layout="vertical"
             margin={{ top: 0, right: 15, left: 5, bottom: 0 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" horizontal={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} horizontal={false} />
             <XAxis
               type="number"
               tick={{ fontSize: 10, fill: '#9E9E9E' }}

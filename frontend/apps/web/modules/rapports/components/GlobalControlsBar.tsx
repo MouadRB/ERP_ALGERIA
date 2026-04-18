@@ -361,7 +361,7 @@ export default function GlobalControlsBar({ exportData, activeTab = 1 }: GlobalC
           flexWrap: 'wrap',
           gap: 1,
           p: 1.5,
-          bgcolor: 'grey.50',
+          bgcolor: 'background.paper',
           borderRadius: 1,
           border: '1px solid',
           borderColor: 'divider',

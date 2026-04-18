@@ -45,7 +45,7 @@ function abbreviateName(name: string): string {
 
 /** Left border color by status */
 function leftBorderColor(status: Order['status']): string | undefined {
-  if (status === 'AwaitingValidation')     return '#FF8A00';
+  if (status === 'AwaitingValidation')     return '#d29922';
   if (status === 'DeliveryFailed_Absent')  return '#E91E63';
   if (status === 'ReturnInTransit_Refused') return '#E91E63';
   return undefined;

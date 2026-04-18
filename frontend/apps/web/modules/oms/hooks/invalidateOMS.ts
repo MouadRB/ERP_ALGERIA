@@ -7,6 +7,7 @@ const OMS_INVALIDATE_KEYS: Array<readonly unknown[]> = [
   ['oms', 'suivi'],
   ['oms', 'analytics'],
   ['oms', 'retours'],
+  ['dashboard'],
 ];
 
 export const invalidateOMSQueries = (queryClient: QueryClient, orderId?: string) => {

@@ -14,6 +14,8 @@ export const useUnpublishProduct = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['catalogue'] });
+      // SYNC-12: Unpublishing blocks future orders — OMS product search must refresh
+      queryClient.invalidateQueries({ queryKey: ['oms'] });
     },
   });
 };

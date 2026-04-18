@@ -3,9 +3,17 @@ const { computeStats } = require('./oms-stats.service');
 const { computeQueue } = require('./oms-queue.service');
 const { computeCarrierSuivi } = require('./oms-suivi.service');
 const { computeAnalytics } = require('./oms-analytics.service');
+const {
+  enrichOrder,
+  enrichOrderItems,
+  validateOrderAgainstCatalogue,
+  deductStockForOrder,
+  quarantineStockForOrder,
+} = require('./cross-module.helpers');
+const { AppError } = require('../errors/AppError');
 
 const mockOrders = () => require('../mocks/oms-orders.mock');
-const pimProducts = () => require('../mocks/pim-products.mock');
+const pimProducts = () => require('../mocks/pim.mock').products;
 
 const nextOrderSequence = (orders) => {
   const max = orders.reduce((acc, o) => {
@@ -133,7 +141,7 @@ const getOrders = async ({
   customerId,
 } = {}) => {
   if (env.useMock) {
-    const all = mockOrders();
+    const all = mockOrders().map(enrichOrder);
     const filtered = filterOrders(all, {
       status,
       carrier,
@@ -180,7 +188,7 @@ const getOrders = async ({
 const getOrderById = async (id) => {
   if (env.useMock) {
     const order = mockOrders().find((o) => o.id === id);
-    return order ?? null;
+    return order ? enrichOrder(order) : null;
   }
   const res = await fetch(`${env.engineAUrl}/oms/orders/${id}`);
   if (res.status === 404) return null;
@@ -196,7 +204,7 @@ const getStats = async () => {
 };
 
 const getQueue = async () => {
-  if (env.useMock) return computeQueue(mockOrders());
+  if (env.useMock) return computeQueue(mockOrders().map(enrichOrder));
   const res = await fetch(`${env.engineAUrl}/oms/queue`);
   if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
   return await res.json();
@@ -233,7 +241,7 @@ const confirmOrder = async (id, userId) => {
       role: 'OMS_OPERATOR',
       reason: null,
     });
-    return order;
+    return enrichOrder(order);
   }
 
   const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/confirm`, {
@@ -262,7 +270,7 @@ const cancelOrder = async (id, reason, userId) => {
       role: 'OMS_OPERATOR',
       reason,
     });
-    return order;
+    return enrichOrder(order);
   }
 
   const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/cancel`, {
@@ -295,7 +303,7 @@ const assignCarrier = async (id, carrier, userId) => {
       role: 'OMS_OPERATOR',
       reason: `Carrier assigne: ${carrier}`,
     });
-    return order;
+    return enrichOrder(order);
   }
 
   const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/assign-carrier`, {
@@ -311,9 +319,10 @@ const createOrder = async (payload) => {
   if (env.useMock) {
     const orders = mockOrders();
     const seq = nextOrderSequence(orders);
-    const id = `ord-2025-${padSeq(seq)}`;
-    const reference = `ORD-2025-${padSeq(seq)}`;
     const now = new Date();
+    const year = now.getUTCFullYear();
+    const id = `ord-${year}-${padSeq(seq)}`;
+    const reference = `ORD-${year}-${padSeq(seq)}`;
 
     const products = pimProducts();
     const items = (payload.items ?? []).map((it) => {
@@ -324,8 +333,6 @@ const createOrder = async (payload) => {
       return {
         productId: product.id ?? it.productId ?? it.sku ?? 'PRD-UNKNOWN',
         sku: it.sku,
-        nameFr: product.nameFr ?? it.nameFr ?? 'Produit',
-        nameAr: product.nameAr ?? it.nameAr ?? 'Produit',
         quantity: qty,
         qty,
         unitPriceHT: Math.round(unitPriceTTC / 1.19),
@@ -335,6 +342,12 @@ const createOrder = async (payload) => {
         total,
       };
     });
+
+    // SYNC-3: Validate items are published in Catalogue before creating order
+    const validation = validateOrderAgainstCatalogue(items);
+    if (!validation.valid) {
+      throw new AppError('CATALOGUE_VALIDATION', validation.errors[0].message, 400);
+    }
 
     const totalTTC = items.reduce((s, it) => s + it.total, 0);
     const totalHT = Math.round(totalTTC / 1.19);
@@ -346,13 +359,51 @@ const createOrder = async (payload) => {
       ? new Date(Date.now() + 120 * 60 * 1000).toISOString()
       : null;
 
+    // CRM customer lookup/upsert by phone — OMS must never create an order without a CRM identity.
+    const customerPhone = payload.telephone ?? payload.customerPhone ?? '';
+    const crmCustomers = require('../mocks/crm.mock');
+    let crmMatch = customerPhone
+      ? crmCustomers.find((c) => c.phone === customerPhone)
+      : null;
+    if (!crmMatch && customerPhone) {
+      const nextCustSeq = crmCustomers.reduce((max, c) => {
+        const m = (c.id || '').match(/CUST-(\d+)/);
+        const n = m ? parseInt(m[1], 10) : 0;
+        return Number.isFinite(n) ? Math.max(max, n) : max;
+      }, 0) + 1;
+      crmMatch = {
+        id: `CUST-${String(nextCustSeq).padStart(3, '0')}`,
+        phone: customerPhone,
+        phoneSec: payload.telephone2 ?? null,
+        nameFr: (payload.nomComplet ?? '').trim() || 'Client sans nom',
+        nameAr: '',
+        email: null,
+        wilayaCode: payload.wilayaCode ?? '',
+        commune: payload.commune ?? '',
+        address: payload.adresse ?? payload.address ?? '',
+        blacklisted: false,
+        blacklistReason: null,
+        blacklistMotif: null,
+        blacklistedAt: null,
+        blacklistedBy: null,
+        preferredChannel: (payload.source ?? '').toLowerCase().includes('whats') ? 'whatsapp' : 'telephone',
+        preferredLanguage: 'français',
+        riskLevel: 'LOW',
+        fraudScore: 0,
+        lifecycleStatus: 'Nouveau client',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      };
+      crmCustomers.push(crmMatch);
+    }
+    const customerId = crmMatch?.id ?? payload.customerId ?? null;
+
     const order = {
       id,
       reference,
       status: nextStatus,
-      customerPhone: payload.telephone ?? payload.customerPhone ?? '',
-      customerNameFr: payload.nomComplet ?? payload.customerNameFr ?? '',
-      customerNameAr: payload.customerNameAr ?? payload.nomComplet ?? '',
+      customerId,
+      customerPhone,
       wilayaCode: payload.wilayaCode ?? '',
       address: payload.adresse ?? payload.address ?? '',
       commune: payload.commune ?? '',
@@ -370,10 +421,6 @@ const createOrder = async (payload) => {
       trackingNumber: null,
       deliveryAttempts: 0,
       autoCancelAt,
-
-      riskLevel: 'LOW',
-      fraudScore: 0.1,
-      riskSignals: [],
 
       confirmedBy: null,
       cancelReason: null,
@@ -400,20 +447,6 @@ const createOrder = async (payload) => {
         revenueRecognizedAt: null,
         carrierRemittance: null,
       },
-      customer: {
-        nameFr: payload.nomComplet ?? payload.customerNameFr ?? '',
-        nameAr: payload.customerNameAr ?? payload.nomComplet ?? '',
-        phone: payload.telephone ?? payload.customerPhone ?? '',
-        wilaya: payload.wilayaName ?? payload.wilayaCode ?? '',
-        wilayaCode: payload.wilayaCode ?? '',
-        address: payload.adresse ?? payload.address ?? '',
-        orderCount: 0,
-        fraudScore: 0.1,
-        riskLevel: 'LOW',
-        riskSignals: [],
-        blacklisted: false,
-        lastDelivery: null,
-      },
 
       createdBy: payload.createdBy ?? 'usr-ops-001',
       createdAt: now.toISOString(),
@@ -421,13 +454,49 @@ const createOrder = async (payload) => {
     };
 
     orders.push(order);
-    return order;
+    return enrichOrder(order);
   }
 
   const res = await fetch(`${env.engineAUrl}/oms/orders`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
+  return await res.json();
+};
+
+// SYNC-6: Transition to DeliveredCOD_Confirmed — deduct stock from Inventory.
+const deliverOrder = async (id, userId) => {
+  if (env.useMock) {
+    const order = mockOrders().find((o) => o.id === id);
+    if (!order) return null;
+    const prevStatus = order.status;
+    order.status = 'DeliveredCOD_Confirmed';
+    order.updatedAt = new Date().toISOString();
+    order.revenueRecognizedAt = order.updatedAt;
+    if (order.paiement) {
+      order.paiement.paymentStatus = 'Livre - revenu reconnu';
+      order.paiement.revenueRecognizedAt = order.updatedAt;
+    }
+    order.history = order.history ?? [];
+    order.history.push({
+      at: order.updatedAt,
+      from: prevStatus,
+      to: 'DeliveredCOD_Confirmed',
+      by: userId ?? 'Systeme',
+      role: 'system',
+      reason: 'Livraison confirmee — COD encaisse',
+    });
+    // RULE 3: deduct stock from Inventory
+    deductStockForOrder(order);
+    return enrichOrder(order);
+  }
+
+  const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/deliver`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deliveredBy: userId }),
   });
   if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
   return await res.json();
@@ -444,19 +513,24 @@ const handleReturnAction = async (id, action, payload = {}) => {
     if (action === 'reintegrate') {
       order.returnOutcome = 'resalable';
       order.status = 'Returned';
+      // SYNC-8: quarantine returned items (not directly back to available)
+      quarantineStockForOrder(order);
     }
 
     if (action === 'declare_loss') {
       order.returnOutcome = 'destroyed';
       order.status = 'Returned';
+      // SYNC-8: quarantine returned items even if declared as loss
+      quarantineStockForOrder(order);
     }
 
     let newOrder = null;
     if (action === 'resend') {
       order.returnOutcome = 'resent';
       order.status = 'Returned';
+      const enrichedOrder = enrichOrder(order);
       newOrder = await createOrder({
-        nomComplet: order.customerNameFr,
+        nomComplet: enrichedOrder.customerNameFr,
         telephone: order.customerPhone,
         wilayaCode: order.wilayaCode,
         adresse: order.address,
@@ -480,7 +554,7 @@ const handleReturnAction = async (id, action, payload = {}) => {
       reason: `Return action: ${action}`,
     });
 
-    return { order, newOrder };
+    return { order: enrichOrder(order), newOrder };
   }
 
   const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/return-action`, {
@@ -504,4 +578,5 @@ module.exports = {
   confirmOrder,
   cancelOrder,
   assignCarrier,
+  deliverOrder,
 };

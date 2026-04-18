@@ -14,9 +14,9 @@ import { getWilayaByCode } from '@ferza/shared';
 interface OrderClientRisqueTabProps { order: any; }
 
 const RISK_THEME: Record<string, { bg: string; color: string; label: string }> = {
-  LOW:    { bg: '#E8F5E9', color: '#2E7D32', label: 'Risque faible' },
-  MEDIUM: { bg: '#FFF3E0', color: '#E65100', label: 'Risque moyen' },
-  HIGH:   { bg: '#FFEBEE', color: '#C62828', label: 'Risque élevé' },
+  LOW:    { bg: 'rgba(46,160,67,0.15)',  color: 'success.main', label: 'Risque faible' },
+  MEDIUM: { bg: 'rgba(210,153,34,0.15)', color: 'warning.main', label: 'Risque moyen' },
+  HIGH:   { bg: 'rgba(248,81,73,0.15)',  color: 'error.main', label: 'Risque élevé' },
 };
 
 function formatPhone(phone: string): string {
@@ -83,7 +83,7 @@ export default function OrderClientRisqueTab({ order }: OrderClientRisqueTabProp
               </Typography>
             </Box>
             <LinearProgress variant="determinate" value={scorePercent}
-              sx={{ height: 10, borderRadius: 5, backgroundColor: '#F0F0F0',
+              sx={{ height: 10, borderRadius: 5, backgroundColor: 'action.hover',
                 '& .MuiLinearProgress-bar': { borderRadius: 5, backgroundColor: risk.color } }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
               <Typography sx={{ fontSize: 10, color: 'text.disabled' }}>0% — Sûr</Typography>
@@ -108,16 +108,16 @@ export default function OrderClientRisqueTab({ order }: OrderClientRisqueTabProp
             </Box>
           ) : (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <CheckCircleOutlineIcon sx={{ fontSize: 14, color: '#2E7D32' }} />
-              <Typography sx={{ fontSize: 12, color: '#2E7D32' }}>Aucun signal de risque détecté.</Typography>
+              <CheckCircleOutlineIcon sx={{ fontSize: 14, color: 'success.main' }} />
+              <Typography sx={{ fontSize: 12, color: 'success.main' }}>Aucun signal de risque détecté.</Typography>
             </Box>
           )}
 
           {/* Blacklist */}
           {c.blacklisted && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 2, p: 1.5, borderRadius: 2, backgroundColor: '#FFEBEE', border: '1px solid #EF9A9A' }}>
-              <BlockIcon sx={{ fontSize: 16, color: '#C62828' }} />
-              <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#C62828' }}>CLIENT BLACKLISTÉ — commandes futures bloquées</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 2, p: 1.5, borderRadius: 2, backgroundColor: 'rgba(248,81,73,0.15)', border: '1px solid #f85149' }}>
+              <BlockIcon sx={{ fontSize: 16, color: 'error.main' }} />
+              <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'error.main' }}>CLIENT BLACKLISTÉ — commandes futures bloquées</Typography>
             </Box>
           )}
         </Paper>

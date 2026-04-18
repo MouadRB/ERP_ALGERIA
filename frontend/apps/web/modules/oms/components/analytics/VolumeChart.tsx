@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, useTheme } from '@mui/material';
 import {
   LineChart,
   Line,
@@ -15,9 +15,9 @@ import {
 import type { VolumeData } from '../../hooks/useOMSAnalytics';
 
 /* ── Series colors ─────────────────────────────────────── */
-const COLOR_TOTAL      = '#0D47A1';
-const COLOR_CONFIRMEES = '#2E7D32';
-const COLOR_LIVREES    = '#FF8A00';
+const COLOR_TOTAL      = '#58a6ff';
+const COLOR_CONFIRMEES = '#2ea043';
+const COLOR_LIVREES    = '#d29922';
 
 /* ── Props ─────────────────────────────────────────────── */
 interface VolumeChartProps {
@@ -41,6 +41,8 @@ function CustomTooltip({ active, payload, label }: any) {
 
 /* ── Component ─────────────────────────────────────────── */
 export default function VolumeChart({ data }: VolumeChartProps) {
+  const theme = useTheme();
+  const gridStroke = theme.palette.divider;
   return (
     <Paper
       elevation={0}
@@ -62,7 +64,7 @@ export default function VolumeChart({ data }: VolumeChartProps) {
       <Box sx={{ height: 240 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data.data} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
             <XAxis
               dataKey="date"
               tick={{ fontSize: 10, fill: '#9E9E9E' }}
@@ -133,7 +135,7 @@ export default function VolumeChart({ data }: VolumeChartProps) {
         />
         <FooterStat
           label={`Croissance 7j: ${data.croissance > 0 ? '+' : ''}${data.croissance}%`}
-          color={data.croissance >= 0 ? '#2E7D32' : '#C62828'}
+          color={data.croissance >= 0 ? '#2ea043' : '#f85149'}
         />
       </Box>
     </Paper>

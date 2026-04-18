@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { fetchBFF } from '@/lib/fetchBFF';
+import { fetchBFF, type ParamValue } from '@/lib/fetchBFF';
 import type { ApiResponse, Ticket } from '@ferza/shared';
 
 export interface UseCRMTicketsParams {
@@ -16,5 +16,5 @@ export interface UseCRMTicketsParams {
 export const useCRMTickets = (params: UseCRMTicketsParams = {}) =>
   useQuery({
     queryKey: ['crm', 'tickets', params],
-    queryFn:  () => fetchBFF<ApiResponse<Ticket[]>>('/bff/crm/tickets', { params }),
+    queryFn:  () => fetchBFF<ApiResponse<Ticket[]>>('/bff/crm/tickets', { params: params as Record<string, ParamValue> }),
   });

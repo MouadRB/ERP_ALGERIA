@@ -52,8 +52,8 @@ export default function CRMKPICards({ stats, loading }: Props) {
             CA moy: {formatDZD(stats.vipAvgCA)}
           </Typography>
         }
-        borderColor="#E65100"
-        valueColor="#E65100"
+        borderColor="#d29922"
+        valueColor="#d29922"
       />
       <KPICard
         label="Clients Fidèles"
@@ -63,8 +63,8 @@ export default function CRMKPICards({ stats, loading }: Props) {
             +{stats.newThisMonth} ce mois · Conv: {stats.conversionRate}%
           </Typography>
         }
-        borderColor="#1565C0"
-        valueColor="#1565C0"
+        borderColor="#58a6ff"
+        valueColor="#58a6ff"
       />
       <KPICard
         label="Nouveaux Clients"
@@ -74,8 +74,8 @@ export default function CRMKPICards({ stats, loading }: Props) {
             Taux conversion: {stats.conversionRate}%
           </Typography>
         }
-        borderColor="#2E7D32"
-        valueColor="#2E7D32"
+        borderColor="#2ea043"
+        valueColor="#2ea043"
       />
       <KPICard
         label="Clients Inactifs"
@@ -85,8 +85,8 @@ export default function CRMKPICards({ stats, loading }: Props) {
             Campagnes de relance
           </Typography>
         }
-        borderColor="#757575"
-        valueColor="#757575"
+        borderColor="#8b949e"
+        valueColor="#8b949e"
       />
       <KPICard
         label="Tickets Support"
@@ -96,8 +96,8 @@ export default function CRMKPICards({ stats, loading }: Props) {
             {stats.escalatedCount} escaladé(s)
           </Typography>
         }
-        borderColor="#6A1B9A"
-        valueColor="#6A1B9A"
+        borderColor="#bc8cff"
+        valueColor="#bc8cff"
       />
       <KPICard
         label="Clients Bloqués"

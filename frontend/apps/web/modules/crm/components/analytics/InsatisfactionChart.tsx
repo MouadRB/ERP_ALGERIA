@@ -4,7 +4,7 @@ import { Alert, Box, Button, Skeleton, Typography } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import type { InsatisfactionReason } from '@/modules/crm/hooks/useCRMAnalytics';
 
-const COLORS = ['#C62828', '#E65100', '#F57F17', '#1565C0', '#6A1B9A'];
+const COLORS = ['#f85149', '#d29922', '#F57F17', '#58a6ff', '#bc8cff'];
 
 interface Props { data: InsatisfactionReason[]; loading: boolean; }
 

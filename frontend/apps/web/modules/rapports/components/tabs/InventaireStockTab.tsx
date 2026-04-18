@@ -102,7 +102,7 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
   return (
     <Box>
       {/* Source */}
-      <Typography variant="caption" sx={{ color: '#22c55e', fontWeight: 500, display: 'block', mb: 2 }}>
+      <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 500, display: 'block', mb: 2 }}>
         Sources: Module Inventaire · FIFO · Temps réel
       </Typography>
 
@@ -124,21 +124,21 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
               <Typography variant="h3" fontWeight={700} color="primary">
                 {fmtDZDShort(d.valorisationFIFO.total)}
               </Typography>
-              <Typography variant="caption" sx={{ color: '#64748B' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 {d.valorisationFIFO.byWarehouse?.[0]?.name ?? 'Entrepôt Central'}
               </Typography>
             </Box>
 
             <Grid container spacing={1}>
               {[
-                { label: 'Mvt. net (30j)', value: `+${d.typesMouvements.reception - d.typesMouvements.sortie}`, color: '#16a34a' },
-                { label: 'Réservations', value: fmtNumber(d.reservationsActives.total), color: '#2563eb' },
-                { label: 'Alertes réappro', value: String(d.totalAlertes), color: d.totalAlertes > 5 ? '#dc2626' : '#d97706' },
+                { label: 'Mvt. net (30j)', value: `+${d.typesMouvements.reception - d.typesMouvements.sortie}`, color: 'success.main' },
+                { label: 'Réservations', value: fmtNumber(d.reservationsActives.total), color: 'primary.main' },
+                { label: 'Alertes réappro', value: String(d.totalAlertes), color: d.totalAlertes > 5 ? '#f85149' : '#d29922' },
               ].map((s) => (
                 <Grid item xs={4} key={s.label}>
-                  <Box sx={{ p: 1, bgcolor: 'grey.50', borderRadius: 1, textAlign: 'center', border: '1px solid', borderColor: 'divider' }}>
+                  <Box sx={{ p: 1, bgcolor: 'background.paper', borderRadius: 1, textAlign: 'center', border: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="subtitle2" fontWeight={700} sx={{ color: s.color }}>{s.value}</Typography>
-                    <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.7rem' }}>{s.label}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>{s.label}</Typography>
                   </Box>
                 </Grid>
               ))}
@@ -146,19 +146,19 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
 
             {d.topReserved && d.topReserved.length > 0 && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, display: 'block', mb: 0.75 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.75 }}>
                   Top 5 produits réservés
                 </Typography>
                 {d.topReserved.slice(0, 5).map((item, idx) => (
                   <Box key={item.sku} display="flex" justifyContent="space-between" alignItems="center" sx={{ py: 0.75, borderBottom: idx < 4 ? '1px solid' : 'none', borderColor: 'divider' }}>
                     <Box display="flex" alignItems="center" gap={1}>
-                      <Typography variant="caption" sx={{ color: '#94A3B8', fontWeight: 700, minWidth: 18 }}>#{idx + 1}</Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, minWidth: 18 }}>#{idx + 1}</Typography>
                       <Box>
                         <Typography variant="body2" fontWeight={500} sx={{ fontSize: 12, lineHeight: 1.3 }}>{item.nameFr}</Typography>
-                        <Typography variant="caption" sx={{ color: '#64748B' }}>{item.sku}</Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>{item.sku}</Typography>
                       </Box>
                     </Box>
-                    <Chip label={`${item.reserved} rés.`} size="small" sx={{ bgcolor: '#EFF6FF', color: '#2563eb', fontWeight: 600, fontSize: 11 }} />
+                    <Chip label={`${item.reserved} rés.`} size="small" sx={{ bgcolor: 'rgba(88,166,255,0.15)', color: 'primary.main', fontWeight: 600, fontSize: 11 }} />
                   </Box>
                 ))}
               </Box>
@@ -190,7 +190,7 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
                     <TableRow key={row.sku}>
                       <TableCell>
                         <Typography variant="body2" fontWeight={500}>{row.nameFr}</Typography>
-                        <Typography variant="caption" sx={{ color: '#64748B' }}>{row.sku}</Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>{row.sku}</Typography>
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" color={row.stock <= 0 ? 'error' : 'text.primary'} fontWeight={600}>
@@ -206,7 +206,7 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
               </Table>
             </TableContainer>
 
-            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#64748B' }}>
+            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
               {d.alertesReappro.filter(a => a.stock <= 0).length} rupture totale · {d.alertesReappro.filter(a => a.stock < 0).length} stock négatif (anomalie détectée). Correction dans Inventaire requise.
             </Typography>
           </Paper>
@@ -243,10 +243,10 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
               </PieChart>
             </ResponsiveContainer>
 
-            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#64748B' }}>
+            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
               Solde net: +{d.typesMouvements.reception - d.typesMouvements.sortie} unités (sorties + entrées). Retours en cours (BCs sortis).
             </Typography>
-            <Typography variant="caption" sx={{ color: '#64748B' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               {d.totalQuarantaine} retours en quarantaine · Inspection requise · Impact valorisation FIFO
             </Typography>
           </Paper>
@@ -270,15 +270,15 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
             {/* 4 stat cards */}
             <Grid container spacing={1.5}>
               {[
-                { label: 'Réservées', value: d.reservationsActives.total, color: '#22c55e' },
-                { label: 'Soft (Délais)', value: d.reservationsActives.soft, color: '#f59e0b' },
-                { label: 'Hard (OMS)', value: d.reservationsActives.hard, color: '#3b82f6' },
-                { label: 'Quarantaine', value: d.reservationsActives.quarantaine, color: '#ef4444' },
+                { label: 'Réservées', value: d.reservationsActives.total, color: 'success.main' },
+                { label: 'Soft (Délais)', value: d.reservationsActives.soft, color: 'warning.main' },
+                { label: 'Hard (OMS)', value: d.reservationsActives.hard, color: 'primary.main' },
+                { label: 'Quarantaine', value: d.reservationsActives.quarantaine, color: 'error.main' },
               ].map((stat) => (
                 <Grid item xs={6} key={stat.label}>
-                  <Box sx={{ p: 1.5, bgcolor: `${stat.color}10`, borderRadius: 1, textAlign: 'center' }}>
+                  <Box sx={{ p: 1.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 1, textAlign: 'center' }}>
                     <Typography variant="h5" fontWeight={700} sx={{ color: stat.color }}>{stat.value}</Typography>
-                    <Typography variant="caption" sx={{ color: '#64748B' }}>{stat.label}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>{stat.label}</Typography>
                   </Box>
                 </Grid>
               ))}
@@ -328,7 +328,7 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
               </AreaChart>
             </ResponsiveContainer>
 
-            <Typography variant="caption" sx={{ color: '#64748B' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               Électronique: coût FIFO stable (+0.2% vs M-1). Inflation import maîtrisée.
             </Typography>
           </Paper>
@@ -351,15 +351,15 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
               <Box key={q.sku} display="flex" justifyContent="space-between" alignItems="center" sx={{ py: 0.75, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Box>
                   <Typography variant="body2" fontWeight={500}>{q.nameFr}</Typography>
-                  <Typography variant="caption" sx={{ color: '#64748B' }}>{q.sku}</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>{q.sku}</Typography>
                 </Box>
                 <Chip
                   label={q.inspection}
                   size="small"
                   sx={
                     q.inspection.toLowerCase().includes('inspect')
-                      ? { bgcolor: '#D1FAE5', color: '#047857', fontWeight: 500 }
-                      : { bgcolor: '#FFEDD5', color: '#C2410C', fontWeight: 500 }
+                      ? { bgcolor: 'rgba(46,160,67,0.15)', color: 'success.main', fontWeight: 500 }
+                      : { bgcolor: 'rgba(253,140,115,0.15)', color: 'warning.main', fontWeight: 500 }
                   }
                 />
               </Box>
@@ -370,9 +370,9 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
               sx={{
                 mt: 1.5,
                 borderRadius: 1.5,
-                bgcolor: '#FFF7ED',
-                '& .MuiAlert-icon': { color: '#C2410C' },
-                '& .MuiAlert-message': { fontSize: 11, color: '#C2410C' },
+                bgcolor: 'rgba(253,140,115,0.08)',
+                '& .MuiAlert-icon': { color: 'warning.main' },
+                '& .MuiAlert-message': { fontSize: 11, color: 'warning.main' },
               }}
             >
               Valeur quarantaine: {fmtDZDShort(492000)} (FIFO)
@@ -395,18 +395,18 @@ export default function InventaireStockTab({ period }: InventaireStockTabProps) 
                 <Box key={row.category} sx={{ mb: 1.5 }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
                     <Typography variant="body2" fontWeight={500} sx={{ fontSize: 13 }}>{row.category}</Typography>
-                    <Typography variant="body2" fontWeight={700} sx={{ color: '#1E293B' }}>{row.rotation}x</Typography>
+                    <Typography variant="body2" fontWeight={700} sx={{ color: 'text.primary' }}>{row.rotation}x</Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
                     value={(row.rotation / maxRotation) * 100}
-                    sx={{ height: 8, borderRadius: 4, bgcolor: '#F1F5F9', '& .MuiLinearProgress-bar': { bgcolor: '#475569', borderRadius: 4 } }}
+                    sx={{ height: 8, borderRadius: 4, bgcolor: 'action.hover', '& .MuiLinearProgress-bar': { bgcolor: 'text.secondary', borderRadius: 4 } }}
                   />
                 </Box>
               ));
             })()}
 
-            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#64748B' }}>
+            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
               Stocks lents à peu rapides (2-5x). Commander pour réassortiment.
             </Typography>
           </Paper>

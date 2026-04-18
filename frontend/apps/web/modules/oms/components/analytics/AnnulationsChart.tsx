@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, useTheme } from '@mui/material';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   BarChart,
@@ -50,7 +50,7 @@ function CustomXAxisTick({
       y={y}
       dy={16}
       textAnchor="end"
-      fill="#757575"
+      fill="#8b949e"
       fontSize={9}
       transform={`rotate(-20, ${x}, ${y})`}
     >
@@ -61,6 +61,8 @@ function CustomXAxisTick({
 
 /* ── Component ─────────────────────────────────────────── */
 export default function AnnulationsChart({ data, periodLabel }: AnnulationsChartProps) {
+  const theme = useTheme();
+  const gridStroke = theme.palette.divider;
   return (
     <Paper
       elevation={0}
@@ -98,17 +100,17 @@ export default function AnnulationsChart({ data, periodLabel }: AnnulationsChart
             data={data.data}
             margin={{ top: 5, right: 10, left: -10, bottom: 30 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
             <XAxis
               dataKey="raison"
               tick={CustomXAxisTick}
               tickLine={false}
-              axisLine={{ stroke: '#E0E0E0' }}
+              axisLine={{ stroke: gridStroke }}
               interval={0}
               height={50}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: '#9E9E9E' }}
+              tick={{ fontSize: 10, fill: '#8b949e' }}
               tickLine={false}
               axisLine={false}
             />
@@ -133,12 +135,12 @@ export default function AnnulationsChart({ data, periodLabel }: AnnulationsChart
             px: 1.5,
             py: 1,
             borderRadius: 2,
-            backgroundColor: '#FFF8E1',
-            border: '1px solid #FFE082',
+            backgroundColor: 'rgba(210,153,34,0.12)',
+            border: '1px solid #d29922',
           }}
         >
-          <WarningAmberRoundedIcon sx={{ fontSize: 16, color: '#F9A825', mt: 0.25, flexShrink: 0 }} />
-          <Typography sx={{ fontSize: 11, color: '#5D4037', lineHeight: 1.5 }}>
+          <WarningAmberRoundedIcon sx={{ fontSize: 16, color: 'warning.main', mt: 0.25, flexShrink: 0 }} />
+          <Typography sx={{ fontSize: 11, color: 'text.primary', lineHeight: 1.5 }}>
             {data.autoExpire} annulations auto (expiré) = stock libéré automatiquement.
             Chaque annulation auto = opportunité de vente perdue.
             Optimiser: réduire délai de confirmation !

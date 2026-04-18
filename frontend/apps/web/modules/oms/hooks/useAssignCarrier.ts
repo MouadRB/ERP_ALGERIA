@@ -26,6 +26,7 @@ export const useAssignCarrier = () => {
 
     onSuccess: (_data, { id }) => {
       invalidateOMSQueries(queryClient, id);
+      queryClient.invalidateQueries({ queryKey: ['rapports'] });
     },
   });
 };

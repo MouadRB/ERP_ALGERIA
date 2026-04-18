@@ -1,12 +1,11 @@
 'use client';
 
-import { Chip } from '@mui/material';
+import { Chip, useTheme, alpha } from '@mui/material';
 import type { ChipProps } from '@mui/material';
 import type { OrderState } from '@ferza/shared';
 import { useLocale } from 'next-intl';
 
-// ─── Color per semantic group ─────────────────────────────────────────────────
-const STATUS_COLOR: Record<OrderState, ChipProps['color']> = {
+const STATUS_COLOR: Record<OrderState, 'warning' | 'info' | 'primary' | 'success' | 'error' | 'default'> = {
   Draft:                   'default',
   AwaitingValidation:      'warning',
   Confirmed:               'info',
@@ -22,7 +21,6 @@ const STATUS_COLOR: Record<OrderState, ChipProps['color']> = {
   Cancelled:               'default',
 };
 
-// ─── Bilingual labels ─────────────────────────────────────────────────────────
 export const STATUS_LABEL: Record<OrderState, { fr: string; ar: string }> = {
   Draft:                   { fr: 'Brouillon',        ar: 'مسودة' },
   AwaitingValidation:      { fr: 'En attente',        ar: 'في الانتظار' },
@@ -39,7 +37,6 @@ export const STATUS_LABEL: Record<OrderState, { fr: string; ar: string }> = {
   Cancelled:               { fr: 'Annulée',            ar: 'ملغاة' },
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
 type Props = {
   status: OrderState;
   size?:  ChipProps['size'];
@@ -47,16 +44,40 @@ type Props = {
 
 export default function OrderStatusChip({ status, size = 'small' }: Props) {
   const locale = useLocale();
-  const label  = locale === 'ar'
-    ? STATUS_LABEL[status].ar
-    : STATUS_LABEL[status].fr;
+  const theme = useTheme();
+
+  const label = locale === 'ar' ? STATUS_LABEL[status].ar : STATUS_LABEL[status].fr;
+  const colorKey = STATUS_COLOR[status];
+
+  const getBadgeStyle = () => {
+    if (colorKey === 'default') {
+      return {
+        bgcolor: alpha(theme.palette.text.secondary, 0.12),
+        border: `1px solid ${theme.palette.divider}`,
+        color: theme.palette.text.secondary,
+      };
+    }
+
+    const mainColor = theme.palette[colorKey].main;
+
+    return {
+      bgcolor: alpha(mainColor, 0.15),
+      border: `1px solid ${mainColor}`,
+      color: mainColor,
+    };
+  };
 
   return (
     <Chip
       label={label}
-      color={STATUS_COLOR[status]}
       size={size}
-      sx={{ fontWeight: 600, fontSize: 11, height: 22 }}
+      sx={{ 
+        fontWeight: 600, 
+        fontSize: 11, 
+        height: 22, 
+        borderRadius: '2rem',
+        ...getBadgeStyle() 
+      }}
     />
   );
 }

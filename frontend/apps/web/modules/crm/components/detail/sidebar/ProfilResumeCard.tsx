@@ -9,8 +9,8 @@ interface Props { customer: Customer; }
 
 export default function ProfilResumeCard({ customer }: Props) {
   const wilaya   = WILAYAS.find((w) => w.code === customer.wilayaCode);
-  const segColor = SEGMENT_COLOR[customer.segment] ?? '#757575';
-  const segBg    = SEGMENT_BG[customer.segment]    ?? '#F5F5F5';
+  const segColor = SEGMENT_COLOR[customer.segment] ?? '#8b949e';
+  const segBg    = SEGMENT_BG[customer.segment]    ?? '#161b22';
   const segIcon  = SEGMENT_ICON[customer.segment]  ?? '';
   const fraud    = customer.fraudScore ?? 0;
 

@@ -131,7 +131,7 @@ export default function AppelEntrantModal({ open, onClose }: Props) {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 1,
-                  bgcolor: 'grey.50',
+                  bgcolor: 'action.hover',
                 }}
               >
                 <Box display="flex" alignItems="center" gap={1} mb={0.5}>

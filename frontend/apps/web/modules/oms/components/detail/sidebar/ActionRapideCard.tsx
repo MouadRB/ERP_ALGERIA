@@ -13,8 +13,8 @@ export default function ActionRapideCard({ order }: ActionRapideCardProps) {
   return (
     <>
       <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
-        <Box sx={{ px: 2, py: 1.5, backgroundColor: '#E3F2FD' }}>
-          <Typography variant="overline" sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#0D47A1' }}>
+        <Box sx={{ px: 2, py: 1.5, backgroundColor: 'rgba(88,166,255,0.15)', borderBottom: '1px solid #58a6ff' }}>
+          <Typography variant="overline" sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'primary.main' }}>
             ACTION RAPIDE
           </Typography>
         </Box>

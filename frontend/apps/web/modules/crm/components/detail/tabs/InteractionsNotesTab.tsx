@@ -51,7 +51,7 @@ function OrderEvent({ order }: { order: Order }) {
   const firstItem = order.items?.[0];
   const isGood    = ['DeliveredCOD_Confirmed','COD_Remitted'].includes(order.status);
   const isBad     = ['Cancelled','Returned','ReturnInTransit_Refused','LostInTransit'].includes(order.status);
-  const borderColor = isGood ? '#2E7D32' : isBad ? '#C62828' : '#1565C0';
+  const borderColor = isGood ? '#2ea043' : isBad ? '#f85149' : '#58a6ff';
 
   return (
     <Box display="flex" gap={1.5} alignItems="flex-start">
@@ -93,7 +93,7 @@ function OrderEvent({ order }: { order: Order }) {
 
 function TicketEvent({ ticket }: { ticket: Ticket }) {
   const isOpen = ['Ouvert','En cours','Escaladé'].includes(ticket.status);
-  const color  = isOpen ? '#C62828' : '#2E7D32';
+  const color  = isOpen ? '#f85149' : '#2ea043';
 
   return (
     <Box display="flex" gap={1.5} alignItems="flex-start">

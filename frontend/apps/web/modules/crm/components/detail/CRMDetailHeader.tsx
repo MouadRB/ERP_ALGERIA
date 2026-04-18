@@ -36,8 +36,8 @@ interface Props {
 export default function CRMDetailHeader({ customer, onNewTicket, onBlacklist }: Props) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const wilaya   = WILAYAS.find((w) => w.code === customer.wilayaCode);
-  const segColor = SEGMENT_COLOR[customer.segment] ?? '#757575';
-  const segBg    = SEGMENT_BG[customer.segment]    ?? '#F5F5F5';
+  const segColor = SEGMENT_COLOR[customer.segment] ?? '#8b949e';
+  const segBg    = SEGMENT_BG[customer.segment]    ?? '#161b22';
   const segIcon  = SEGMENT_ICON[customer.segment]  ?? '';
   const phone213 = `213${customer.phone.slice(1)}`;
 

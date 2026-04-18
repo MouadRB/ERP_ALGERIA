@@ -6,6 +6,7 @@ import {
   Skeleton,
   Typography,
 } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import PhoneInTalkIcon   from '@mui/icons-material/PhoneInTalk';
 import Inventory2Icon    from '@mui/icons-material/Inventory2';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
@@ -16,24 +17,24 @@ import AccessTimeIcon    from '@mui/icons-material/AccessTime';
 import type { OMSStats } from '@/modules/oms/hooks/useOMSStats';
 import { formatDZD }     from '@ferza/shared';
 
+type AccentToken = 'warning' | 'info' | 'secondary' | 'success' | 'error' | 'neutral';
+
 // ─── Card configuration ───────────────────────────────────────────────────────
 
 type CardConfig = {
-  key:         keyof Omit<OMSStats, 'expirentBientot' | 'caLivres' | 'carriersEnLivraison' | 'retoursStock' | 'quarantaine' | 'annulesAuto' | 'annulesManuel' | 'funnel' | 'tauxConfirmation' | 'tauxLivraison' | 'tauxEchec' | 'tauxAnnulation' | 'lastUpdatedAt'>;
-  label:       string;
-  icon:        React.ReactNode;
-  borderColor: string;
-  valueColor:  string;
-  detail:      (s: OMSStats) => React.ReactNode;
+  key:    keyof Omit<OMSStats, 'expirentBientot' | 'caLivres' | 'carriersEnLivraison' | 'retoursStock' | 'quarantaine' | 'annulesAuto' | 'annulesManuel' | 'funnel' | 'tauxConfirmation' | 'tauxLivraison' | 'tauxEchec' | 'tauxAnnulation' | 'lastUpdatedAt'>;
+  label:  string;
+  icon:   React.ReactNode;
+  accent: AccentToken;
+  detail: (s: OMSStats) => React.ReactNode;
 };
 
 const CARDS: CardConfig[] = [
   {
-    key:         'confirmer',
-    label:       'A confirmer',
-    icon:        <PhoneInTalkIcon />,
-    borderColor: '#FF8A00',
-    valueColor:  '#E65100',
+    key:    'confirmer',
+    label:  'A confirmer',
+    icon:   <PhoneInTalkIcon />,
+    accent: 'warning',
     detail: (s) =>
       s.expirentBientot > 0 ? (
         <Box display="flex" alignItems="center" gap={0.4}>
@@ -49,11 +50,10 @@ const CARDS: CardConfig[] = [
       ),
   },
   {
-    key:         'confirmes',
-    label:       'Confirmés — WMS',
-    icon:        <Inventory2Icon />,
-    borderColor: '#1565C0',
-    valueColor:  '#0D47A1',
+    key:    'confirmes',
+    label:  'Confirmés — WMS',
+    icon:   <Inventory2Icon />,
+    accent: 'info',
     detail: () => (
       <Typography variant="caption" color="text.secondary">
         En préparation
@@ -61,11 +61,10 @@ const CARDS: CardConfig[] = [
     ),
   },
   {
-    key:         'enLivraison',
-    label:       'En livraison',
-    icon:        <LocalShippingIcon />,
-    borderColor: '#6A1B9A',
-    valueColor:  '#4A148C',
+    key:    'enLivraison',
+    label:  'En livraison',
+    icon:   <LocalShippingIcon />,
+    accent: 'secondary',
     detail: (s) => (
       <Typography variant="caption" color="text.secondary" noWrap>
         Yalidine: {s.carriersEnLivraison.Yalidine} · Maystro:{' '}
@@ -74,39 +73,36 @@ const CARDS: CardConfig[] = [
     ),
   },
   {
-    key:         'livres',
-    label:       'Livrés',
-    icon:        <CheckCircleIcon />,
-    borderColor: '#2E7D32',
-    valueColor:  '#1B5E20',
+    key:    'livres',
+    label:  'Livrés',
+    icon:   <CheckCircleIcon />,
+    accent: 'success',
     detail: (s) => (
       <Typography
         variant="caption"
         fontWeight={700}
-        sx={{ color: '#2E7D32' }}
+        color="success.main"
       >
         CA: {formatDZD(s.caLivres)}
       </Typography>
     ),
   },
   {
-    key:         'echecs',
-    label:       'Echecs + Retours',
-    icon:        <SyncProblemIcon />,
-    borderColor: '#C62828',
-    valueColor:  '#B71C1C',
+    key:    'echecs',
+    label:  'Echecs + Retours',
+    icon:   <SyncProblemIcon />,
+    accent: 'error',
     detail: (s) => (
-      <Typography variant="caption" sx={{ color: '#E65100' }}>
+      <Typography variant="caption" color="warning.main">
         Retours stock: +{s.retoursStock} quarantaine
       </Typography>
     ),
   },
   {
-    key:         'annules',
-    label:       'Annulés',
-    icon:        <HighlightOffIcon />,
-    borderColor: '#757575',
-    valueColor:  '#424242',
+    key:    'annules',
+    label:  'Annulés',
+    icon:   <HighlightOffIcon />,
+    accent: 'neutral',
     detail: (s) => (
       <Typography variant="caption" color="text.secondary">
         Auto (expiré): {s.annulesAuto} · Manuel: {s.annulesManuel}
@@ -126,7 +122,11 @@ function KPICard({
   stats:   OMSStats | null;
   loading: boolean;
 }) {
-  const value = stats ? (stats[config.key] as number) : null;
+  const theme  = useTheme();
+  const value  = stats ? (stats[config.key] as number) : null;
+  const accent = config.accent === 'neutral'
+    ? theme.palette.text.secondary
+    : theme.palette[config.accent].main;
 
   return (
     <Card
@@ -135,31 +135,28 @@ function KPICard({
         flex:         '1 1 0',
         minWidth:     148,
         borderRadius: 2,
-        borderLeft:   `4px solid ${config.borderColor}`,
-        borderTop:    '1px solid',
-        borderRight:  '1px solid',
-        borderBottom: '1px solid',
-        borderColor:  `${config.borderColor} divider divider divider`,
+        borderLeft:   `4px solid ${accent}`,
+        bgcolor:      'background.paper',
+        borderColor:  'divider',
+        boxShadow:    'none',
+        backgroundImage: 'none',
         px:           2,
         py:           1.75,
-        boxShadow:    '0 1px 3px rgba(0,0,0,0.05)',
-        transition:   'box-shadow 0.15s',
-        '&:hover':    { boxShadow: '0 2px 8px rgba(0,0,0,0.09)' },
       }}
     >
       {/* Icon + value */}
       <Box display="flex" alignItems="flex-start" gap={1.25} mb={0.5}>
         <Box
           sx={{
-            width:           36,
-            height:          36,
-            borderRadius:    1.5,
-            backgroundColor: `${config.borderColor}18`,
-            display:         'flex',
-            alignItems:      'center',
-            justifyContent:  'center',
-            flexShrink:      0,
-            '& svg':         { fontSize: 20, color: config.borderColor },
+            width:          36,
+            height:         36,
+            borderRadius:   1.5,
+            bgcolor:        alpha(accent, 0.12),
+            display:        'flex',
+            alignItems:     'center',
+            justifyContent: 'center',
+            flexShrink:     0,
+            '& svg':        { fontSize: 20, color: accent },
           }}
         >
           {config.icon}
@@ -174,7 +171,7 @@ function KPICard({
               lineHeight={1}
               sx={{
                 fontSize:   28,
-                color:      config.valueColor,
+                color:      accent,
                 fontFamily: 'DM Sans, Nunito, sans-serif',
               }}
             >

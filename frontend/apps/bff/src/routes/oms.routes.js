@@ -225,6 +225,21 @@ router.patch(
   },
 );
 
+// SYNC-6: deliver endpoint — triggers stock deduction in Inventory
+router.patch(
+  '/:id/deliver',
+  requireRole(...OMS_ROLES),
+  async (req, res, next) => {
+    try {
+      const order = await orderService.deliverOrder(req.params.id, req.user.id);
+      if (!order) return next(new AppError('NOT_FOUND', 'Commande introuvable.', 404));
+      res.json({ data: order });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 router.patch(
   '/:id/assign-carrier',
   requireRole(...OMS_ROLES),

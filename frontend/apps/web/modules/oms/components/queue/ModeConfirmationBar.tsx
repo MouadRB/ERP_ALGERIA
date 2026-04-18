@@ -204,7 +204,7 @@ export default function ModeConfirmationBar({
           disabled={selectedCount === 0}
           onClick={onIgnoreAll}
           sx={{
-            color:        '#FF8A00',
+            color: 'warning.main',
             border:       '1px solid rgba(255,138,0,0.6)',
             borderRadius: 1.5,
             fontSize:     12,
@@ -215,7 +215,7 @@ export default function ModeConfirmationBar({
             whiteSpace:    'nowrap',
             '&:hover': {
               backgroundColor: 'rgba(255,138,0,0.08)',
-              borderColor:     '#FF8A00',
+              borderColor:     '#d29922',
             },
             '&.Mui-disabled': {
               color:       'rgba(255,138,0,0.35)',

@@ -1,29 +1,30 @@
+/**
+ * RAPPORT MOCK — DEPRECATED (SYNC-11)
+ *
+ * Rapport owns NOTHING. All metrics are computed LIVE by rapports.service.js
+ * via module-specific adapters (oms.adapter, crm.adapter, inventory.adapter,
+ * pim.adapter, catalogue.adapter, procurement.adapter).
+ *
+ * This file is kept only as static metadata (available report types, etc.).
+ * Pre-computed KPIs (totalRevenueTTC, totalOrders, etc.) have been removed
+ * because they drift from the actual module state.
+ */
+
 module.exports = {
-  overview: {
-    period: { from: '2025-03-01T00:00:00.000Z', to: '2025-03-15T23:59:59.000Z' },
-    totalRevenueTTC: 320000,
-    totalOrders: 148,
-    deliveryRate: 0.72,
-    returnRate: 0.08,
-    avgOrderValueTTC: 21621,
-    codCollectionRate: 0.85,
-    topWilaya: { code: '16', name: 'Alger', orders: 54 },
-  },
-  codFunnel: [
-    { state: 'Draft', count: 12 },
-    { state: 'AwaitingValidation', count: 8 },
-    { state: 'Confirmed', count: 35 },
-    { state: 'HandedToCarrier', count: 28 },
-    { state: 'OutForDelivery', count: 22 },
-    { state: 'DeliveredCOD_Confirmed', count: 106 },
-    { state: 'DeliveryFailed_Absent', count: 18 },
-    { state: 'Returned', count: 9 },
+  availableReports: [
+    { id: 'overview', label: 'Vue d\'ensemble', icon: 'Dashboard' },
+    { id: 'ventes', label: 'Ventes & OMS', icon: 'ShoppingCart' },
+    { id: 'produits', label: 'Produits & Catalogue', icon: 'Inventory' },
+    { id: 'inventaire', label: 'Inventaire & Stock', icon: 'Warehouse' },
+    { id: 'clients', label: 'Clients & CRM', icon: 'People' },
+    { id: 'approvisionnement', label: 'Approvisionnement', icon: 'LocalShipping' },
+    { id: 'cross-module', label: 'Inter-modules', icon: 'Hub' },
   ],
-  moduleHealth: [
-    { module: 'OMS', status: 'ok', p99Ms: 180 },
-    { module: 'Inventory', status: 'ok', p99Ms: 95 },
-    { module: 'PIM', status: 'ok', p99Ms: 210 },
-    { module: 'CRM', status: 'warning', p99Ms: 650 },
-    { module: 'Procurement', status: 'ok', p99Ms: 300 },
+  periodOptions: [
+    { value: 'today', label: "Aujourd'hui" },
+    { value: '7d', label: '7 derniers jours' },
+    { value: '30d', label: '30 derniers jours' },
+    { value: 'quarter', label: 'Ce trimestre' },
+    { value: 'year', label: 'Cette annee' },
   ],
 };

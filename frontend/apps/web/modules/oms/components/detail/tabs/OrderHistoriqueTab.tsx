@@ -29,7 +29,7 @@ export default function OrderHistoriqueTab({ order }: OrderHistoriqueTabProps) {
 
   return (
     <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
-      <Box sx={{ px: 2.5, py: 1.5, backgroundColor: '#F8FAFC', display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ px: 2.5, py: 1.5, backgroundColor: (t) => t.palette.background.paper, borderBottom: (t) => `1px solid ${t.palette.divider}`, display: 'flex', alignItems: 'center', gap: 1 }}>
         <HistoryIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
         <Typography sx={{ fontWeight: 700, fontSize: 13, color: 'text.secondary' }}>
           Journal d&apos;audit — {history.length} événement{history.length > 1 ? 's' : ''}
@@ -37,7 +37,7 @@ export default function OrderHistoriqueTab({ order }: OrderHistoriqueTabProps) {
       </Box>
       <Box>
         {sorted.map((entry: any, idx: number) => (
-          <Box key={idx} sx={{ px: 2.5, py: 1.75, borderBottom: idx < sorted.length - 1 ? '1px solid' : 'none', borderColor: 'divider', '&:hover': { backgroundColor: '#FAFBFC' } }}>
+          <Box key={idx} sx={{ px: 2.5, py: 1.75, borderBottom: idx < sorted.length - 1 ? '1px solid' : 'none', borderColor: 'divider', '&:hover': { backgroundColor: (t) => t.palette.background.paper } }}>
             {/* Timestamp + actor */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
               <Typography sx={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'text.secondary' }}>
@@ -46,7 +46,7 @@ export default function OrderHistoriqueTab({ order }: OrderHistoriqueTabProps) {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                 <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{entry.by}</Typography>
                 {entry.role !== 'system' && (
-                  <Chip label={entry.role} size="small" sx={{ height: 18, fontSize: 10, fontWeight: 600, backgroundColor: '#E3F2FD', color: '#0D47A1' }} />
+                  <Chip label={entry.role} size="small" sx={{ height: 18, fontSize: 10, fontWeight: 600, backgroundColor: 'rgba(88,166,255,0.15)', color: 'primary.main', border: '1px solid #58a6ff' }} />
                 )}
               </Box>
             </Box>

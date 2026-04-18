@@ -1,32 +1,42 @@
-// Catalogue / OpenSearch Adapter — MOCK (static data)
-// TODO: Replace with real API call when Catalogue module is merged
+// Catalogue Adapter — LIVE data from catalogue.mock (shared require cache).
+// Health + indexing stats come straight from catalogueEntries so rapport
+// reflects the current Catalogue state.
 
-const env = require('../../../config/env');
+const catalogueEntries = () => require('../../../mocks/catalogue.mock').catalogueEntries;
 
 async function getCatalogueOverview(/* period */) {
-  // if (!env.useMock) { return await fetch(...) }
+  const entries = catalogueEntries();
+
+  const totalDocs = entries.length;
+  const indexed   = entries.filter((e) => e.openSearchIndexed).length;
+  const indexedAt = entries
+    .map((e) => e.openSearchIndexedAt)
+    .filter(Boolean)
+    .sort()
+    .pop() || null;
+
+  // Latency is an ops metric — keep a stable mocked value; everything else is live.
+  const latencyMs = 42;
+  const indexRate = totalDocs > 0 ? Math.round((indexed / totalDocs) * 1000) / 10 : 0;
+
+  const openSearchHealth = {
+    status:       indexed === totalDocs && totalDocs > 0 ? 'online' : 'degraded',
+    docsIndexed:  indexed,
+    totalDocs,
+    indexRate,
+    latencyMs,
+    score:        Math.round(indexRate),
+    lastReindex:  indexedAt,
+  };
+
+  // Lacunes (unmatched search queries) — none derivable from mock state yet.
+  const lacunesOpenSearch = [];
+  const totalLacunes = 0;
 
   return {
-    openSearchHealth: {
-      status:        'online',
-      docsIndexed:   487,
-      totalDocs:     524,
-      indexRate:      92.9,
-      latencyMs:     42,
-      score:         94,
-      lastReindex:   '2025-03-25T03:00:00.000Z',
-    },
-
-    lacunesOpenSearch: [
-      { query: 'casque gamer',           count: 34, hasProduct: false },
-      { query: 'montre connectée',       count: 28, hasProduct: false },
-      { query: 'sac à dos étanche',      count: 22, hasProduct: true  },
-      { query: 'clavier arabe',          count: 19, hasProduct: false },
-      { query: 'protection écran iphone', count: 17, hasProduct: true  },
-      { query: 'chaussures running 44',  count: 15, hasProduct: true  },
-      { query: 'tablette dessin',        count: 12, hasProduct: false },
-    ],
-    totalLacunes: 23,
+    openSearchHealth,
+    lacunesOpenSearch,
+    totalLacunes,
   };
 }
 

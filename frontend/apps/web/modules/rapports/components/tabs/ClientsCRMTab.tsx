@@ -51,22 +51,22 @@ interface ClientsCRMTabProps { period: string; }
 
 // High-Contrast Semantic Palette — each segment has a unique, meaningful color
 const SEGMENT_COLORS: Record<string, string> = {
-  VIP:              '#F59E0B', // Amber-500  — gold/priority
-  'Fidèle':         '#10B981', // Emerald-500 — healthy/active
-  'Fidèle (30j)':   '#10B981', // alias for API variants
-  'À risque':       '#F97316', // Orange-500 — caution
-  Nouveau:          '#3B82F6', // Blue-500   — growth
-  'Liste noire':    '#334155', // Slate-700  — restricted/inactive
-  'Inactif (>60j)': '#94A3B8', // Slate-400  — neutral inactive
+  VIP:              '#d29922', // Amber-500  — gold/priority
+  'Fidèle':         '#2ea043', // Emerald-500 — healthy/active
+  'Fidèle (30j)':   '#2ea043', // alias for API variants
+  'À risque':       '#fd8c73', // Orange-500 — caution
+  Nouveau:          '#58a6ff', // Blue-500   — growth
+  'Liste noire':    '#8b949e', // Slate-700  — restricted/inactive
+  'Inactif (>60j)': '#8b949e', // Slate-400  — neutral inactive
 };
 
 // Diverging Categorical Palette for Canal d'acquisition
 const CHANNEL_COLORS = [
-  '#14B8A6', // Teal-500
-  '#6366F1', // Indigo-500
+  '#39c5cf', // Teal-500
+  '#a371f7', // Indigo-500
   '#F43F5E', // Rose-500
-  '#F59E0B', // Amber-500
-  '#8B5CF6', // Violet-500
+  '#d29922', // Amber-500
+  '#bc8cff', // Violet-500
 ];
 
 /* ------------------------------------------------------------------ */
@@ -103,7 +103,7 @@ function ChannelExternalLabel({ cx, cy, midAngle, outerRadius, percent, name }: 
     <text
       x={x}
       y={y}
-      fill="#374151"
+      fill="#8b949e"
       textAnchor={x > (cx as number) ? 'start' : 'end'}
       dominantBaseline="central"
       style={{ fontSize: 11, fontWeight: 500 }}
@@ -167,8 +167,8 @@ function WilayaTable({ rows }: { rows: { name: string; count: number }[] }) {
                     <TableCell sx={{ fontSize: 11, py: 0.5 }}>
                       <Box display="flex" alignItems="center" gap={0.75}>
                         {/* Slate-200 track with Blue fill */}
-                        <Box sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: '#E2E8F0', position: 'relative', overflow: 'hidden' }}>
-                          <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(pct, 100)}%`, bgcolor: '#3B82F6', borderRadius: 3 }} />
+                        <Box sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: 'action.hover', position: 'relative', overflow: 'hidden' }}>
+                          <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(pct, 100)}%`, bgcolor: 'primary.main', borderRadius: 3 }} />
                         </Box>
                         <Typography variant="caption" sx={{ minWidth: 34, textAlign: 'right', fontSize: 10 }}>
                           {pct.toFixed(1)}%
@@ -220,7 +220,7 @@ export default function ClientsCRMTab({ period }: ClientsCRMTabProps) {
     // pb={6} = 48px bottom padding — prevents watermark overlap on Wilaya table & Acquisition donut
     <Box pb={6}>
       {/* Source */}
-      <Typography variant="caption" sx={{ color: '#ea580c', fontWeight: 500, display: 'block', mb: 2 }}>
+      <Typography variant="caption" sx={{ color: '#fd8c73', fontWeight: 500, display: 'block', mb: 2 }}>
         Source: Module CRM · Synchronisé avec OMS
       </Typography>
 
@@ -403,9 +403,9 @@ export default function ClientsCRMTab({ period }: ClientsCRMTabProps) {
 
             <Grid container spacing={1.5} sx={{ mb: 2 }}>
               {[
-                { label: 'Ouverts',      value: d.supportPerformance.openTickets,     color: '#f59e0b' },
-                { label: 'Résolus (30j)', value: d.supportPerformance.resolvedTickets, color: '#22c55e' },
-                { label: 'Escaladés',    value: d.supportPerformance.escalatedTickets, color: '#ef4444' },
+                { label: 'Ouverts',      value: d.supportPerformance.openTickets,     color: 'warning.main' },
+                { label: 'Résolus (30j)', value: d.supportPerformance.resolvedTickets, color: 'success.main' },
+                { label: 'Escaladés',    value: d.supportPerformance.escalatedTickets, color: 'error.main' },
               ].map((card) => (
                 <Grid item xs={4} key={card.label}>
                   <Box sx={{ p: 1.5, bgcolor: `${card.color}10`, borderRadius: 1.5, textAlign: 'center' }}>
@@ -477,7 +477,7 @@ export default function ClientsCRMTab({ period }: ClientsCRMTabProps) {
                   outerRadius={82}
                   paddingAngle={3}
                   label={ChannelExternalLabel}
-                  labelLine={{ stroke: '#9CA3AF', strokeWidth: 1 }}
+                  labelLine={{ stroke: '#8b949e', strokeWidth: 1 }}
                 >
                   {d.channelDistribution?.map((_: any, idx: number) => (
                     <Cell key={idx} fill={CHANNEL_COLORS[idx % CHANNEL_COLORS.length]} />
@@ -498,12 +498,12 @@ export default function ClientsCRMTab({ period }: ClientsCRMTabProps) {
         <Grid item xs={12} md={4}>
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-              <Typography variant="h6" fontWeight={600} sx={{ fontSize: 15, color: '#EF4444' }}>
+              <Typography variant="h6" fontWeight={600} sx={{ fontSize: 15, color: 'error.main' }}>
                 Inactifs &gt; 90j — Opportunité relance
               </Typography>
             </Box>
 
-            <Typography variant="caption" sx={{ color: '#EF4444', display: 'block', mb: 1.5, fontWeight: 500 }}>
+            <Typography variant="caption" sx={{ color: 'error.main', display: 'block', mb: 1.5, fontWeight: 500 }}>
               {d.inactiveClients?.length ?? 0} clients · Revenu potentiel:{' '}
               {fmtDZD(d.inactiveClients?.reduce((s: number, c: any) => s + (c.totalSpentTTC || 0), 0) ?? 0)}
             </Typography>

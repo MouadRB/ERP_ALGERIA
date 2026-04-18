@@ -18,7 +18,7 @@ export default function OrderCommandeTab({ order }: OrderCommandeTabProps) {
       <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ backgroundColor: '#F8FAFC', '& th': { fontWeight: 700, fontSize: 11, letterSpacing: '0.06em', color: 'text.secondary', textTransform: 'uppercase', py: 1.5 } }}>
+            <TableRow sx={{ backgroundColor: (t) => t.palette.background.paper, '& th': { fontWeight: 700, fontSize: 11, letterSpacing: '0.06em', color: 'text.secondary', textTransform: 'uppercase', py: 1.5, borderBottom: (t) => `1px solid ${t.palette.divider}` } }}>
               <TableCell>SKU</TableCell>
               <TableCell>NOM PRODUIT</TableCell>
               <TableCell align="center">QTÉ</TableCell>

@@ -23,6 +23,10 @@ export const useCreateOrder = () => {
       fetchBFF('/bff/oms', { method: 'POST', body: payload }),
     onSuccess: () => {
       invalidateOMSQueries(queryClient);
+      // SYNC-12: New order creates soft reservation in Inventory
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      // SYNC-12: New order updates customer order count in CRM
+      queryClient.invalidateQueries({ queryKey: ['crm'] });
     },
   });
 };

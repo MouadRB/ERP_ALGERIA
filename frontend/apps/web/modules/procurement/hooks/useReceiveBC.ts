@@ -22,6 +22,8 @@ export const useReceiveBC = () => {
       queryClient.invalidateQueries({ queryKey: ['procurement', 'bcs'] });
       queryClient.invalidateQueries({ queryKey: ['procurement', 'bc', id] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      // SYNC-12: Receiving stock affects Rapports inventory metrics
+      queryClient.invalidateQueries({ queryKey: ['rapports'] });
     },
   });
 };

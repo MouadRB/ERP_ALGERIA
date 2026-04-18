@@ -14,6 +14,8 @@ export const usePublishProduct = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['catalogue'] });
+      // SYNC-12: Publication status gates order creation — OMS product search must refresh
+      queryClient.invalidateQueries({ queryKey: ['oms'] });
     },
   });
 };

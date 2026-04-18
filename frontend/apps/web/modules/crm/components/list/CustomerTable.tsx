@@ -44,7 +44,7 @@ export default function CustomerTable({
               {COLUMNS.map((col) => (
                 <TableCell
                   key={col.label}
-                  sx={{ fontWeight: 700, fontSize: 11, color: 'text.secondary', width: col.width, bgcolor: 'grey.50' }}
+                  sx={{ fontWeight: 700, fontSize: 11, color: 'text.secondary', width: col.width, bgcolor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider' }}
                 >
                   {col.label}
                 </TableCell>

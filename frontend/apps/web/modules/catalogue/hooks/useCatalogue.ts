@@ -1,33 +1,26 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { fetchBFF } from '@/lib/fetchBFF';
+import { fetchBFF, type ParamValue } from '@/lib/fetchBFF';
 import type { ApiResponse } from '@ferza/shared';
-
-interface CatalogueEntry {
-  id: string;
-  productId: string;
-  sku: string;
-  nameFr: string;
-  nameAr: string;
-  priceTTC: number;
-  status: 'draft' | 'published' | 'scheduled' | 'unpublished';
-  publishedAt: string | null;
-  channels: string[];
-  openSearchIndexed: boolean;
-}
+import type { CatalogueEntry, CatalogueStockStatus, CatalogueStatus } from '../catalogue.types';
 
 interface UseCatalogueParams {
   page?: number;
   pageSize?: number;
   search?: string;
-  status?: string;
+  status?: CatalogueStatus | '';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  category?: string;
+  stockStatus?: CatalogueStockStatus | '';
+  channel?: string;
+  minPrice?: string | number;
+  maxPrice?: string | number;
 }
 
-export const useCatalogue = (params: UseCatalogueParams = {}) => {
-  return useQuery({
+export const useCatalogue = (params: UseCatalogueParams = {}) =>
+  useQuery({
     queryKey: ['catalogue', 'list', params],
-    queryFn: () =>
-      fetchBFF<ApiResponse<CatalogueEntry[]>>('/bff/catalogue', { params }),
+    queryFn: () => fetchBFF<ApiResponse<CatalogueEntry[]>>('/bff/catalogue', { params: params as Record<string, ParamValue> }),
   });
-};

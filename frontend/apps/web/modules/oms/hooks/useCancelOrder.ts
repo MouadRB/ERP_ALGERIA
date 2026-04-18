@@ -26,6 +26,8 @@ export const useCancelOrder = () => {
 
     onSuccess: (_data, { id }) => {
       invalidateOMSQueries(queryClient, id);
+      // SYNC-12: Cancellation releases reservation in Inventory
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };

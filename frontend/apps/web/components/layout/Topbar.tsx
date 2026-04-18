@@ -14,6 +14,10 @@ import {
 import SearchRounded from "@mui/icons-material/SearchRounded";
 import NotificationsNoneRounded from "@mui/icons-material/NotificationsNoneRounded";
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
+import DarkModeRounded from "@mui/icons-material/DarkModeRounded";
+import LightModeRounded from "@mui/icons-material/LightModeRounded";
+import Tooltip from "@mui/material/Tooltip";
+import { useColorMode } from "@/providers/ThemeRegistry";
 
 type UserInfo = {
   name: string;
@@ -21,6 +25,7 @@ type UserInfo = {
 };
 
 export default function Topbar() {
+  const { mode, toggleMode } = useColorMode();
   const [user, setUser] = useState<UserInfo>({
     name: "SuperAdmin",
     roleLabel: "Administrateur"
@@ -51,8 +56,9 @@ export default function Topbar() {
   return (
     <Box
       sx={{
-        bgcolor: "#FFFFFF",
-        borderBottom: "1px solid #E6EDF5",
+        bgcolor: "background.paper",
+        borderBottom: "1px solid",
+        borderColor: "divider",
         paddingX: { xs: 2, md: 3 },
         paddingY: 1.5,
         display: "flex",
@@ -61,8 +67,8 @@ export default function Topbar() {
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Avatar sx={{ bgcolor: "#1A4E8A", width: 34, height: 34 }}>F</Avatar>
-        <Typography variant="subtitle1" fontWeight={700} color="#1A4E8A">
+        <Avatar sx={{ bgcolor: "primary.main", width: 34, height: 34 }}>F</Avatar>
+        <Typography variant="subtitle1" fontWeight={700} color="primary.main">
           FERZA
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -76,7 +82,7 @@ export default function Topbar() {
         elevation={0}
         sx={{
           borderRadius: 6,
-          backgroundColor: "#F3F6FB",
+          bgcolor: "action.hover",
           paddingX: 1,
           display: { xs: "none", md: "flex" },
           alignItems: "center",
@@ -90,7 +96,7 @@ export default function Topbar() {
             disableUnderline: true,
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRounded sx={{ color: "#90A4BF" }} />
+                <SearchRounded sx={{ color: "text.secondary" }} />
               </InputAdornment>
             )
           }}
@@ -98,23 +104,33 @@ export default function Topbar() {
         />
       </Paper>
 
+      <Tooltip title={mode === "light" ? "Mode sombre" : "Mode clair"}>
+        <IconButton onClick={toggleMode} aria-label="toggle color mode">
+          {mode === "light" ? (
+            <DarkModeRounded sx={{ color: "text.secondary" }} />
+          ) : (
+            <LightModeRounded sx={{ color: 'warning.main' }} />
+          )}
+        </IconButton>
+      </Tooltip>
+
       <IconButton>
         <Badge color="error" variant="dot" overlap="circular">
-          <NotificationsNoneRounded sx={{ color: "#6B7A90" }} />
+          <NotificationsNoneRounded sx={{ color: "text.secondary" }} />
         </Badge>
       </IconButton>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Avatar sx={{ bgcolor: "#1A4E8A", width: 36, height: 36 }}>{initials}</Avatar>
+        <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36 }}>{initials}</Avatar>
         <Box>
-          <Typography variant="body2" fontWeight={600} color="#1B2B3D">
+          <Typography variant="body2" fontWeight={600} color="text.primary">
             {user.name}
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {user.roleLabel}
           </Typography>
         </Box>
-        <KeyboardArrowDownRounded sx={{ color: "#90A4BF" }} />
+        <KeyboardArrowDownRounded sx={{ color: "text.secondary" }} />
       </Box>
     </Box>
   );

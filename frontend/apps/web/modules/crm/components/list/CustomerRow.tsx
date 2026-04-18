@@ -68,8 +68,8 @@ export default function CustomerRow({ customer, onView, onOpenTicket, onBlacklis
 
   const wilaya    = WILAYAS.find((w) => w.code === customer.wilayaCode);
   const segment   = customer.segment;
-  const segColor  = SEGMENT_COLOR[segment] ?? '#757575';
-  const segBg     = SEGMENT_BG[segment]    ?? '#F5F5F5';
+  const segColor  = SEGMENT_COLOR[segment] ?? '#8b949e';
+  const segBg     = SEGMENT_BG[segment]    ?? '#161b22';
   const segIcon   = SEGMENT_ICON[segment]  ?? '';
   const tauxRetour = customer.tauxRetour ?? 0;
   const fraudScore = customer.fraudScore ?? 0;
@@ -81,7 +81,7 @@ export default function CustomerRow({ customer, onView, onOpenTicket, onBlacklis
       sx={{
         cursor: 'pointer',
         bgcolor: customer.blacklisted ? '#FFF5F5' : undefined,
-        '&:hover': { bgcolor: customer.blacklisted ? '#FFEBEE' : undefined },
+        '&:hover': { bgcolor: customer.blacklisted ? 'rgba(248,81,73,0.12)' : undefined },
       }}
     >
       {/* CLIENT */}

@@ -72,15 +72,15 @@ export default function OrderPaiementTab({ order }: OrderPaiementTabProps) {
             <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 0.5 }}>Reconnaissance revenu</Typography>
             {isRevenueRecognized ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <CheckCircleOutlineIcon sx={{ fontSize: 16, color: '#2E7D32' }} />
-                <Typography sx={{ fontSize: 13, color: '#2E7D32', fontWeight: 600 }}>
+                <CheckCircleOutlineIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                <Typography sx={{ fontSize: 13, color: 'success.main', fontWeight: 600 }}>
                   Reconnu le {fmtDate(p.revenueRecognizedAt)}
                 </Typography>
               </Box>
             ) : (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, px: 1.5, py: 1, borderRadius: 2, backgroundColor: '#FFF8E1' }}>
-                <HourglassEmptyIcon sx={{ fontSize: 14, color: '#F9A825' }} />
-                <Typography sx={{ fontSize: 12, color: '#5D4037' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, px: 1.5, py: 1, borderRadius: 2, backgroundColor: 'rgba(210,153,34,0.12)', border: '1px solid #d29922' }}>
+                <HourglassEmptyIcon sx={{ fontSize: 14, color: 'warning.main' }} />
+                <Typography sx={{ fontSize: 12, color: 'warning.main' }}>
                   En attente de livraison — revenu non reconnu
                 </Typography>
               </Box>

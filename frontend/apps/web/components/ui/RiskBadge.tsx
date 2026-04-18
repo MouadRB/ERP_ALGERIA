@@ -9,6 +9,7 @@ const RISK_COLORS: Record<RiskLevel, ChipProps["color"]> = {
   LOW: "success",
   MEDIUM: "warning",
   HIGH: "error",
+  CRITICAL: "error",
 };
 
 type RiskBadgeProps = {

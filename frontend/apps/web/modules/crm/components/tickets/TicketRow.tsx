@@ -88,7 +88,7 @@ export default function TicketRow({ ticket }: Props) {
   };
 
   return (
-    <TableRow hover sx={{ bgcolor: ticket.escalated ? '#FFF8E1' : undefined }}>
+    <TableRow hover sx={{ bgcolor: ticket.escalated ? 'rgba(210,153,34,0.15)' : undefined }}>
       {/* #TICKET */}
       <TableCell>
         <Box display="flex" alignItems="center" gap={0.5}>

@@ -117,10 +117,12 @@ function computeByOperator(orders) {
 }
 
 function computeByCarrier(orders) {
-  const ordersWithCarrier = orders.filter((o) => o.carrier);
+  // Donut represents the share of ACTIVE shipments per carrier so Σ slices === totalEnvoisActifs (100%).
+  const ACTIVE_STATES = ['HandedToCarrier', 'OutForDelivery'];
+  const activeShipments = orders.filter((o) => o.carrier && ACTIVE_STATES.includes(o.status));
   const donut = CARRIERS.map((name) => ({
     name,
-    value: ordersWithCarrier.filter((o) => o.carrier === name).length,
+    value: activeShipments.filter((o) => o.carrier === name).length,
     color: CARRIER_COLORS[name],
   })).filter((d) => d.value > 0);
 
@@ -135,10 +137,8 @@ function computeByCarrier(orders) {
     };
   });
 
-  const totalEnvoisActifs = ordersWithCarrier.filter((o) => ['HandedToCarrier', 'OutForDelivery'].includes(o.status)).length;
-
   return {
-    totalEnvoisActifs,
+    totalEnvoisActifs: activeShipments.length,
     donut,
     tauxLivraison,
   };

@@ -34,9 +34,27 @@ export default function TopClientsTable({ data, loading, vipCount, onShowVIP }: 
             return (
               <TableRow key={c.id}>
                 <TableCell sx={{ fontWeight: 700, color: i < 3 ? 'warning.main' : undefined }}>{i + 1}</TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={600}>{c.nameFr}</Typography>
-                  <Chip label={c.segment} size="small" sx={{ bgcolor: SEGMENT_BG[seg] ?? '#F5F5F5', color: SEGMENT_COLOR[seg] ?? '#757575', fontSize: 9, height: 16 }} />
+                <TableCell sx={{ maxWidth: 180 }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    title={c.nameFr}
+                  >
+                    {c.nameFr}
+                  </Typography>
+                  <Chip
+                    label={c.segment}
+                    size="small"
+                    sx={{
+                      bgcolor: SEGMENT_BG[seg] ?? '#161b22',
+                      color: SEGMENT_COLOR[seg] ?? '#8b949e',
+                      fontSize: 9,
+                      height: 16,
+                      maxWidth: '100%',
+                      '& .MuiChip-label': { px: 0.75 },
+                    }}
+                  />
                 </TableCell>
                 <TableCell><Typography variant="caption">{wilaya?.name ?? c.wilayaCode}</Typography></TableCell>
                 <TableCell><Typography variant="body2" fontFamily="monospace" fontWeight={600}>{formatDZD(c.totalSpentTTC)}</Typography></TableCell>

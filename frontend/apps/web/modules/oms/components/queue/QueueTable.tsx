@@ -78,9 +78,10 @@ export default function QueueTable({
                 sx={{
                   pl:              1.5,
                   pr:              0,
-                  backgroundColor: '#F8FAFC',
+                  bgcolor:         'action.hover',
                   borderBottom:    '1px solid',
                   borderColor:     'divider',
+                  color:           'text.secondary',
                 }}
               >
                 <Checkbox
@@ -98,13 +99,13 @@ export default function QueueTable({
                   align={col.align}
                   sx={{
                     width:           col.width,
-                    backgroundColor: '#F8FAFC',
+                    bgcolor:         'action.hover',
                     borderBottom:    '1px solid',
                     borderColor:     'divider',
                     py:              1,
                     fontSize:        11,
                     fontWeight:      700,
-                    color:           'text.disabled',
+                    color:           'text.secondary',
                     letterSpacing:   '.06em',
                     whiteSpace:      'nowrap',
                   }}

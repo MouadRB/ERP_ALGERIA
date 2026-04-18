@@ -1,60 +1,46 @@
 "use client";
 
 import { Box, Button, Divider, Paper, Stack, Typography } from "@mui/material";
+import { alpha, useTheme, type Theme } from "@mui/material/styles";
+import { useParams, useRouter } from "next/navigation";
 import DescriptionOutlined from "@mui/icons-material/DescriptionOutlined";
+import type { ProcurementOrderVM, ProcurementVM } from "@/modules/dashboard/types";
 
-const purchaseOrders = [
-  {
-    id: "BC #0892",
-    supplier: "Supplier Express DZ",
-    status: "Approbation",
-    statusColor: "#F59E0B",
-    statusBg: "#FEF3C7",
-    delay: "2 jours"
-  },
-  {
-    id: "BC #0891",
-    supplier: "TechDistrib Alger",
-    status: "Envoye",
-    statusColor: "#3B82F6",
-    statusBg: "#DBEAFE",
-    delay: "Aujourd'hui"
-  },
-  {
-    id: "BC #0890",
-    supplier: "Mode & Style SARL",
-    status: "Recu",
-    statusColor: "#16A34A",
-    statusBg: "#DCFCE7",
-    delay: "Hier"
+type Props = {
+  data: ProcurementVM | null;
+};
+
+const toneColor = (theme: Theme, tone: ProcurementOrderVM['status']['tone']): string => {
+  switch (tone) {
+    case 'warning':
+      return theme.palette.warning.main;
+    case 'success':
+      return theme.palette.success.main;
+    case 'info':
+    default:
+      return theme.palette.info?.main ?? theme.palette.primary.main;
   }
-];
+};
 
-const receptions = [
-  {
-    id: "BR #445",
-    details: "24 articles - Inventaire non mis a jour",
-    status: "Mettre a jour",
-    statusColor: "#FFFFFF",
-    statusBg: "#1A4E8A"
-  },
-  {
-    id: "BR #444",
-    details: "12 articles - En cours de verification",
-    status: "En cours",
-    statusColor: "#2563EB",
-    statusBg: "#DBEAFE"
-  }
-];
+export default function ProcurementCard({ data }: Props) {
+  const theme = useTheme();
+  const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string | undefined) ?? 'fr';
 
-export default function ProcurementCard() {
+  if (!data) return null;
+  const { purchaseOrders, receptions } = data;
+
+  const goToBC = (bcId: string) => router.push(`/${locale}/procurement/${bcId}`);
+
   return (
     <Paper
       elevation={0}
       sx={{
         borderRadius: 2.5,
-        border: "1px solid #E6EDF5",
-        backgroundColor: "#FFFFFF",
+        border: "1px solid",
+        borderColor: "divider",
+        backgroundColor: "background.paper",
         p: 2.5
       }}
     >
@@ -66,35 +52,45 @@ export default function ProcurementCard() {
         BONS DE COMMANDE EN ATTENTE
       </Typography>
       <Stack spacing={2} mt={1.5}>
-        {purchaseOrders.map((order) => (
-          <Stack key={order.id} direction="row" spacing={2} alignItems="center">
-            <DescriptionOutlined sx={{ color: "#94A3B8" }} />
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="body2" fontWeight={700}>
-                {order.id}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {order.supplier}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                bgcolor: order.statusBg,
-                color: order.statusColor,
-                fontWeight: 700,
-                fontSize: 11,
-                px: 1.5,
-                py: 0.5,
-                borderRadius: 999
-              }}
+        {purchaseOrders.map((order) => {
+          const color = toneColor(theme, order.status.tone);
+          return (
+            <Stack
+              key={order.bcId}
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              onClick={() => goToBC(order.bcId)}
+              sx={{ cursor: "pointer", "&:hover": { opacity: 0.85 } }}
             >
-              {order.status}
-            </Box>
-            <Typography variant="caption" color="text.secondary">
-              {order.delay}
-            </Typography>
-          </Stack>
-        ))}
+              <DescriptionOutlined sx={{ color: "text.secondary" }} />
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="body2" fontWeight={700}>
+                  {order.reference}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {order.supplier}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  bgcolor: alpha(color, 0.15),
+                  color,
+                  fontWeight: 700,
+                  fontSize: 11,
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 999
+                }}
+              >
+                {order.status.label}
+              </Box>
+              <Typography variant="caption" color="text.secondary">
+                {order.delay}
+              </Typography>
+            </Stack>
+          );
+        })}
       </Stack>
 
       <Divider sx={{ my: 2 }} />
@@ -104,30 +100,28 @@ export default function ProcurementCard() {
       </Typography>
       <Stack spacing={2} mt={1.5}>
         {receptions.map((receipt) => (
-          <Stack key={receipt.id} direction="row" spacing={2} alignItems="center">
+          <Stack key={receipt.bcId} direction="row" spacing={2} alignItems="center">
             <Typography variant="body2" fontWeight={700}>
-              {receipt.id}
+              {receipt.reference}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ flexGrow: 1 }}>
               {receipt.details}
             </Typography>
-            {receipt.statusBg === "#1A4E8A" ? (
+            {receipt.isActionable ? (
               <Button
                 variant="contained"
                 size="small"
-                sx={{
-                  bgcolor: receipt.statusBg,
-                  textTransform: "none",
-                  "&:hover": { bgcolor: "#143B68" }
-                }}
+                color="primary"
+                onClick={() => goToBC(receipt.bcId)}
+                sx={{ textTransform: "none" }}
               >
                 {receipt.status}
               </Button>
             ) : (
               <Box
                 sx={{
-                  bgcolor: receipt.statusBg,
-                  color: receipt.statusColor,
+                  bgcolor: alpha(theme.palette.info?.main ?? theme.palette.primary.main, 0.15),
+                  color: theme.palette.info?.main ?? theme.palette.primary.main,
                   fontWeight: 700,
                   fontSize: 11,
                   px: 1.5,

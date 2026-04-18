@@ -10,9 +10,9 @@ import { getWilayaByCode } from '@ferza/shared';
 interface ClientRisqueCardProps { order: any; }
 
 const RISK_COLORS: Record<string, { bg: string; color: string; label: string }> = {
-  LOW:    { bg: '#E8F5E9', color: '#2E7D32', label: 'Risque faible' },
-  MEDIUM: { bg: '#FFF3E0', color: '#E65100', label: 'Risque moyen' },
-  HIGH:   { bg: '#FFEBEE', color: '#C62828', label: 'Risque élevé' },
+  LOW:    { bg: 'rgba(46,160,67,0.15)',  color: 'success.main', label: 'Risque faible' },
+  MEDIUM: { bg: 'rgba(210,153,34,0.15)', color: 'warning.main', label: 'Risque moyen' },
+  HIGH:   { bg: 'rgba(248,81,73,0.15)',  color: 'error.main', label: 'Risque élevé' },
 };
 
 function formatPhone(phone: string): string {
@@ -33,7 +33,7 @@ export default function ClientRisqueCard({ order }: ClientRisqueCardProps) {
 
   return (
     <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
-      <Box sx={{ px: 2, py: 1.5, backgroundColor: '#F8FAFC' }}>
+      <Box sx={{ px: 2, py: 1.5, backgroundColor: (t) => t.palette.background.paper, borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
         <Typography variant="overline" sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'text.secondary' }}>
           CLIENT + RISQUE
         </Typography>
@@ -70,7 +70,7 @@ export default function ClientRisqueCard({ order }: ClientRisqueCardProps) {
             </Typography>
           </Box>
           <LinearProgress variant="determinate" value={scorePercent}
-            sx={{ height: 6, borderRadius: 3, backgroundColor: '#F0F0F0',
+            sx={{ height: 6, borderRadius: 3, backgroundColor: 'action.hover',
               '& .MuiLinearProgress-bar': { borderRadius: 3, backgroundColor: risk.color } }} />
         </Box>
 
@@ -87,9 +87,9 @@ export default function ClientRisqueCard({ order }: ClientRisqueCardProps) {
 
         {/* Blacklist */}
         {c.blacklisted && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5, p: 1, borderRadius: 1.5, backgroundColor: '#FFEBEE' }}>
-            <BlockIcon sx={{ fontSize: 14, color: '#C62828' }} />
-            <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#C62828' }}>CLIENT BLACKLISTÉ</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5, p: 1, borderRadius: 1.5, backgroundColor: 'rgba(248,81,73,0.15)', border: '1px solid #f85149' }}>
+            <BlockIcon sx={{ fontSize: 14, color: 'error.main' }} />
+            <Typography sx={{ fontSize: 11, fontWeight: 700, color: 'error.main' }}>CLIENT BLACKLISTÉ</Typography>
           </Box>
         )}
       </Box>

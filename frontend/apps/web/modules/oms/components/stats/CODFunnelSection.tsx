@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Skeleton, Typography } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import type { OMSStats } from '@/modules/oms/hooks/useOMSStats';
 
 // ─── Block config ─────────────────────────────────────────────────────────────
@@ -8,16 +9,15 @@ import type { OMSStats } from '@/modules/oms/hooks/useOMSStats';
 type Block = {
   key:   keyof OMSStats['funnel'];
   label: string;
-  bg:    string;
-  color: string;
+  token: 'warning' | 'info' | 'secondary' | 'success' | 'error';
 };
 
 const BLOCKS: Block[] = [
-  { key: 'recues',     label: 'Reçues',       bg: '#FFF3E0', color: '#E65100' },
-  { key: 'confirmees', label: 'Confirmées',    bg: '#E3F2FD', color: '#0D47A1' },
-  { key: 'expediees',  label: 'Expédiées',     bg: '#F3E5F5', color: '#4A148C' },
-  { key: 'livrees',    label: 'Livrées',       bg: '#E8F5E9', color: '#1B5E20' },
-  { key: 'echecs',     label: 'Echecs',        bg: '#FCE4EC', color: '#B71C1C' },
+  { key: 'recues',     label: 'Reçues',     token: 'warning'   },
+  { key: 'confirmees', label: 'Confirmées', token: 'info'      },
+  { key: 'expediees',  label: 'Expédiées',  token: 'secondary' },
+  { key: 'livrees',    label: 'Livrées',    token: 'success'   },
+  { key: 'echecs',     label: 'Echecs',     token: 'error'     },
 ];
 
 // ─── Rate row ─────────────────────────────────────────────────────────────────
@@ -51,6 +51,7 @@ type Props = {
 };
 
 export default function CODFunnelSection({ stats, loading }: Props) {
+  const theme  = useTheme();
   const funnel = stats?.funnel;
   const base   = funnel?.recues ?? 1;
 
@@ -86,15 +87,18 @@ export default function CODFunnelSection({ stats, loading }: Props) {
         {/* 5 funnel blocks */}
         <Box display="flex" flex={1} gap={0.75} minWidth={0}>
           {BLOCKS.map((block, i) => {
-            const count   = funnel?.[block.key] ?? 0;
-            const isFirst = i === 0;
+            const count       = funnel?.[block.key] ?? 0;
+            const isFirst     = i === 0;
+            const blockColor  = theme.palette[block.token].main;
 
             return (
               <Box
                 key={block.key}
                 flex={1}
                 sx={{
-                  background:   block.bg,
+                  bgcolor:      alpha(blockColor, 0.12),
+                  border:       '1px solid',
+                  borderColor:  alpha(blockColor, 0.4),
                   borderRadius: 1.5,
                   p:            1.25,
                   minWidth:     0,
@@ -110,7 +114,7 @@ export default function CODFunnelSection({ stats, loading }: Props) {
                   <>
                     <Typography
                       fontWeight={700}
-                      sx={{ fontSize: 22, color: block.color, lineHeight: 1.1 }}
+                      sx={{ fontSize: 22, color: blockColor, lineHeight: 1.1 }}
                     >
                       {count.toLocaleString('fr-DZ')}
                     </Typography>
@@ -125,7 +129,7 @@ export default function CODFunnelSection({ stats, loading }: Props) {
                         variant="caption"
                         sx={{
                           fontSize:   10,
-                          color:      block.color,
+                          color:      blockColor,
                           fontWeight: 600,
                           display:    'block',
                           mt:         0.25,
@@ -161,10 +165,10 @@ export default function CODFunnelSection({ stats, loading }: Props) {
             ))
           ) : (
             <>
-              <RateRow label="Taux confirmation" value={stats.tauxConfirmation} color="#0D47A1" />
-              <RateRow label="Taux livraison"    value={stats.tauxLivraison}    color="#1B5E20" />
-              <RateRow label="Taux échec"        value={stats.tauxEchec}        color="#C62828" />
-              <RateRow label="Taux annulation"   value={stats.tauxAnnulation}   color="#757575" />
+              <RateRow label="Taux confirmation" value={stats.tauxConfirmation} color={theme.palette.info.main} />
+              <RateRow label="Taux livraison"    value={stats.tauxLivraison}    color={theme.palette.success.main} />
+              <RateRow label="Taux échec"        value={stats.tauxEchec}        color={theme.palette.error.main} />
+              <RateRow label="Taux annulation"   value={stats.tauxAnnulation}   color={theme.palette.text.secondary} />
             </>
           )}
         </Box>

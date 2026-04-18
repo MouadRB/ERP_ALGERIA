@@ -23,6 +23,8 @@ export const useReturnAction = () => {
       }),
     onSuccess: (_data, variables) => {
       invalidateOMSQueries(queryClient, variables.id);
+      // SYNC-12: Return actions affect quarantine/available stock in Inventory
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };

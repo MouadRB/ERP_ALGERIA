@@ -126,11 +126,10 @@ export default function CancelOrderModal({ open, orderId, onClose }: Props) {
             {/* Order mini-summary */}
             <Box
               sx={{
-                border:          '1px solid',
-                borderColor:     'error.light',
+                border:          '1px solid #f85149',
                 borderRadius:    2,
                 p:               1.75,
-                backgroundColor: '#FFF8F8',
+                backgroundColor: 'rgba(248,81,73,0.08)',
                 mb:              2.5,
               }}
             >

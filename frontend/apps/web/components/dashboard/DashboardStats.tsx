@@ -6,8 +6,14 @@ import AccessTimeRounded from "@mui/icons-material/AccessTimeRounded";
 import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import WarningAmberRounded from "@mui/icons-material/WarningAmberRounded";
 import StatCard from "./StatCard";
+import type { DashboardStatsVM } from "@/modules/dashboard/types";
 
-export default function DashboardStats() {
+type Props = {
+  data: DashboardStatsVM | null;
+};
+
+export default function DashboardStats({ data }: Props) {
+  if (!data) return null;
   return (
     <Box
       sx={{
@@ -18,31 +24,38 @@ export default function DashboardStats() {
     >
       <StatCard
         title="Commandes Aujourd'hui"
-        value="142"
+        value={data.ordersToday.value}
         icon={<ShoppingCartRounded />}
         accentColor="#1A73E8"
-        trend={{ label: "+12% vs hier", color: "#22C55E" }}
+        trend={{
+          label: data.ordersToday.trendLabel,
+          color: data.ordersToday.trendIsPositive ? 'success.main' : 'error.main',
+        }}
       />
       <StatCard
         title="En Attente Confirmation"
-        value="23"
+        value={data.awaitingConfirmation.value}
         icon={<AccessTimeRounded />}
-        accentColor="#F59E0B"
-        helper="Delai max 120 min"
+        accentColor="#d29922"
+        helper={data.awaitingConfirmation.helper}
       />
       <StatCard
         title="Taux de Livraison"
-        value="78.4%"
+        value={data.deliveryRate.valueLabel}
         icon={<CheckCircleRounded />}
-        accentColor="#16A34A"
-        progress={{ value: 78, color: "#16A34A", label: "+3.2% cette semaine" }}
+        accentColor="#2ea043"
+        progress={{
+          value: data.deliveryRate.progressValue,
+          color: 'success.main',
+          label: data.deliveryRate.trendLabel,
+        }}
       />
       <StatCard
         title="Articles en Rupture"
-        value="7"
+        value={data.outOfStockItems.value}
         icon={<WarningAmberRounded />}
-        accentColor="#EF4444"
-        trend={{ label: "3 nouveaux aujourd'hui", color: "#EF4444" }}
+        accentColor="#f85149"
+        trend={{ label: data.outOfStockItems.trendLabel, color: 'error.main' }}
       />
     </Box>
   );

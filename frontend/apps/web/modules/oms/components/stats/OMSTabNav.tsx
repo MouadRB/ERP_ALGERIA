@@ -84,7 +84,7 @@ export default function OMSTabNav({ active, onChange, queueCount }: Props) {
                   lineHeight:      1,
                   backgroundColor: active === 'file-attente'
                     ? 'rgba(255,255,255,0.25)'
-                    : '#FF8A00',
+                    : '#d29922',
                   color: active === 'file-attente' ? '#fff' : '#fff',
                 }}
               >

@@ -20,9 +20,9 @@ import { useRiskProfile } from '@/modules/crm/hooks/useRiskProfile';
 import type { RiskLevel, RiskFactor } from '@ferza/shared';
 
 const LEVEL_COLOR: Record<RiskLevel, string> = {
-  LOW:      '#2E7D32',
-  MEDIUM:   '#E65100',
-  HIGH:     '#C62828',
+  LOW:      '#2ea043',
+  MEDIUM:   '#d29922',
+  HIGH:     '#f85149',
   CRITICAL: '#7B1FA2',
 };
 

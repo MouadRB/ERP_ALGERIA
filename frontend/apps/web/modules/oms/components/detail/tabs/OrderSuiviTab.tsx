@@ -59,8 +59,8 @@ export default function OrderSuiviTab({ order }: OrderSuiviTabProps) {
               <Box key={idx} sx={{ display: 'flex', gap: 2 }}>
                 {/* Dot + line */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20 }}>
-                  <FiberManualRecordIcon sx={{ fontSize: 12, color: isFail ? '#C62828' : isLast ? 'primary.main' : '#BDBDBD', mt: 0.5 }} />
-                  {!isLast && <Box sx={{ width: 2, flex: 1, backgroundColor: '#E0E0E0', my: 0.5 }} />}
+                  <FiberManualRecordIcon sx={{ fontSize: 12, color: isFail ? '#f85149' : isLast ? 'primary.main' : '#8b949e', mt: 0.5 }} />
+                  {!isLast && <Box sx={{ width: 2, flex: 1, backgroundColor: 'divider', my: 0.5 }} />}
                 </Box>
                 {/* Content */}
                 <Box sx={{ pb: isLast ? 0 : 2, flex: 1 }}>
@@ -93,9 +93,9 @@ export default function OrderSuiviTab({ order }: OrderSuiviTabProps) {
             </Box>
           ))}
           {attempts.length >= 2 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.5, px: 1, py: 0.75, borderRadius: 1.5, backgroundColor: '#FFEBEE' }}>
-              <ErrorOutlineIcon sx={{ fontSize: 14, color: '#C62828' }} />
-              <Typography sx={{ fontSize: 11, color: '#C62828', fontWeight: 600 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.5, px: 1, py: 0.75, borderRadius: 1.5, backgroundColor: 'rgba(248,81,73,0.15)', border: '1px solid #f85149' }}>
+              <ErrorOutlineIcon sx={{ fontSize: 14, color: 'error.main' }} />
+              <Typography sx={{ fontSize: 11, color: 'error.main', fontWeight: 600 }}>
                 {attempts.length >= 3 ? 'Maximum 3 tentatives atteint — retour automatique.' : `${attempts.length}/3 tentatives échouées — risque retour élevé.`}
               </Typography>
             </Box>

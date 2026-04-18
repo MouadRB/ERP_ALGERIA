@@ -80,7 +80,7 @@ export default function TicketsSupportTab({ customer, onNewTicket }: Props) {
         <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
                 <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>ID</TableCell>
                 <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Catégorie</TableCell>
                 <TableCell sx={{ fontWeight: 700, fontSize: 11 }}>Statut</TableCell>
