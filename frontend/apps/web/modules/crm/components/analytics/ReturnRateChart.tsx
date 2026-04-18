@@ -21,8 +21,8 @@ export default function ReturnRateChart({ data, loading }: Props) {
           <XAxis dataKey="week" />
           <YAxis domain={[0, 40]} tickFormatter={(v) => `${v}%`} />
           <Tooltip formatter={(v) => [`${v}%`, 'Taux retour']} />
-          <ReferenceLine y={30} stroke="#E65100" strokeDasharray="4 2" label={{ value: 'Seuil 30%', fill: '#E65100', fontSize: 11 }} />
-          <Line type="monotone" dataKey="rate" stroke="#C62828" strokeWidth={2} dot={<Dot r={4} fill="#C62828" />} />
+          <ReferenceLine y={30} stroke="#d29922" strokeDasharray="4 2" label={{ value: 'Seuil 30%', fill: '#d29922', fontSize: 11 }} />
+          <Line type="monotone" dataKey="rate" stroke="#f85149" strokeWidth={2} dot={<Dot r={4} fill="#f85149" />} />
         </LineChart>
       </ResponsiveContainer>
       <Box display="flex" gap={1} mt={1} flexWrap="wrap">

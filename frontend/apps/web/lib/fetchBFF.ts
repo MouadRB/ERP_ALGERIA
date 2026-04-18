@@ -44,7 +44,7 @@ const buildURL = (
 
 // ─── Options ──────────────────────────────────────────────────────────────────
 
-type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
+type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 interface FetchBFFOptions<B = unknown> {
   method?: Method;

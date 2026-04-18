@@ -1,49 +1,104 @@
-// Procurement Adapter — MOCK (static data)
-// TODO: Replace with real API call when Procurement module is merged
+// Procurement Adapter — LIVE data from procurement.mock.
+// BC pipeline, supplier stats and alerts are computed from the same list the
+// Procurement module itself exposes, keeping rapport dynamic.
 
-const env = require('../../../config/env');
+const procurementOrders = () => require('../../../mocks/procurement.mock');
+
+const STATUS_PIPELINE = {
+  Draft:             'brouillon',
+  PendingApproval:   'enAttente',
+  Approved:          'approuve',
+  InTransit:         'enCours',
+  PartiallyReceived: 'enCours',
+  Received:          'recu',
+};
+
+function daysBetween(a, b) { return Math.max(0, Math.round((new Date(b) - new Date(a)) / 86400000)); }
 
 async function getProcurementOverview(/* period */) {
-  // if (!env.useMock) { return await fetch(...) }
+  const orders = procurementOrders();
+
+  // ── Pipeline counts ──
+  const pipeline = { brouillon: 0, enAttente: 0, approuve: 0, enCours: 0, recu: 0, totalValue: 0 };
+  orders.forEach((o) => {
+    const bucket = STATUS_PIPELINE[o.status];
+    if (bucket) pipeline[bucket] += 1;
+    pipeline.totalValue += o.totalTTC || 0;
+  });
+  const bcPipeline = { total: orders.length, ...pipeline };
+
+  // ── Pending approvals ──
+  const now = new Date();
+  const pendingApprovals = orders
+    .filter((o) => o.status === 'PendingApproval')
+    .map((o) => ({
+      id:          o.reference || o.id,
+      supplier:    o.supplierName,
+      value:       o.totalTTC,
+      items:       (o.items || []).reduce((s, it) => s + (it.quantityOrdered || 0), 0),
+      daysWaiting: daysBetween(o.createdAt, now),
+      priority:    daysBetween(o.createdAt, now) >= 3 ? 'haute' : 'normale',
+    }));
+
+  // ── Supplier performance (aggregated over all BCs) ──
+  const supMap = {};
+  orders.forEach((o) => {
+    if (!o.supplierName) return;
+    if (!supMap[o.supplierName]) supMap[o.supplierName] = { name: o.supplierName, bcCount: 0, onTime: 0, delays: [] };
+    const s = supMap[o.supplierName];
+    s.bcCount += 1;
+    if (o.expectedDeliveryDate && o.updatedAt && (o.status === 'Received' || o.status === 'PartiallyReceived')) {
+      const delai = daysBetween(o.createdAt, o.updatedAt);
+      s.delays.push(delai);
+      if (new Date(o.updatedAt) <= new Date(o.expectedDeliveryDate)) s.onTime += 1;
+    }
+  });
+  const supplierPerformance = Object.values(supMap).map((s) => ({
+    name:         s.name,
+    bcCount:      s.bcCount,
+    onTime:       s.onTime,
+    tauxOnTime:   s.bcCount > 0 ? Math.round((s.onTime / s.bcCount) * 1000) / 10 : 0,
+    delaiMoyen:   s.delays.length > 0 ? Math.round(s.delays.reduce((a, b) => a + b, 0) / s.delays.length) : null,
+    qualityScore: 85,
+  }));
+
+  // ── Recent receptions ──
+  const receptionRecente = orders
+    .filter((o) => o.status === 'Received' || o.status === 'PartiallyReceived')
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+    .slice(0, 5)
+    .map((o) => ({
+      bcId:       o.reference || o.id,
+      supplier:   o.supplierName,
+      receivedAt: (o.updatedAt || '').slice(0, 10),
+      items:      (o.items || []).reduce((s, it) => s + (it.quantityReceived || 0), 0),
+      conformity: (() => {
+        const ordered = (o.items || []).reduce((s, it) => s + (it.quantityOrdered || 0), 0);
+        const received = (o.items || []).reduce((s, it) => s + (it.quantityReceived || 0), 0);
+        return ordered > 0 ? Math.round((received / ordered) * 100) : 0;
+      })(),
+    }));
+
+  // ── Alerts ──
+  const alerts = [];
+  const lateBCs = orders.filter((o) =>
+    o.expectedDeliveryDate &&
+    ['Approved', 'InTransit', 'PartiallyReceived'].includes(o.status) &&
+    new Date(o.expectedDeliveryDate) < now,
+  );
+  lateBCs.forEach((o) => {
+    const days = daysBetween(o.expectedDeliveryDate, now);
+    alerts.push({ type: 'retard', message: `${o.reference || o.id} (${o.supplierName}) en retard de ${days} jours`, severity: days > 5 ? 'haute' : 'moyenne' });
+  });
+  const rejectedCount = orders.filter((o) => o.status === 'Rejected').length;
+  if (rejectedCount > 0) alerts.push({ type: 'budget', message: `${rejectedCount} BC rejete(s) - revoir les plafonds`, severity: 'moyenne' });
 
   return {
-    bcPipeline: {
-      total:       42,
-      brouillon:   8,
-      enAttente:   12,
-      approuve:    15,
-      enCours:     5,
-      recu:        2,
-      totalValue:  18500000,
-    },
-
-    pendingApprovals: [
-      { id: 'BC-2025-038', supplier: 'TechParts DZ', value: 2800000, items: 15, daysWaiting: 3, priority: 'haute' },
-      { id: 'BC-2025-039', supplier: 'ModeTex Oran', value: 1950000, items: 42, daysWaiting: 2, priority: 'normale' },
-      { id: 'BC-2025-040', supplier: 'SportGear Alger', value: 980000, items: 8, daysWaiting: 5, priority: 'haute' },
-      { id: 'BC-2025-041', supplier: 'BeautéPro', value: 650000, items: 20, daysWaiting: 1, priority: 'normale' },
-    ],
-
-    supplierPerformance: [
-      { name: 'TechParts DZ',    bcCount: 12, onTime: 10, tauxOnTime: 83.3, delaiMoyen: 8,  qualityScore: 92 },
-      { name: 'ModeTex Oran',    bcCount: 9,  onTime: 8,  tauxOnTime: 88.9, delaiMoyen: 12, qualityScore: 87 },
-      { name: 'SportGear Alger', bcCount: 7,  onTime: 5,  tauxOnTime: 71.4, delaiMoyen: 15, qualityScore: 78 },
-      { name: 'BeautéPro',       bcCount: 6,  onTime: 6,  tauxOnTime: 100,  delaiMoyen: 6,  qualityScore: 95 },
-      { name: 'MaisonPlus',      bcCount: 5,  onTime: 4,  tauxOnTime: 80.0, delaiMoyen: 10, qualityScore: 84 },
-      { name: 'AlimFresh',       bcCount: 3,  onTime: 3,  tauxOnTime: 100,  delaiMoyen: 4,  qualityScore: 98 },
-    ],
-
-    receptionRecente: [
-      { bcId: 'BC-2025-032', supplier: 'TechParts DZ', receivedAt: '2025-03-24', items: 8, conformity: 100 },
-      { bcId: 'BC-2025-030', supplier: 'ModeTex Oran', receivedAt: '2025-03-22', items: 35, conformity: 94 },
-      { bcId: 'BC-2025-028', supplier: 'AlimFresh', receivedAt: '2025-03-20', items: 12, conformity: 100 },
-    ],
-
-    alerts: [
-      { type: 'retard', message: 'BC-2025-035 (SportGear) en retard de 3 jours', severity: 'haute' },
-      { type: 'budget', message: 'Budget mensuel approvisionnement à 78%', severity: 'moyenne' },
-      { type: 'qualite', message: 'Taux de conformité SportGear < 80%', severity: 'haute' },
-    ],
+    bcPipeline,
+    pendingApprovals,
+    supplierPerformance,
+    receptionRecente,
+    alerts,
   };
 }
 

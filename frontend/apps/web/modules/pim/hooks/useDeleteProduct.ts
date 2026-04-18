@@ -14,6 +14,9 @@ export const useDeleteProduct = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pim', 'products'] });
+      // SYNC-12: Deleted PIM product affects Catalogue & Inventory enrichment
+      queryClient.invalidateQueries({ queryKey: ['catalogue'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };

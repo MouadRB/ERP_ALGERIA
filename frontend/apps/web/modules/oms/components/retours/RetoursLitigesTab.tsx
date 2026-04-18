@@ -139,7 +139,7 @@ function OrderDetailDrawer({
             </Box>
 
             {/* COD */}
-            <Box sx={{ p: 2, borderRadius: 2, backgroundColor: '#F8FAFC', border: '1px solid', borderColor: 'divider' }}>
+            <Box sx={{ p: 2, borderRadius: 2, backgroundColor: (t) => t.palette.background.default, border: '1px solid', borderColor: 'divider' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>Montant COD</Typography>
                 <Typography sx={{ fontSize: 16, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace' }}>
@@ -213,7 +213,7 @@ function SuiviDialog({
       <DialogContent>
         <Stack spacing={2}>
           {/* Carrier + tracking */}
-          <Box sx={{ p: 2, borderRadius: 2, backgroundColor: '#F8FAFC', border: '1px solid', borderColor: 'divider' }}>
+          <Box sx={{ p: 2, borderRadius: 2, backgroundColor: (t) => t.palette.background.default, border: '1px solid', borderColor: 'divider' }}>
             <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', color: 'text.disabled', mb: 0.5 }}>
               CARRIER
             </Typography>
@@ -301,28 +301,28 @@ function ContactDialog({
           </Typography>
 
           {isClient ? (
-            <Box sx={{ p: 2, borderRadius: 2, backgroundColor: '#E3F2FD', border: '1px solid #90CAF9' }}>
-              <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', color: '#0D47A1', mb: 0.5 }}>
+            <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'rgba(88,166,255,0.15)', border: '1px solid #58a6ff' }}>
+              <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', color: 'primary.main', mb: 0.5 }}>
                 CLIENT · {litige?.wilaya}
               </Typography>
-              <Typography sx={{ fontSize: 14, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, color: '#0D47A1' }}>
+              <Typography sx={{ fontSize: 14, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, color: 'primary.main' }}>
                 {litige ? fmtPhone(litige.customerPhone) : '—'}
               </Typography>
               <Button
                 size="small"
                 component="a"
                 href={`tel:${litige?.customerPhone}`}
-                sx={{ mt: 1, textTransform: 'none', fontWeight: 600, fontSize: 12, color: '#0D47A1' }}
+                sx={{ mt: 1, textTransform: 'none', fontWeight: 600, fontSize: 12, color: 'primary.main' }}
               >
                 Appeler maintenant
               </Button>
             </Box>
           ) : (
-            <Box sx={{ p: 2, borderRadius: 2, backgroundColor: '#FFF3E0', border: '1px solid #FFCC80' }}>
-              <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', color: '#E65100', mb: 0.5 }}>
+            <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'rgba(210,153,34,0.15)', border: '1px solid #d29922' }}>
+              <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', color: 'warning.main', mb: 0.5 }}>
                 CARRIER
               </Typography>
-              <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#E65100' }}>
+              <Typography sx={{ fontSize: 14, fontWeight: 600, color: 'warning.main' }}>
                 {litige?.carrier}
               </Typography>
               <Typography sx={{ fontSize: 12, color: '#BF360C', mt: 0.5, fontFamily: 'JetBrains Mono, monospace' }}>
@@ -382,8 +382,8 @@ export default function RetoursLitigesTab() {
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.25, mb: 2.5, borderRadius: 2, backgroundColor: '#FFF8E1', border: '1px solid #FFE082' }}>
-        <WarningAmberRoundedIcon sx={{ fontSize: 20, color: '#F9A825', flexShrink: 0 }} />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.25, mb: 2.5, borderRadius: 2, backgroundColor: 'rgba(210,153,34,0.12)', border: '1px solid #d29922' }}>
+        <WarningAmberRoundedIcon sx={{ fontSize: 20, color: 'warning.main', flexShrink: 0 }} />
         <Typography sx={{ fontSize: 13, color: '#5D4037', lineHeight: 1.5 }}>
           Les retours sont placés en quarantaine dans l&apos;inventaire.
           Inspection requise avant réintégration ou perte définitive.

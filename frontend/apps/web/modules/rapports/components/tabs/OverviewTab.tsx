@@ -78,7 +78,7 @@ const KPI_CONFIGS = [
   },
   {
     key: 'valorisationStock',
-    label: 'Valorisation FIFO — 3 entrepôts',
+    label: 'Valorisation FIFO',
     icon: <PublicIcon />,
     colors: KPI_ICON_COLORS.stock,
     source: 'Inventaire (FIFO)',
@@ -127,14 +127,14 @@ function KPICards({ kpis }: { kpis: any }) {
                 {delta !== undefined && delta !== null && (
                   <Box display="flex" alignItems="center" gap={0.5}>
                     {delta >= 0 ? (
-                      <TrendingUpIcon sx={{ fontSize: 16, color: '#22c55e' }} />
+                      <TrendingUpIcon sx={{ fontSize: 16, color: 'success.main' }} />
                     ) : (
-                      <TrendingDownIcon sx={{ fontSize: 16, color: '#ef4444' }} />
+                      <TrendingDownIcon sx={{ fontSize: 16, color: 'error.main' }} />
                     )}
                     <Typography
                       variant="body2"
                       fontWeight={600}
-                      sx={{ color: delta >= 0 ? '#22c55e' : '#ef4444' }}
+                      sx={{ color: delta >= 0 ? '#2ea043' : '#f85149' }}
                     >
                       {deltaLabel(delta)} vs mois précédent
                     </Typography>
@@ -149,7 +149,9 @@ function KPICards({ kpis }: { kpis: any }) {
 
               {/* Subtitle */}
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                {cfg.label}
+                {cfg.key === 'valorisationStock' && kpi.byWarehouse?.length
+                  ? `${cfg.label} — ${kpi.byWarehouse.length} entrepôt${kpi.byWarehouse.length > 1 ? 's' : ''}`
+                  : cfg.label}
               </Typography>
 
               {/* CA-specific: subtitles */}
@@ -172,16 +174,16 @@ function KPICards({ kpis }: { kpis: any }) {
                 </Typography>
               )}
 
-              {/* Progress bar (CA card only) */}
-              {cfg.showProgress && (
+              {/* Progress bar (CA card only — shown when backend provides an objective) */}
+              {cfg.showProgress && kpi.objective > 0 && (
                 <Box sx={{ mt: 1 }}>
                   <LinearProgress
                     variant="determinate"
-                    value={Math.min((kpi.value / 15_000_000) * 100, 100)}
-                    sx={{ height: 8, borderRadius: 4, bgcolor: '#e0e7ff' }}
+                    value={Math.min((kpi.value / kpi.objective) * 100, 100)}
+                    sx={{ height: 8, borderRadius: 4, bgcolor: 'rgba(163,113,247,0.15)' }}
                   />
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                    {Math.round((kpi.value / 15_000_000) * 100)}% de l&apos;objectif · Objectif: 15 000 000M DZD
+                    {Math.round((kpi.value / kpi.objective) * 100)}% de l&apos;objectif · Objectif: {fmtDZD(kpi.objective)}
                   </Typography>
                 </Box>
               )}
@@ -210,11 +212,11 @@ function KPICards({ kpis }: { kpis: any }) {
 // ---- COD Funnel (redesigned) -----------------------------------------------
 
 const FUNNEL_STEPS = [
-  { key: 'recues',      label: 'Reçues',      pctLabel: '100%',  color: '#2563eb' },
-  { key: 'confirmees',  label: 'Confirmées',   color: '#3b82f6' },
-  { key: 'expediees',   label: 'Expédiées',    color: '#f59e0b' },
-  { key: 'livrees',     label: 'Livrées',      color: '#22c55e' },
-  { key: 'echecs',      label: 'Échecs',       color: '#ef4444' },
+  { key: 'recues',      label: 'Reçues',      pctLabel: '100%',  color: 'primary.main' },
+  { key: 'confirmees',  label: 'Confirmées',   color: 'primary.main' },
+  { key: 'expediees',   label: 'Expédiées',    color: 'warning.main' },
+  { key: 'livrees',     label: 'Livrées',      color: 'success.main' },
+  { key: 'echecs',      label: 'Échecs',       color: 'error.main' },
 ];
 
 function CODFunnel({ funnel, period }: { funnel: any; period: string }) {
@@ -224,7 +226,6 @@ function CODFunnel({ funnel, period }: { funnel: any; period: string }) {
   }));
 
   const recues = values[0].value || 1;
-  const deltas = [null, '+3.2 pts', '+2.3 pts', '+2.3 pts', '-11 pts'];
 
   return (
     <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
@@ -247,7 +248,7 @@ function CODFunnel({ funnel, period }: { funnel: any; period: string }) {
                 borderRadius: 2,
                 border: '2px solid',
                 borderColor: step.color,
-                bgcolor: i === values.length - 1 ? '#fef2f2' : 'transparent',
+                bgcolor: i === values.length - 1 ? 'rgba(248,81,73,0.08)' : 'transparent',
                 minWidth: 80,
               }}
             >
@@ -269,37 +270,12 @@ function CODFunnel({ funnel, period }: { funnel: any; period: string }) {
         ))}
       </Box>
 
-      {/* Deltas */}
-      <Box display="flex" gap={0.5} mt={1} justifyContent="space-around">
-        {deltas.map((d, i) => (
-          <Typography
-            key={i}
-            variant="caption"
-            sx={{
-              flex: '1 1 0',
-              textAlign: 'center',
-              color: d?.startsWith('+') ? '#22c55e' : d?.startsWith('-') ? '#ef4444' : 'transparent',
-              fontWeight: 600,
-            }}
-          >
-            {d ?? ''}
-          </Typography>
-        ))}
-      </Box>
-
-      {/* Annulations */}
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-        Annulations: {funnel.annulations ?? 137} ({funnel.annulationsPct ?? '11%'}) · {funnel.annulationsDelta ?? '-0.8 pts'}
-      </Typography>
-
-      {/* Insight banner */}
-      <Alert
-        severity="success"
-        icon={<TrendingUpIcon />}
-        sx={{ mt: 2, borderRadius: 1.5, '& .MuiAlert-message': { fontSize: 13 } }}
-      >
-        Taux confirmation en hausse (+3.2 pts). Principaux leviers: formation opérateurs OMS + réduction temps réponse.
-      </Alert>
+      {funnel.annulations !== undefined && (
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+          Annulations: {fmtNumber(funnel.annulations)}
+          {funnel.annulationsPct !== undefined && ` (${funnel.annulationsPct}%)`}
+        </Typography>
+      )}
     </Paper>
   );
 }
@@ -307,7 +283,7 @@ function CODFunnel({ funnel, period }: { funnel: any; period: string }) {
 // ---- Top 5 Produits CA -----------------------------------------------------
 
 // Single-color blue scale: rank 1 (darkest) → rank 5 (lightest)
-const RANKING_BLUES = ['#1e3a8a', '#1d4ed8', '#3b82f6', '#60a5fa', '#93c5fd'];
+const RANKING_BLUES = ['#58a6ff', '#58a6ff', '#58a6ff', '#58a6ff', '#58a6ff'];
 
 function TopProductsCA({ topProductsCA }: { topProductsCA: any[] }) {
   const data = (topProductsCA ?? []).map((p: any) => ({
@@ -354,9 +330,9 @@ function TopProductsCA({ topProductsCA }: { topProductsCA: any[] }) {
 // ---- Alertes Actives -------------------------------------------------------
 
 const SEVERITY_ICON: Record<string, React.ReactNode> = {
-  haute:   <ErrorIcon sx={{ color: '#ef4444', fontSize: 20 }} />,
-  moyenne: <WarningIcon sx={{ color: '#f59e0b', fontSize: 20 }} />,
-  basse:   <InfoIcon sx={{ color: '#3b82f6', fontSize: 20 }} />,
+  haute:   <ErrorIcon sx={{ color: 'error.main', fontSize: 20 }} />,
+  moyenne: <WarningIcon sx={{ color: 'warning.main', fontSize: 20 }} />,
+  basse:   <InfoIcon sx={{ color: 'primary.main', fontSize: 20 }} />,
 };
 
 function AlertesActives({ alerts }: { alerts: any[] }) {
@@ -490,10 +466,6 @@ function CAByWilaya({ caByWilaya }: { caByWilaya: any[] }) {
         </ComposedChart>
       </ResponsiveContainer>
 
-      {/* Insight */}
-      <Alert severity="info" sx={{ mt: 2, borderRadius: 1.5, '& .MuiAlert-message': { fontSize: 12 } }}>
-        Alger: 38% du CA total mais taux livraison 78%. Wilayas sud (Ouargla, Tamanrasset): CA faible mais taux livraison 54-61%. Opportunité: partenariat Procolis renforcé pour zones difficiles.
-      </Alert>
     </Paper>
   );
 }
@@ -511,7 +483,7 @@ const STATUS_BAR_COLOR = (status: string) => {
 
 const MODULE_BADGE_COLOR = (module: string) => {
   const key = module.includes('Appro') ? 'Approvisionnement' : module;
-  return MODULE_COLORS[key] ?? { bg: '#e0e7ff', text: '#4338ca' };
+  return MODULE_COLORS[key] ?? { bg: 'rgba(163,113,247,0.15)', text: '#a371f7' };
 };
 
 function SanteMVP({ health, globalScore }: { health: any[]; globalScore: number }) {

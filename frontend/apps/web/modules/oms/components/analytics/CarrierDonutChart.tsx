@@ -139,7 +139,7 @@ export default function CarrierDonutChart({ data }: CarrierDonutChartProps) {
                   flex: 1,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: '#F0F0F0',
+                  backgroundColor: 'action.hover',
                   '& .MuiLinearProgress-bar': {
                     borderRadius: 4,
                     backgroundColor: c.color,
@@ -153,7 +153,7 @@ export default function CarrierDonutChart({ data }: CarrierDonutChartProps) {
                   fontFamily: 'JetBrains Mono, monospace',
                   minWidth: 30,
                   textAlign: 'right',
-                  color: c.taux >= 70 ? '#2E7D32' : '#C62828',
+                  color: c.taux >= 70 ? '#2ea043' : '#f85149',
                 }}
               >
                 {c.taux}%

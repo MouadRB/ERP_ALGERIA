@@ -3,7 +3,9 @@ const dashboardService = require('../services/dashboard.service');
 
 const router = express.Router();
 
-// Dashboard is accessible to all authenticated roles
+// Auth is enforced by the global `app.use('/bff', auth)` in index.js — this
+// router is mounted under /bff, so every handler here runs post-auth with
+// req.user populated. All FERZA roles are allowed to read the dashboard.
 router.get('/', async (req, res, next) => {
   try {
     const data = await dashboardService.getDashboard();

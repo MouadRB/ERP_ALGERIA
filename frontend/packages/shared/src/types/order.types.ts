@@ -19,6 +19,9 @@ export interface Order {
   customerNameAr:       string;
   wilayaCode:           string;
   address:              string;
+  commune?:             string;
+  source?:              string;
+  trackingNumber?:      string;
   items:                OrderItem[];
   totalHT:              number;
   totalTVA:             number;

@@ -25,7 +25,7 @@ interface Props {
 const SEGMENTS = [
   { key: 'VIP',          label: 'VIP',          icon: <StarIcon />,        color: '#FFD700', countKey: 'vipCount' as const },
   { key: 'Fidèle',       label: 'Fidèle',       icon: <FavoriteIcon />,    color: '#4CAF50', countKey: 'fideleCount' as const },
-  { key: 'Nouveau',      label: 'Nouveau',      icon: <FiberNewIcon />,    color: '#2196F3', countKey: 'nouveauCount' as const },
+  { key: 'Nouveau',      label: 'Nouveau',      icon: <FiberNewIcon />,    color: 'primary.main', countKey: 'nouveauCount' as const },
   { key: 'Inactif',      label: 'Inactif',      icon: <PauseCircleIcon />, color: '#9E9E9E', countKey: 'inactifCount' as const },
   { key: 'A risque',     label: 'À risque',     icon: <WarningIcon />,     color: '#FF9800', countKey: 'aRisqueCount' as const },
   { key: 'Liste noire',  label: 'Liste noire',  icon: <BlockIcon />,       color: '#F44336', countKey: 'blacklistedCount' as const },

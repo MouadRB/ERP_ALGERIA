@@ -26,18 +26,18 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const BORDER_COLOR: Record<string, string> = {
-  DeliveredCOD_Confirmed: '#2E7D32',
-  COD_Remitted:           '#2E7D32',
+  DeliveredCOD_Confirmed: '#2ea043',
+  COD_Remitted:           '#2ea043',
   Cancelled:              '#9E9E9E',
-  AwaitingValidation:     '#E65100',
-  Confirmed:              '#1565C0',
-  AwaitingPickup:         '#1565C0',
-  HandedToCarrier:        '#6A1B9A',
-  OutForDelivery:         '#6A1B9A',
-  DeliveryFailed_Absent:  '#C62828',
-  ReturnInTransit_Refused:'#C62828',
-  LostInTransit:          '#C62828',
-  Returned:               '#C62828',
+  AwaitingValidation:     '#d29922',
+  Confirmed:              '#58a6ff',
+  AwaitingPickup:         '#58a6ff',
+  HandedToCarrier:        '#bc8cff',
+  OutForDelivery:         '#bc8cff',
+  DeliveryFailed_Absent:  '#f85149',
+  ReturnInTransit_Refused:'#f85149',
+  LostInTransit:          '#f85149',
+  Returned:               '#f85149',
   Draft:                  '#9E9E9E',
 };
 
@@ -101,7 +101,7 @@ export default function HistoriqueCommandesTab({ customer }: Props) {
                 borderLeft: `4px solid ${borderColor}`,
                 p: 1.5,
                 cursor: 'pointer',
-                '&:hover': { bgcolor: 'grey.50' },
+                '&:hover': { bgcolor: 'action.hover' },
               }}
               onClick={() => router.push(`/${locale}/oms/${order.id}`)}
             >
@@ -159,7 +159,7 @@ export default function HistoriqueCommandesTab({ customer }: Props) {
 
       {/* Footer summary */}
       {orders.length > 0 && (
-        <Box sx={{ p: 1.5, bgcolor: 'grey.50', borderRadius: 1, display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+        <Box sx={{ p: 1.5, bgcolor: 'action.hover', borderRadius: 1, display: 'flex', gap: 3, flexWrap: 'wrap', border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="caption" fontWeight={600}>
             {delivered.length} livrées
           </Typography>

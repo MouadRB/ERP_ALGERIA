@@ -4,6 +4,7 @@ import {
   Alert, Box, Chip, IconButton, Skeleton, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import LockOpenIcon    from '@mui/icons-material/LockOpen';
 import OpenInNewIcon   from '@mui/icons-material/OpenInNew';
 import type { Customer } from '@ferza/shared';
@@ -36,9 +37,9 @@ export default function BlacklistTable({ customers, loading }: Props) {
       <TableContainer sx={{ border: '1px solid', borderColor: 'error.light', borderRadius: 1 }}>
         <Table size="small" stickyHeader>
           <TableHead>
-            <TableRow sx={{ bgcolor: '#FFF5F5' }}>
+            <TableRow sx={{ bgcolor: (t) => alpha(t.palette.error.main, 0.08) }}>
               {COLUMNS.map((col) => (
-                <TableCell key={col} sx={{ fontWeight: 700, fontSize: 11, color: 'error.main', bgcolor: '#FFF5F5' }}>
+                <TableCell key={col} sx={{ fontWeight: 700, fontSize: 11, color: 'error.main', bgcolor: (t) => alpha(t.palette.error.main, 0.08) }}>
                   {col}
                 </TableCell>
               ))}
@@ -62,7 +63,7 @@ export default function BlacklistTable({ customers, loading }: Props) {
               : customers.map((c) => {
                 const wilaya = WILAYAS.find((w) => w.code === c.wilayaCode);
                 return (
-                  <TableRow key={c.id} sx={{ bgcolor: '#FFF5F5' }}>
+                  <TableRow key={c.id} sx={{ bgcolor: (t) => alpha(t.palette.error.main, 0.06) }}>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>{c.nameFr}</Typography>
                       <Typography variant="caption" color="text.secondary">{c.nameAr}</Typography>

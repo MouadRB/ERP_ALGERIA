@@ -92,7 +92,6 @@ export default function CRMPage() {
   const handleExport = React.useCallback(() => {
     const doExport = async () => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let rows: Record<string, unknown>[] = [];
         let filename = '';
         const date = new Date().toISOString().slice(0, 10);

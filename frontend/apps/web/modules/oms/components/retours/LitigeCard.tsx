@@ -11,17 +11,17 @@ import type { LitigeItem, LitigeSeverity } from '@/modules/oms/hooks/useOMSRetou
 /* ── Severity → border & icon color ───────────────────── */
 
 const SEVERITY_THEME: Record<LitigeSeverity, { borderColor: string; iconColor: string; bgColor: string }> = {
-  high:   { borderColor: '#C62828', iconColor: '#C62828', bgColor: '#FFF5F5' },
-  medium: { borderColor: '#FF8A00', iconColor: '#E65100', bgColor: '#FFFBF5' },
-  low:    { borderColor: '#F9A825', iconColor: '#F9A825', bgColor: '#FFFDF5' },
+  high:   { borderColor: '#f85149', iconColor: '#f85149', bgColor: '#FFF5F5' },
+  medium: { borderColor: '#d29922', iconColor: '#d29922', bgColor: 'rgba(210,153,34,0.08)' },
+  low:    { borderColor: '#d29922', iconColor: '#d29922', bgColor: 'rgba(210,153,34,0.08)' },
 };
 
 /* ── Litige status → chip style ────────────────────────── */
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  attente_carrier: { bg: '#FFF3E0', color: '#E65100' },
-  finance_notifie: { bg: '#E3F2FD', color: '#0D47A1' },
-  resolu:          { bg: '#E8F5E9', color: '#2E7D32' },
+  attente_carrier: { bg: 'rgba(210,153,34,0.15)', color: 'warning.main' },
+  finance_notifie: { bg: 'rgba(88,166,255,0.15)', color: 'primary.main' },
+  resolu:          { bg: 'rgba(46,160,67,0.15)', color: 'success.main' },
 };
 
 /** Format phone for display */
@@ -204,7 +204,7 @@ export default function LitigeCard({ litige, onViewOrder, onContact }: LitigeCar
               borderRadius: 0,
               py: 1.25,
               '&:hover': {
-                backgroundColor: '#F5F5F5',
+                backgroundColor: (t) => t.palette.background.paper,
                 color: 'text.primary',
               },
             }}

@@ -17,24 +17,24 @@ import type { CarrierData, CarrierShipment } from '@/modules/oms/hooks/useOMSSui
 /* ── Carrier color map (from design-system.md) ─────────── */
 
 const CARRIER_THEME: Record<string, { color: string; bg: string }> = {
-  Yalidine: { color: '#0D47A1', bg: '#E3F2FD' },
-  Maystro:  { color: '#E65100', bg: '#FFF3E0' },
-  Ecotrack: { color: '#1B5E20', bg: '#E8F5E9' },
-  Procolis: { color: '#4A148C', bg: '#F3E5F5' },
+  Yalidine: { color: 'primary.main', bg: 'rgba(88,166,255,0.15)'  },
+  Maystro:  { color: 'warning.main', bg: 'rgba(210,153,34,0.15)' },
+  Ecotrack: { color: 'success.main', bg: 'rgba(46,160,67,0.15)'  },
+  Procolis: { color: '#bc8cff', bg: 'rgba(188,140,255,0.15)' },
 };
 
 /* ── Shipment status display map ───────────────────────── */
 
 const SHIPMENT_STATUS_MAP: Record<string, { label: string; color: string; icon: string }> = {
-  AwaitingPickup:          { label: 'En attente ramassage', color: '#7B1FA2', icon: '🟣' },
-  HandedToCarrier:         { label: 'Pris en charge',       color: '#0D47A1', icon: '🔵' },
-  OutForDelivery:          { label: 'En livraison',         color: '#2E7D32', icon: '🟢' },
-  DeliveredCOD_Confirmed:  { label: 'Livré',                color: '#2E7D32', icon: '✅' },
-  COD_Remitted:            { label: 'COD remis',            color: '#1B5E20', icon: '✅' },
-  DeliveryFailed_Absent:   { label: 'Échec — absent',       color: '#C62828', icon: '🔴' },
-  ReturnInTransit_Refused: { label: 'Retour en transit',    color: '#E65100', icon: '🟠' },
-  LostInTransit:           { label: 'Perdu en transit',     color: '#C62828', icon: '⚫' },
-  Returned:                { label: 'Retourné au dépôt',    color: '#795548', icon: '📦' },
+  AwaitingPickup:          { label: 'En attente ramassage', color: '#bc8cff', icon: '🟣' },
+  HandedToCarrier:         { label: 'Pris en charge',       color: 'primary.main', icon: '🔵' },
+  OutForDelivery:          { label: 'En livraison',         color: 'success.main', icon: '🟢' },
+  DeliveredCOD_Confirmed:  { label: 'Livré',                color: 'success.main', icon: '✅' },
+  COD_Remitted:            { label: 'COD remis',            color: 'success.main', icon: '✅' },
+  DeliveryFailed_Absent:   { label: 'Échec — absent',       color: 'error.main', icon: '🔴' },
+  ReturnInTransit_Refused: { label: 'Retour en transit',    color: 'warning.main', icon: '🟠' },
+  LostInTransit:           { label: 'Perdu en transit',     color: 'error.main', icon: '⚫' },
+  Returned:                { label: 'Retourné au dépôt',    color: 'text.secondary', icon: '📦' },
 };
 
 /* ── Props ─────────────────────────────────────────────── */
@@ -101,7 +101,7 @@ export default function CarrierCard({
                     width: 6,
                     height: 6,
                     borderRadius: '50%',
-                    backgroundColor: '#2E7D32',
+                    backgroundColor: '#2ea043',
                   }}
                 />
                 <span>Connecté</span>
@@ -116,8 +116,9 @@ export default function CarrierCard({
               </Box>
             }
             sx={{
-              backgroundColor: '#E8F5E9',
-              color: '#2E7D32',
+              backgroundColor: 'rgba(46,160,67,0.15)',
+              color: 'success.main',
+              border: '1px solid #2ea043',
               fontWeight: 600,
               fontSize: 12,
               height: 26,
@@ -128,8 +129,9 @@ export default function CarrierCard({
             size="small"
             label="Déconnecté"
             sx={{
-              backgroundColor: '#F5F5F5',
-              color: '#9E9E9E',
+              backgroundColor: 'rgba(139,148,158,0.15)',
+              color: 'text.secondary',
+              border: '1px solid', borderColor: 'divider',
               fontWeight: 600,
               fontSize: 12,
               height: 26,
@@ -140,13 +142,13 @@ export default function CarrierCard({
 
       {/* ── Stat blocks ────────────────────────────────── */}
       <Box sx={{ display: 'flex', gap: 1.5, px: 2.5, pb: 2 }}>
-        <StatBlock value={data.enTransit} label="en transit" bgColor="#E3F2FD" textColor="#0D47A1" />
-        <StatBlock value={data.livres}    label="livrés"     bgColor="#E8F5E9" textColor="#2E7D32" />
+        <StatBlock value={data.enTransit} label="en transit" bgColor="rgba(88,166,255,0.15)" textColor="#58a6ff" />
+        <StatBlock value={data.livres}    label="livrés"     bgColor="rgba(46,160,67,0.15)" textColor="#2ea043" />
         <StatBlock
           value={data.echecs}
           label={data.connected ? 'échecs' : 'partiel'}
-          bgColor={data.connected ? '#FFEBEE' : '#FFF3E0'}
-          textColor={data.connected ? '#C62828' : '#E65100'}
+          bgColor={data.connected ? 'rgba(248,81,73,0.15)' : 'rgba(210,153,34,0.15)'}
+          textColor={data.connected ? '#f85149' : '#d29922'}
         />
       </Box>
 
@@ -171,7 +173,7 @@ export default function CarrierCard({
             {data.recentShipments.map((s: CarrierShipment) => {
               const statusInfo = SHIPMENT_STATUS_MAP[s.status] ?? {
                 label: s.status,
-                color: '#757575',
+                color: 'text.secondary',
                 icon: '⚪',
               };
               return (
@@ -248,7 +250,8 @@ export default function CarrierCard({
               gap: 1,
               p: 1.5,
               borderRadius: 2,
-              backgroundColor: '#F5F5F5',
+              backgroundColor: (t) => t.palette.background.default,
+              border: '1px solid', borderColor: 'divider',
             }}
           >
             <Typography sx={{ fontSize: 14, lineHeight: 1 }}>💡</Typography>
@@ -302,7 +305,7 @@ export default function CarrierCard({
                     fontSize: 13,
                     fontWeight: 700,
                     fontFamily: 'JetBrains Mono, monospace',
-                    color: data.tauxLivraison >= 0.7 ? '#2E7D32' : '#C62828',
+                    color: data.tauxLivraison >= 0.7 ? '#2ea043' : '#f85149',
                   }}
                 >
                   {Math.round(data.tauxLivraison * 100)}%
@@ -314,10 +317,10 @@ export default function CarrierCard({
                 sx={{
                   height: 6,
                   borderRadius: 3,
-                  backgroundColor: '#E0E0E0',
+                  backgroundColor: 'action.hover',
                   '& .MuiLinearProgress-bar': {
                     borderRadius: 3,
-                    backgroundColor: data.tauxLivraison >= 0.7 ? theme.color : '#C62828',
+                    backgroundColor: data.tauxLivraison >= 0.7 ? theme.color : '#f85149',
                   },
                 }}
               />
@@ -364,11 +367,12 @@ export default function CarrierCard({
                 px: 1.5,
                 py: 0.75,
                 borderRadius: 1.5,
-                backgroundColor: '#FFF8E1',
+                backgroundColor: 'rgba(210,153,34,0.15)',
+                border: '1px solid #d29922',
               }}
             >
-              <WarningAmberRoundedIcon sx={{ fontSize: 16, color: '#F9A825' }} />
-              <Typography sx={{ fontSize: 11, color: '#E65100', fontWeight: 600 }}>
+              <WarningAmberRoundedIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+              <Typography sx={{ fontSize: 11, color: 'warning.main', fontWeight: 600 }}>
                 Taux échec élevé ce mois ({Math.round(echecRate * 100)}%)
               </Typography>
             </Box>
@@ -402,6 +406,7 @@ function StatBlock({
         py: 1.5,
         borderRadius: 2,
         backgroundColor: bgColor,
+        border: `1px solid ${textColor}`,
       }}
     >
       <Typography

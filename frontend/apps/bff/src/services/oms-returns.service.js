@@ -1,6 +1,7 @@
 const mockOrders = require('../mocks/oms-orders.mock');
 const mockReturns = require('../mocks/oms-returns.mock');
 const mockDisputes = require('../mocks/oms-disputes.mock');
+const { enrichOrder } = require('./cross-module.helpers');
 
 function orderRef(order) {
   return order?.reference ? `#${order.reference}` : '#N/A';
@@ -13,10 +14,11 @@ function defaultWilaya(order) {
 function buildRetours() {
   return mockReturns
     .map((ret) => {
-      const order = mockOrders.find((o) => o.id === ret.orderId);
-      if (!order) return null;
-      if (!['ReturnInTransit_Refused', 'Returned'].includes(order.status)) return null;
-      if (order.returnOutcome) return null;
+      const rawOrder = mockOrders.find((o) => o.id === ret.orderId);
+      if (!rawOrder) return null;
+      if (!['ReturnInTransit_Refused', 'Returned'].includes(rawOrder.status)) return null;
+      if (rawOrder.returnOutcome) return null;
+      const order = enrichOrder(rawOrder);
     const carrier = order?.carrier ?? order?.tracking?.carrier ?? '—';
     const trackingNumber =
       order?.trackingNumber ??

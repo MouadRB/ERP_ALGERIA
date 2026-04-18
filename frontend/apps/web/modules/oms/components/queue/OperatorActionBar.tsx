@@ -105,13 +105,12 @@ export default function OperatorActionBar({
       <Collapse in={count > 0} timeout={180}>
         <Paper
           elevation={0}
-          variant="outlined"
           sx={{
             mt: 1.5,
             borderRadius: 2,
+            border: '1px solid',
             borderColor: 'primary.main',
-            borderWidth: 1.5,
-            backgroundColor: 'primary.50',
+            backgroundColor: 'background.paper',
             px: 2,
             py: 1.25,
           }}
@@ -131,7 +130,7 @@ export default function OperatorActionBar({
                 color="primary"
                 sx={{ fontWeight: 700, height: 20, fontSize: 11 }}
               />
-              <Typography variant="body2" fontWeight={500} sx={{ fontSize: 13 }}>
+              <Typography variant="body2" fontWeight={500} sx={{ fontSize: 13, color: 'text.primary' }}>
                 {isSingle
                   ? `${singleName} sélectionnée`
                   : `${count} commandes sélectionnées`}
@@ -210,9 +209,10 @@ export default function OperatorActionBar({
                   padding: '8px 10px',
                   fontSize: 12,
                   borderRadius: 6,
-                  border: '1px solid var(--color-border-secondary, rgba(0,0,0,0.23))',
+                  border: '1px solid var(--color-border-secondary, rgba(140,140,140,0.5))',
                   fontFamily: 'inherit',
-                  backgroundColor: 'white',
+                  backgroundColor: 'transparent',
+                  color: 'inherit',
                   outline: 'none',
                 }}
               />

@@ -91,15 +91,14 @@ export default function RetoursTable({ retours, isLoading, onViewOrder, onSuivre
         <TableHead>
           <TableRow
             sx={{
-              backgroundColor: '#F8FAFC',
+              backgroundColor: (t) => t.palette.background.paper,
               '& th': {
                 fontWeight: 700,
                 fontSize: 11,
                 letterSpacing: '0.06em',
                 color: 'text.secondary',
                 textTransform: 'uppercase',
-                borderBottom: '1px solid',
-                borderColor: 'divider',
+                borderBottom: (t) => `1px solid ${t.palette.divider}`,
                 py: 1.5,
                 whiteSpace: 'nowrap',
               },

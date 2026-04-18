@@ -173,10 +173,9 @@ export default function OMSQueueTab() {
       <Collapse in={cancelTarget !== null} timeout={160}>
         <Box
           sx={{
-            backgroundColor: '#FFF8F8',
-            border:           '1px solid',
-            borderTop:        'none',
-            borderColor:      'error.light',
+            backgroundColor: 'rgba(248,81,73,0.08)',
+            border:          '1px solid #f85149',
+            borderTop:       'none',
             px:               2,
             py:               1.5,
             display:          'flex',

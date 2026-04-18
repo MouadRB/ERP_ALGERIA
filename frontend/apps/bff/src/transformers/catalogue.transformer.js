@@ -1,4 +1,3 @@
-
 const transformCatalogueEntry = (raw) => ({
   id: raw.entryId ?? raw.id,
   productId: raw.productId,

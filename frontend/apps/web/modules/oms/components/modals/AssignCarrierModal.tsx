@@ -31,26 +31,26 @@ const CARRIERS: {
 }[] = [
   {
     key:     'Yalidine',
-    color:   '#0D47A1',
-    bgLight: '#E3F2FD',
+    color: 'primary.main',
+    bgLight: 'rgba(88,166,255,0.15)',
     desc:    'Livraison J+1 · 48 wilayas',
   },
   {
     key:     'Maystro',
-    color:   '#E65100',
-    bgLight: '#FFF3E0',
+    color: 'warning.main',
+    bgLight: 'rgba(210,153,34,0.15)',
     desc:    'Livraison J+2 · 48 wilayas',
   },
   {
     key:     'Ecotrack',
-    color:   '#1B5E20',
-    bgLight: '#E8F5E9',
+    color: 'success.main',
+    bgLight: 'rgba(46,160,67,0.15)',
     desc:    'Suivi en temps réel · 48 wilayas',
   },
   {
     key:     'Procolis',
-    color:   '#4A148C',
-    bgLight: '#F3E5F5',
+    color:   '#bc8cff',
+    bgLight: 'rgba(188,140,255,0.15)',
     desc:    'COD difficile · Zones rurales',
   },
 ];

@@ -29,7 +29,7 @@ export default function TicketTable({ tickets, loading, openCount, escalCount }:
           <TableHead>
             <TableRow>
               {COLUMNS.map((col) => (
-                <TableCell key={col} sx={{ fontWeight: 700, fontSize: 11, color: 'text.secondary', bgcolor: 'grey.50' }}>
+                <TableCell key={col} sx={{ fontWeight: 700, fontSize: 11, color: 'text.secondary', bgcolor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider' }}>
                   {col}
                 </TableCell>
               ))}

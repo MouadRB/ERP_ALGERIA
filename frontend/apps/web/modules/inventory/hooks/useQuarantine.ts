@@ -21,6 +21,8 @@ export const useQuarantine = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      // SYNC-12: Quarantine affects available stock in Rapports
+      queryClient.invalidateQueries({ queryKey: ['rapports'] });
     },
   });
 };

@@ -2,6 +2,7 @@
 // Computes all OMS KPIs dynamically from the real orders array.
 
 const env = require('../../../config/env');
+const { resolveProduct } = require('../../cross-module.helpers');
 
 const mockOrders = () => require('../../../mocks/oms-orders.mock');
 
@@ -149,12 +150,14 @@ async function getOmsOverview(period = '30d', comparison = false) {
   const statusDistribution = Object.entries(statusMap).map(([status, count]) => ({ status, count }));
 
   // ── Operator performance ──
+  // Same logic as oms-analytics.service.computeByOperator — OMS is the single source of truth.
+  // Orders without an assigned operator are excluded so rate is meaningful.
   const opMap = {};
   orders.forEach((o) => {
-    const op = o.confirmedBy || 'Non assigné';
-    if (!opMap[op]) opMap[op] = { name: op, total: 0, confirmed: 0 };
-    opMap[op].total++;
-    if (CONFIRMED_STATES.includes(o.status)) opMap[op].confirmed++;
+    if (!o.confirmedBy) return;
+    if (!opMap[o.confirmedBy]) opMap[o.confirmedBy] = { name: o.confirmedBy, total: 0, confirmed: 0 };
+    opMap[o.confirmedBy].total++;
+    if (CONFIRMED_STATES.includes(o.status)) opMap[o.confirmedBy].confirmed++;
   });
   const operatorPerformance = Object.values(opMap).map((op) => ({
     name: op.name,
@@ -181,24 +184,48 @@ async function getOmsOverview(period = '30d', comparison = false) {
     if (FAIL_STATES.includes(o.status)) cm.failed++;
     if (o.wilayaCode) cm.wilayas.add(o.wilayaCode);
   });
+  // Distribution denominator: orders-with-carrier in the period. Ensures Σ parts === 100%.
+  const ordersWithCarrierTotal = orders.filter((o) => o.carrier && CARRIERS.includes(o.carrier)).length;
   const carrierPerformance = CARRIERS.map((name) => {
     const cm = carrierMap[name];
+    const concluded = cm.delivered + cm.failed;
     return {
       name,
       total:          cm.total,
       delivered:      cm.delivered,
       failed:         cm.failed,
-      tauxLivraison:  pct(cm.delivered, cm.delivered + cm.failed),
+      partPct:        ordersWithCarrierTotal > 0 ? (cm.total / ordersWithCarrierTotal) * 100 : 0,
+      // null when nothing has concluded yet — UI renders "—" instead of a misleading 0%.
+      tauxLivraison:  concluded > 0 ? pct(cm.delivered, concluded) : null,
       delaiMoyen:     cm.delais.length > 0 ? Math.round(cm.delais.reduce((a, b) => a + b, 0) / cm.delais.length) : null,
       wilayas:        cm.wilayas.size,
     };
   });
+  const carrierDistribution = {
+    totalOrdersWithCarrier: ordersWithCarrierTotal,
+    parts: carrierPerformance.filter((c) => c.total > 0).map((c) => ({ name: c.name, value: c.total, partPct: c.partPct })),
+  };
 
   // ── Failure reasons ──
+  // Cancellations keep their explicit cancelReason.
+  // Delivery failures / returns don't carry a free-text reason — infer from status,
+  // so counts reflect what actually happened rather than a single hardcoded label.
+  const FAIL_STATUS_LABELS = {
+    DeliveryFailed_Absent:   'Échec livraison – client absent',
+    ReturnInTransit_Refused: 'Refus livraison – retour en transit',
+    LostInTransit:           'Colis perdu en transit',
+    Returned:                'Commande retournée au dépôt',
+  };
   const reasonMap = {};
-  orders.filter((o) => CANCELLED_STATES.includes(o.status) || FAIL_STATES.includes(o.status)).forEach((o) => {
-    const r = o.cancelReason || (FAIL_STATES.includes(o.status) ? 'Échec livraison – absent' : 'Autre');
-    reasonMap[r] = (reasonMap[r] || 0) + 1;
+  orders.forEach((o) => {
+    let label = null;
+    if (CANCELLED_STATES.includes(o.status)) {
+      label = o.cancelReason || 'Annulation — motif non renseigné';
+    } else if (FAIL_STATES.includes(o.status)) {
+      label = FAIL_STATUS_LABELS[o.status] || o.status;
+    }
+    if (!label) return;
+    reasonMap[label] = (reasonMap[label] || 0) + 1;
   });
   const REASON_COLORS = ['#C62828', '#FF8A00', '#F9A825', '#0D47A1', '#4A148C', '#2E7D32', '#757575'];
   const failureReasons = Object.entries(reasonMap)
@@ -231,7 +258,10 @@ async function getOmsOverview(period = '30d', comparison = false) {
     if (!DELIVERED_STATES.includes(o.status)) return;
     (o.items || []).forEach((item) => {
       const key = item.sku || item.productId;
-      if (!prodMap[key]) prodMap[key] = { sku: key, nameFr: item.nameFr, ca: 0, qty: 0 };
+      if (!prodMap[key]) {
+        const p = resolveProduct(item.sku, item.productId);
+        prodMap[key] = { sku: key, productId: item.productId, nameFr: p?.nameFr || item.nameFr || key, ca: 0, qty: 0 };
+      }
       prodMap[key].ca  += (item.unitPriceTTC || 0) * (item.quantity || 0);
       prodMap[key].qty += item.quantity || 0;
     });
@@ -304,6 +334,7 @@ async function getOmsOverview(period = '30d', comparison = false) {
     operatorPerformance,
     teamAvgTauxConfirmation,
     carrierPerformance,
+    carrierDistribution,
     failureReasons,
     montantDistribution,
     sourceDistribution,

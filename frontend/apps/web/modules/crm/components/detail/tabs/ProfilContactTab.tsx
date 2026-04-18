@@ -158,7 +158,7 @@ export default function ProfilContactTab({ customer }: Props) {
         <Box display="flex" alignItems="center" gap={1} mb={1}>
           <Chip
             label={customer.segment}
-            sx={{ bgcolor: SEGMENT_BG[customer.segment] ?? '#F5F5F5', color: SEGMENT_COLOR[customer.segment] ?? '#757575', fontWeight: 700 }}
+            sx={{ bgcolor: SEGMENT_BG[customer.segment] ?? '#161b22', color: SEGMENT_COLOR[customer.segment] ?? '#8b949e', fontWeight: 700 }}
           />
         </Box>
         <Typography variant="caption" color="text.secondary">

@@ -14,7 +14,8 @@ export default function AppShell({ children }: AppShellProps) {
       display="flex"
       flexDirection="column"
       minHeight="100vh"
-      bgcolor="#F4F7FB"
+      bgcolor="background.default"
+      color="text.primary"
     >
       <Topbar />
       <Box display="flex" flexGrow={1} minHeight={0}>

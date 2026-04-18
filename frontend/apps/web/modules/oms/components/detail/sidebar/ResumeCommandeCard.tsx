@@ -29,7 +29,7 @@ export default function ResumeCommandeCard({ order }: ResumeCommandeCardProps) {
   return (
     <>
       <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
-        <Box sx={{ px: 2, py: 1.5, backgroundColor: '#F8FAFC' }}>
+        <Box sx={{ px: 2, py: 1.5, backgroundColor: (t) => t.palette.background.paper, borderBottom: (t) => `1px solid ${t.palette.divider}` }}>
           <Typography variant="overline" sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'text.secondary' }}>
             RÉSUMÉ COMMANDE
           </Typography>

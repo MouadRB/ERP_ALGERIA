@@ -232,11 +232,11 @@ export default function ToutesCommandesTab({
             py: 1,
             mb: 1.5,
             borderRadius: 2,
-            backgroundColor: '#E3F2FD',
-            border: '1px solid #90CAF9',
+            backgroundColor: 'rgba(88,166,255,0.15)',
+            border: '1px solid #58a6ff',
           }}
         >
-          <Typography sx={{ fontSize: 13, color: '#0D47A1', fontWeight: 600 }}>
+          <Typography sx={{ fontSize: 13, color: 'primary.main', fontWeight: 600 }}>
             Filtre par carrier : {carrierFilter}
           </Typography>
           <Button
@@ -245,7 +245,7 @@ export default function ToutesCommandesTab({
               setFilters((prev) => ({ ...prev, carrier: '' }));
               onClearCarrierFilter?.();
             }}
-            sx={{ fontSize: 12, textTransform: 'none', color: '#0D47A1' }}
+            sx={{ fontSize: 12, textTransform: 'none', color: 'primary.main' }}
           >
             Effacer le filtre
           </Button>

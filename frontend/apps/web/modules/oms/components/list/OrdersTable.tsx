@@ -77,10 +77,11 @@ export default function OrdersTable({
               <TableCell
                 padding="checkbox"
                 sx={{
-                  pl:              1.5,
-                  backgroundColor: '#F8FAFC',
-                  borderBottom:    '1px solid',
-                  borderColor:     'divider',
+                  pl:           1.5,
+                  bgcolor:      'action.hover',
+                  borderBottom: '1px solid',
+                  borderColor:  'divider',
+                  color:        'text.secondary',
                 }}
               >
                 <Checkbox
@@ -97,16 +98,16 @@ export default function OrdersTable({
                   key={col.id}
                   align={col.align}
                   sx={{
-                    width:           col.width,
-                    backgroundColor: '#F8FAFC',
-                    borderBottom:    '1px solid',
-                    borderColor:     'divider',
-                    py:              1,
-                    fontSize:        11,
-                    fontWeight:      700,
-                    color:           'text.disabled',
-                    letterSpacing:   '.06em',
-                    whiteSpace:      'nowrap',
+                    width:         col.width,
+                    bgcolor:       'action.hover',
+                    borderBottom:  '1px solid',
+                    borderColor:   'divider',
+                    py:            1,
+                    fontSize:      11,
+                    fontWeight:    700,
+                    color:         'text.secondary',
+                    letterSpacing: '.06em',
+                    whiteSpace:    'nowrap',
                   }}
                 >
                   {col.label}

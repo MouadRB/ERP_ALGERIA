@@ -1,87 +1,114 @@
 "use client";
 
+import { alpha, useTheme, type Theme } from "@mui/material/styles";
 import { Box, Paper, Stack, Typography } from "@mui/material";
+import type { CodFunnelRowVM, CodFunnelVM } from "@/modules/dashboard/types";
 
-const rows = [
-  { label: "Passees", value: 142, percent: 100, color: "#1D4ED8" },
-  { label: "Confirmees", value: 98, percent: 69, color: "#2563EB" },
-  { label: "Expediees", value: 67, percent: 47, color: "#7C3AED" },
-  { label: "Livrees", value: 41, percent: 29, color: "#16A34A" },
-  { label: "Remises", value: 28, percent: 20, color: "#0EA5A4" },
-  { label: "Retournees", value: 12, percent: 8, color: "#EF4444" }
-];
+type Props = {
+  data: CodFunnelVM | null;
+};
 
-export default function CodFunnelCard() {
+const resolveToneColor = (theme: Theme, tone: CodFunnelRowVM['tone']): string => {
+  switch (tone) {
+    case 'primary':
+      return theme.palette.primary.main;
+    case 'info':
+      return theme.palette.info.main;
+    case 'secondary':
+      return theme.palette.secondary?.main ?? '#805ad5';
+    case 'success':
+      return theme.palette.success.main;
+    case 'teal':
+      return '#319795';
+    case 'error':
+      return theme.palette.error.main;
+    default:
+      return theme.palette.primary.main;
+  }
+};
+
+export default function CodFunnelCard({ data }: Props) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  if (!data) return null;
+  const { total, rows } = data;
+
   return (
     <Paper
       elevation={0}
       sx={{
         borderRadius: 2.5,
-        border: "1px solid #E6EDF5",
-        backgroundColor: "#FFFFFF",
+        border: "1px solid",
+        borderColor: "divider",
+        backgroundColor: "background.paper",
         p: 2.5
       }}
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-        <Typography variant="subtitle1" fontWeight={700}>
+        <Typography variant="subtitle1" fontWeight={700} color="text.primary">
           Entonnoir COD - Aujourd&apos;hui
         </Typography>
         <Box
           sx={{
-            bgcolor: "#E8F1FF",
-            color: "#2563EB",
+            bgcolor: isDark ? alpha(theme.palette.primary.main, 0.15) : "#E8F1FF",
+            color: isDark ? theme.palette.primary.light : "#58a6ff",
+            border: isDark ? `1px solid ${theme.palette.primary.main}` : "none",
             fontWeight: 700,
             fontSize: 12,
             px: 1.5,
             py: 0.5,
-            borderRadius: 999
+            borderRadius: '2rem'
           }}
         >
-          142 commandes
+          {total} commandes
         </Box>
       </Stack>
 
       <Stack spacing={1.6}>
-        {rows.map((row) => (
-          <Box key={row.label}>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Typography variant="caption" sx={{ minWidth: 90, color: "#64748B" }}>
-                {row.label}
-              </Typography>
-              <Box
-                sx={{
-                  flexGrow: 1,
-                  height: 14,
-                  backgroundColor: "#EEF2F7",
-                  borderRadius: 999,
-                  overflow: "hidden",
-                  position: "relative"
-                }}
-              >
+        {rows.map((row) => {
+          const color = resolveToneColor(theme, row.tone);
+          return (
+            <Box key={row.label}>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Typography variant="caption" sx={{ minWidth: 90, color: "text.secondary", fontWeight: 500 }}>
+                  {row.label}
+                </Typography>
                 <Box
                   sx={{
-                    width: `${row.percent}%`,
-                    height: "100%",
-                    backgroundColor: row.color,
+                    flexGrow: 1,
+                    height: 14,
+                    backgroundColor: isDark ? "rgba(139, 148, 158, 0.1)" : "action.hover",
                     borderRadius: 999,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "flex-end",
-                    color: "#FFFFFF",
-                    fontSize: 10,
-                    fontWeight: 700,
-                    paddingRight: 1
+                    overflow: "hidden",
+                    position: "relative"
                   }}
                 >
-                  {row.value}
+                  <Box
+                    sx={{
+                      width: `${row.percent}%`,
+                      height: "100%",
+                      backgroundColor: color,
+                      borderRadius: 999,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                      color: "#ffffff",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      paddingRight: 1
+                    }}
+                  >
+                    {row.value}
+                  </Box>
                 </Box>
-              </Box>
-              <Typography variant="caption" color="text.secondary">
-                {row.percent}%
-              </Typography>
-            </Stack>
-          </Box>
-        ))}
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                  {row.percent}%
+                </Typography>
+              </Stack>
+            </Box>
+          );
+        })}
       </Stack>
     </Paper>
   );

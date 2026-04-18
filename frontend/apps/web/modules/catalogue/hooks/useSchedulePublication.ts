@@ -7,16 +7,17 @@ import type { ApiResponse } from '@ferza/shared';
 interface SchedulePayload {
   id: string;
   scheduledAt: string; // ISO 8601
+  type?: 'publish' | 'unpublish';
 }
 
 export const useSchedulePublication = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, scheduledAt }: SchedulePayload) =>
+    mutationFn: ({ id, scheduledAt, type = 'publish' }: SchedulePayload) =>
       fetchBFF<ApiResponse<unknown>>(`/bff/catalogue/${id}/schedule`, {
         method: 'PATCH',
-        body: { scheduledAt },
+        body: { scheduledAt, type },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['catalogue'] });

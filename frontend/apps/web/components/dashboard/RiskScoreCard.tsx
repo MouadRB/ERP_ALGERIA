@@ -1,34 +1,53 @@
 "use client";
 
 import { Box, Paper, Stack, Typography } from "@mui/material";
+import { useTheme, type Theme } from "@mui/material/styles";
+import type { RiskScoreSegmentVM, RiskScoreVM } from "@/modules/dashboard/types";
 
-const segments = [
-  { label: "Faible", value: 97, color: "#16A34A" },
-  { label: "Moyen", value: 34, color: "#F59E0B" },
-  { label: "Eleve", value: 11, color: "#EF4444" }
-];
+type Props = {
+  data: RiskScoreVM | null;
+};
 
-const total = segments.reduce((sum, item) => sum + item.value, 0);
+const resolveToneColor = (theme: Theme, tone: RiskScoreSegmentVM['tone']): string => {
+  switch (tone) {
+    case 'success':
+      return theme.palette.success.main;
+    case 'warning':
+      return theme.palette.warning.main;
+    case 'error':
+      return theme.palette.error.main;
+    default:
+      return theme.palette.text.primary;
+  }
+};
 
-function buildConicGradient() {
-  let start = 0;
-  const parts = segments.map((segment) => {
-    const slice = (segment.value / total) * 100;
-    const part = `${segment.color} ${start}% ${start + slice}%`;
-    start += slice;
-    return part;
-  });
-  return `conic-gradient(${parts.join(", ")})`;
-}
+export default function RiskScoreCard({ data }: Props) {
+  const theme = useTheme();
 
-export default function RiskScoreCard() {
+  if (!data) return null;
+  const { total, segments } = data;
+
+  const background = (() => {
+    if (total === 0) return `conic-gradient(${theme.palette.action.disabledBackground} 0% 100%)`;
+    let cursor = 0;
+    const parts = segments.map((segment) => {
+      const slice = (segment.value / total) * 100;
+      const color = resolveToneColor(theme, segment.tone);
+      const part = `${color} ${cursor}% ${cursor + slice}%`;
+      cursor += slice;
+      return part;
+    });
+    return `conic-gradient(${parts.join(', ')})`;
+  })();
+
   return (
     <Paper
       elevation={0}
       sx={{
         borderRadius: 2.5,
-        border: "1px solid #E6EDF5",
-        backgroundColor: "#FFFFFF",
+        border: "1px solid",
+        borderColor: "divider",
+        backgroundColor: "background.paper",
         p: 2.5
       }}
     >
@@ -49,7 +68,7 @@ export default function RiskScoreCard() {
             width: 170,
             height: 170,
             borderRadius: "50%",
-            background: buildConicGradient(),
+            background,
             position: "relative",
             display: "flex",
             alignItems: "center",
@@ -61,12 +80,12 @@ export default function RiskScoreCard() {
               width: 110,
               height: 110,
               borderRadius: "50%",
-              backgroundColor: "#FFFFFF",
+              backgroundColor: "background.paper",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: "0 0 0 1px #EEF2F7"
+              boxShadow: (t) => `0 0 0 1px ${t.palette.divider}`
             }}
           >
             <Typography variant="h4" fontWeight={700}>
@@ -87,7 +106,7 @@ export default function RiskScoreCard() {
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                backgroundColor: segment.color
+                backgroundColor: resolveToneColor(theme, segment.tone)
               }}
             />
             <Typography variant="caption" color="text.secondary">

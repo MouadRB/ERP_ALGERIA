@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { alpha, useTheme } from "@mui/material/styles";
 import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Divider,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -17,98 +20,120 @@ import {
 } from "@mui/material";
 import FilterListRounded from "@mui/icons-material/FilterListRounded";
 import AccessTimeRounded from "@mui/icons-material/AccessTimeRounded";
+import Toast from "@/components/ui/Toast";
+import CancelOrderModal from "@/modules/oms/components/modals/CancelOrderModal";
+import { useConfirmOrder } from "@/modules/oms/hooks/useConfirmOrder";
+import type { ConfirmationsVM } from "@/modules/dashboard/types";
 
-const rows = [
-  {
-    id: "#10042",
-    client: "+213 0550 123 456",
-    note: "Nouvelle cliente",
-    wilaya: "Alger (16)",
-    montant: "4 500 DZD",
-    risque: { label: "Faible", color: "#16A34A", bg: "#DCFCE7" },
-    statut: { label: "En Attente", color: "#F59E0B", bg: "#FEF3C7" },
-    minuterie: { label: "1h 47min", color: "#16A34A", bg: "#DCFCE7" }
-  },
-  {
-    id: "#10043",
-    client: "+213 0661 987 654",
-    note: "2 commandes",
-    wilaya: "Oran (31)",
-    montant: "12 200 DZD",
-    risque: { label: "Moyen", color: "#F59E0B", bg: "#FEF3C7" },
-    statut: { label: "En Attente", color: "#F59E0B", bg: "#FEF3C7" },
-    minuterie: { label: "23min", color: "#EF4444", bg: "#FEE2E2" }
-  },
-  {
-    id: "#10044",
-    client: "+213 0770 456 789",
-    note: "Connu, 1 absence",
-    wilaya: "Setif (19)",
-    montant: "8 400 DZD",
-    risque: { label: "Eleve", color: "#EF4444", bg: "#FEE2E2" },
-    statut: { label: "En Attente", color: "#F59E0B", bg: "#FEF3C7" },
-    minuterie: { label: "12min", color: "#EF4444", bg: "#FEE2E2" }
-  },
-  {
-    id: "#10045",
-    client: "+213 0550 321 000",
-    note: "Champion RFM",
-    wilaya: "Constantine (25)",
-    montant: "6 800 DZD",
-    risque: { label: "Faible", color: "#16A34A", bg: "#DCFCE7" },
-    statut: { label: "Confirme", color: "#3B82F6", bg: "#DBEAFE" },
-    minuterie: { label: "--", color: "#94A3B8", bg: "#E2E8F0" }
-  },
-  {
-    id: "#10046",
-    client: "+213 0661 654 321",
-    note: "Nouvelle cliente",
-    wilaya: "Annaba (23)",
-    montant: "3 200 DZD",
-    risque: { label: "Faible", color: "#16A34A", bg: "#DCFCE7" },
-    statut: { label: "En Attente", color: "#F59E0B", bg: "#FEF3C7" },
-    minuterie: { label: "52min", color: "#16A34A", bg: "#DCFCE7" }
-  }
-];
+type Props = {
+  data: ConfirmationsVM | null;
+};
 
-export default function ConfirmationTableCard() {
+type ToastState = {
+  open: boolean;
+  message: string;
+  severity: "success" | "error" | "info";
+};
+
+const CHIP_PALETTE_KEYS = new Set(['primary', 'secondary', 'success', 'warning', 'error', 'info', 'default']);
+
+const safePaletteKey = (key: string): 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'default' =>
+  (CHIP_PALETTE_KEYS.has(key) ? key : 'default') as
+    | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'default';
+
+export default function ConfirmationTableCard({ data }: Props) {
+  const theme = useTheme();
+  const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string | undefined) ?? 'fr';
+  const isDark = theme.palette.mode === 'dark';
+
+  const confirmOrder = useConfirmOrder();
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+  const [bulkPending, setBulkPending] = useState(false);
+  const [toast, setToast] = useState<ToastState>({ open: false, message: "", severity: "info" });
+
+  if (!data) return null;
+  const { rows, pending } = data;
+
+  const goToOMS = (query?: string) => {
+    router.push(query ? `/${locale}/oms?${query}` : `/${locale}/oms`);
+  };
+
+  const handleConfirmOne = (orderId: string, reference: string) => {
+    confirmOrder.mutate(orderId, {
+      onSuccess: () =>
+        setToast({ open: true, message: `Commande ${reference} confirmée.`, severity: "success" }),
+      onError: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Échec de la confirmation.";
+        setToast({ open: true, message: msg, severity: "error" });
+      },
+    });
+  };
+
+  const handleConfirmAll = async () => {
+    if (rows.length === 0 || bulkPending) return;
+    setBulkPending(true);
+    const results = await Promise.allSettled(
+      rows.map((r) => confirmOrder.mutateAsync(r.orderId))
+    );
+    setBulkPending(false);
+    const ok = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.length - ok;
+    setToast({
+      open: true,
+      message: failed === 0
+        ? `${ok} commande(s) confirmée(s).`
+        : `${ok} confirmée(s), ${failed} en échec.`,
+      severity: failed === 0 ? "success" : "error",
+    });
+  };
+
   return (
     <Paper
       elevation={0}
       sx={{
-        borderRadius: 2.5,
-        border: "1px solid #E6EDF5",
-        backgroundColor: "#FFFFFF"
+        borderRadius: 3,
+        border: "1px solid",
+        borderColor: "divider",
+        backgroundColor: "background.paper",
+        overflow: "hidden"
       }}
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between" p={2.5}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="subtitle1" fontWeight={700}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Typography variant="subtitle1" fontWeight={700} color="text.primary">
             File de Confirmation
           </Typography>
           <Chip
-            label="23 en attente"
+            label={`${pending} en attente`}
             size="small"
-            sx={{ bgcolor: "#FFE8C2", color: "#B45309", fontWeight: 600 }}
+            sx={{
+              bgcolor: isDark ? alpha(theme.palette.warning.main, 0.15) : "rgba(210,153,34,0.15)",
+              color: isDark ? theme.palette.warning.light : "#d29922",
+              fontWeight: 700
+            }}
           />
         </Stack>
         <Stack direction="row" spacing={1} alignItems="center">
           <Button
             variant="text"
             startIcon={<FilterListRounded />}
-            sx={{ color: "#64748B", textTransform: "none" }}
+            onClick={() => goToOMS("status=AwaitingValidation")}
+            sx={{ color: "text.secondary", textTransform: "none" }}
           >
             Filtrer
           </Button>
           <Button
             variant="contained"
-            sx={{
-              bgcolor: "#1A4E8A",
-              textTransform: "none",
-              "&:hover": { bgcolor: "#143B68" }
-            }}
+            color="primary"
+            disableElevation
+            onClick={handleConfirmAll}
+            disabled={bulkPending || rows.length === 0}
+            startIcon={bulkPending ? <CircularProgress size={14} color="inherit" /> : null}
+            sx={{ textTransform: "none", borderRadius: 2 }}
           >
-            Tout confirmer
+            {bulkPending ? "Confirmation..." : "Tout confirmer"}
           </Button>
         </Stack>
       </Stack>
@@ -117,108 +142,147 @@ export default function ConfirmationTableCard() {
         <Table size="small" sx={{ minWidth: 700 }}>
           <TableHead>
             <TableRow>
-              <TableCell># COMMANDE</TableCell>
+              <TableCell sx={{ py: 2 }}># COMMANDE</TableCell>
               <TableCell>CLIENT</TableCell>
               <TableCell>WILAYA</TableCell>
               <TableCell>MONTANT</TableCell>
               <TableCell>RISQUE</TableCell>
               <TableCell>STATUT</TableCell>
               <TableCell>MINUTERIE</TableCell>
-              <TableCell>ACTIONS</TableCell>
+              <TableCell align="right">ACTIONS</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id} hover>
-                <TableCell>
-                  <Typography fontWeight={700} color="#1A4E8A">
-                    {row.id}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight={600}>{row.client}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {row.note}
-                  </Typography>
-                </TableCell>
-                <TableCell>{row.wilaya}</TableCell>
-                <TableCell>
-                  <Typography fontWeight={700}>{row.montant}</Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={row.risque.label}
-                    size="small"
-                    sx={{
-                      bgcolor: row.risque.bg,
-                      color: row.risque.color,
-                      fontWeight: 600
-                    }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={row.statut.label}
-                    size="small"
-                    sx={{
-                      bgcolor: row.statut.bg,
-                      color: row.statut.color,
-                      fontWeight: 600
-                    }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    icon={<AccessTimeRounded sx={{ fontSize: 14 }} />}
-                    label={row.minuterie.label}
-                    size="small"
-                    sx={{
-                      bgcolor: row.minuterie.bg,
-                      color: row.minuterie.color,
-                      fontWeight: 600
-                    }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      sx={{
-                        bgcolor: "#16A34A",
-                        textTransform: "none",
-                        "&:hover": { bgcolor: "#15803D" }
-                      }}
+            {rows.map((row) => {
+              const risqueKey = safePaletteKey(row.risque.tone);
+              const statutKey = safePaletteKey(row.statut.tone);
+              const minuterieKey = safePaletteKey(row.minuterie.tone);
+              const risquePalette = risqueKey !== 'default' ? theme.palette[risqueKey] : null;
+              const isRowPending =
+                bulkPending ||
+                (confirmOrder.isPending && confirmOrder.variables === row.orderId);
+              return (
+                <TableRow key={row.orderId} hover>
+                  <TableCell>
+                    <Typography
+                      fontWeight={700}
+                      color="primary.main"
+                      sx={{ cursor: "pointer" }}
+                      onClick={() => router.push(`/${locale}/oms/${row.orderId}`)}
                     >
-                      Confirmer
-                    </Button>
-                    <Button
+                      {row.reference}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight={600} color="text.primary">{row.client}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {row.note}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ color: 'text.primary' }}>{row.wilaya}</TableCell>
+                  <TableCell>
+                    <Typography fontWeight={700} color="text.primary">{row.montant}</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={row.risque.label}
                       size="small"
-                      variant="outlined"
+                      color={risqueKey}
+                      variant={isDark ? "outlined" : "filled"}
                       sx={{
-                        color: "#EF4444",
-                        borderColor: "#FCA5A5",
-                        textTransform: "none",
-                        "&:hover": { borderColor: "#EF4444", bgcolor: "#FEE2E2" }
+                        fontWeight: 600,
+                        ...(!isDark && risquePalette && {
+                          bgcolor: alpha(risquePalette.main, 0.1),
+                          color: risquePalette.dark,
+                        }),
                       }}
-                    >
-                      Annuler
-                    </Button>
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={row.statut.label}
+                      size="small"
+                      color={statutKey}
+                      variant={isDark ? "outlined" : "filled"}
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <AccessTimeRounded
+                        sx={{
+                          fontSize: 14,
+                          color: minuterieKey === 'default' ? 'text.disabled' : `${minuterieKey}.main`
+                        }}
+                      />
+                      <Typography
+                        variant="caption"
+                        fontWeight={600}
+                        sx={{ color: minuterieKey === 'default' ? 'text.secondary' : `${minuterieKey}.main` }}
+                      >
+                        {row.minuterie.label}
+                      </Typography>
+                    </Stack>
+                  </TableCell>
+                  <TableCell align="right">
+                    <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        disableElevation
+                        disabled={isRowPending}
+                        onClick={() => handleConfirmOne(row.orderId, row.reference)}
+                        sx={{ textTransform: "none", borderRadius: 1.5 }}
+                      >
+                        {isRowPending ? "..." : "Confirmer"}
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        disabled={isRowPending}
+                        onClick={() => setCancelTargetId(row.orderId)}
+                        sx={{ textTransform: "none", borderRadius: 1.5 }}
+                      >
+                        Annuler
+                      </Button>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </Box>
-      <Box sx={{ p: 2, display: "flex", justifyContent: "space-between" }}>
+      <Box sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Typography variant="caption" color="text.secondary">
-          Affichage 6 sur 23 commandes en attente
+          Affichage {rows.length} sur {pending} commandes en attente
         </Typography>
-        <Button variant="text" sx={{ textTransform: "none" }}>
+        <Button
+          variant="text"
+          size="small"
+          onClick={() => goToOMS()}
+          sx={{ textTransform: "none" }}
+        >
           Voir toutes les commandes
         </Button>
       </Box>
+
+      {cancelTargetId && (
+        <CancelOrderModal
+          open={Boolean(cancelTargetId)}
+          orderId={cancelTargetId}
+          onClose={() => setCancelTargetId(null)}
+        />
+      )}
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={() => setToast((t) => ({ ...t, open: false }))}
+      />
     </Paper>
   );
 }

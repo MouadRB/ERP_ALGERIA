@@ -54,10 +54,10 @@ interface ApproData {
 /* ------------------------------------------------------------------ */
 
 const PIPELINE_COLORS: Record<string, string> = {
-  brouillon:  '#6b7280', // Gray    — neutral draft
-  enAttente:  '#F59E0B', // Amber-500  — pause/warning, needs human intervention
-  approuve:   '#3B82F6', // Blue-500   — confirmed/approved
-  enCours:    '#6366F1', // Indigo-500 — active process (not as loud as orange, not as final as gray)
+  brouillon:  '#8b949e', // Gray    — neutral draft
+  enAttente:  '#d29922', // Amber-500  — pause/warning, needs human intervention
+  approuve:   '#58a6ff', // Blue-500   — confirmed/approved
+  enCours:    '#a371f7', // Indigo-500 — active process (not as loud as orange, not as final as gray)
   recu:       CATEGORICAL[1], // Green — completed delivery
 };
 
@@ -73,9 +73,9 @@ const ALERT_TYPE_COLORS: Record<string, 'error' | 'info' | 'warning'> = { retard
 /* ------------------------------------------------------------------ */
 
 function getSupplierStatut(taux: number): { label: string; color: string } {
-  if (taux > 80) return { label: 'Excellent', color: '#10B981' }; // Emerald
-  if (taux >= 60) return { label: 'Moyen',    color: '#F59E0B' }; // Amber
-  return              { label: 'Critique',   color: '#EF4444' }; // Red
+  if (taux > 80) return { label: 'Excellent', color: 'success.main' }; // Emerald
+  if (taux >= 60) return { label: 'Moyen',    color: 'warning.main' }; // Amber
+  return              { label: 'Critique',   color: 'error.main' }; // Red
 }
 
 /* ------------------------------------------------------------------ */
@@ -132,7 +132,7 @@ function SupplierPerformanceTable({ rows }: { rows: ApproData['supplierPerforman
                     {/* Mini inline progress bar — visual without chart clutter */}
                     <TableCell sx={{ py: 0.75 }}>
                       <Box display="flex" alignItems="center" gap={1}>
-                        <Box sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: '#E2E8F0', position: 'relative', overflow: 'hidden' }}>
+                        <Box sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: 'action.hover', position: 'relative', overflow: 'hidden' }}>
                           <Box sx={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(row.tauxOnTime, 100)}%`, bgcolor: statut.color, borderRadius: 3, transition: 'width 0.4s ease' }} />
                         </Box>
                         <Typography variant="caption" sx={{ minWidth: 40, textAlign: 'right', fontWeight: 700, color: statut.color, fontSize: 11 }}>
@@ -245,13 +245,13 @@ export default function ApprovisionnementTab({ period }: ApprovisionnementTabPro
                 label={`Total: ${fmtNumber(d.bcPipeline.total)} BC`}
                 variant="outlined"
                 size="small"
-                sx={{ color: '#334155', borderColor: '#CBD5E1', fontWeight: 600, fontSize: 12 }}
+                sx={{ color: 'text.secondary', borderColor: 'divider', fontWeight: 600, fontSize: 12 }}
               />
               <Chip
                 label={`Valeur: ${fmtDZD(d.bcPipeline.totalValue)}`}
                 variant="outlined"
                 size="small"
-                sx={{ color: '#334155', borderColor: '#CBD5E1', fontWeight: 600, fontSize: 12 }}
+                sx={{ color: 'text.secondary', borderColor: 'divider', fontWeight: 600, fontSize: 12 }}
               />
             </Box>
           </Paper>

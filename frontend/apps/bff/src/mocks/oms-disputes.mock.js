@@ -17,37 +17,7 @@
 //             → order must be COD_Remitted (COD was collected and remitted)
 
 module.exports = [
-  {
-    id: 'lit-001',
-    orderId: 'ord-2025-00031',          // DeliveredCOD_Confirmed (idx 30, Ecotrack)
-    severity: 'high',
-    description: 'Client affirme avoir reçu un produit différent de la commande',
-    openedAt: '2026-03-22T10:00:00Z',
-    status: 'En attente carrier',
-    statusKey: 'attente_carrier',
-    assignedTo: 'CRM Agent',
-    actionLabel: 'Contacter client',
-  },
-  {
-    id: 'lit-002',
-    orderId: 'ord-2025-00033',          // DeliveredCOD_Confirmed (idx 32, Yalidine)
-    severity: 'medium',
-    description: 'Colis arrivé endommagé — photos client reçues',
-    openedAt: '2026-03-19T14:00:00Z',
-    status: 'En attente carrier',
-    statusKey: 'attente_carrier',
-    assignedTo: null,
-    actionLabel: 'Contacter Yalidine',
-  },
-  {
-    id: 'lit-003',
-    orderId: 'ord-2025-00037',          // COD_Remitted (idx 36, Yalidine)
-    severity: 'medium',
-    description: 'Montant COD incorrect encaissé (12 500 vs 12 000 DZD)',
-    openedAt: '2026-03-17T09:00:00Z',
-    status: 'Finance notifié',
-    statusKey: 'finance_notifie',
-    assignedTo: 'Finance Director',
-    actionLabel: 'Contacter client',
-  },
+  { id: 'lit-001', orderId: 'ord-2026-00051', severity: 'high',   description: 'Client affirme avoir reçu un produit différent de la commande', openedAt: '2026-03-22T10:00:00Z', status: 'En attente carrier', statusKey: 'attente_carrier', assignedTo: 'CRM Agent',        actionLabel: 'Contacter client' },
+  { id: 'lit-002', orderId: 'ord-2026-00053', severity: 'medium', description: 'Colis arrivé endommagé — photos client reçues',                 openedAt: '2026-03-19T14:00:00Z', status: 'En attente carrier', statusKey: 'attente_carrier', assignedTo: null,               actionLabel: 'Contacter Yalidine' },
+  { id: 'lit-003', orderId: 'ord-2026-00069', severity: 'medium', description: 'Montant COD incorrect encaissé (12 500 vs 12 000 DZD)',         openedAt: '2026-03-17T09:00:00Z', status: 'Finance notifié',    statusKey: 'finance_notifie', assignedTo: 'Finance Director', actionLabel: 'Contacter client' },
 ];

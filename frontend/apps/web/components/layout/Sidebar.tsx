@@ -47,7 +47,7 @@ export default function Sidebar() {
         minWidth: 250,
         display: { xs: "none", md: "flex" },
         flexDirection: "column",
-        bgcolor: "#0F2742",
+        bgcolor: "sidebar.main",
         color: "#DCE6F2",
         paddingX: 2,
         paddingY: 3

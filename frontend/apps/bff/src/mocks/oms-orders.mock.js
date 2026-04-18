@@ -1,26 +1,82 @@
 const OPERATORS = require('./oms-operators.mock');
 const CRM_CUSTOMERS = require('./crm.mock');
 
-// Maps each order index (0–52) to a customerId.
-// Distribution is intentional: CUST-001 gets good-status orders → VIP segment;
-// CUST-008/013/015 get bad-status orders → À risque / Liste noire.
+// ─── ITEM_CATALOG — PIM-valid products ONLY ───────────────────────────────
+// Every SKU maps to a real PIM product (pim.mock.js PRD-001..PRD-006) or one
+// of their variants. Prices are "captured at order time" snapshots.
+const ITEM_CATALOG = [
+  // PRD-001 + variants
+  { sku: 'SKU-0042-BLK',     productId: 'PRD-001', priceTTC: 1200 },
+  { sku: 'SKU-0042-NVY',     productId: 'PRD-001', priceTTC: 1200 },
+  { sku: 'SKU-0042-CLR',     productId: 'PRD-001', priceTTC: 1200 },
+  // PRD-002 + variants
+  { sku: 'SKU-0118-WR',      productId: 'PRD-002', priceTTC: 8500 },
+  { sku: 'SKU-0118-WR-41',   productId: 'PRD-002', priceTTC: 8500 },
+  { sku: 'SKU-0118-WR-42',   productId: 'PRD-002', priceTTC: 8500 },
+  { sku: 'SKU-0118-WR-43',   productId: 'PRD-002', priceTTC: 8500 },
+  { sku: 'SKU-0118-WR-44',   productId: 'PRD-002', priceTTC: 8500 },
+  { sku: 'SKU-0118-WR-45',   productId: 'PRD-002', priceTTC: 8500 },
+  // PRD-003 + variants
+  { sku: 'SKU-0234-FLR',     productId: 'PRD-003', priceTTC: 3200 },
+  { sku: 'SKU-0234-FLR-SM',  productId: 'PRD-003', priceTTC: 3200 },
+  { sku: 'SKU-0234-FLR-ML',  productId: 'PRD-003', priceTTC: 3200 },
+  { sku: 'SKU-0234-FLR-XL',  productId: 'PRD-003', priceTTC: 3200 },
+  // PRD-005 + variants
+  { sku: 'SKU-0301-BK46',    productId: 'PRD-005', priceTTC: 12900 },
+  { sku: 'SKU-0301-BK40',    productId: 'PRD-005', priceTTC: 12900 },
+  { sku: 'SKU-0301-BK41',    productId: 'PRD-005', priceTTC: 12900 },
+  // PRD-006
+  { sku: 'SKU-0789-RAM',     productId: 'PRD-006', priceTTC: 5900 },
+];
+// Note: PRD-004 (SKU-DRAFT-001) is deliberately excluded — it is status=draft
+// in PIM and not published in Catalogue, so it cannot appear in orders.
+
+// ─── 108 orders across 13 statuses — spread over today / 7d / 30d ─────────
+// Counts are tuned so analytics dashboards always have non-zero values on
+// every common period (today, last 7 days, last 30 days).
+const STATUS_PLAN = [
+  { status: 'AwaitingValidation',      count: 16 },  // 0-2 days (feeds today+7d)
+  { status: 'Confirmed',               count: 10 },  // 1-4 days (feeds 7d)
+  { status: 'AwaitingPickup',          count: 7 },   // 2-5 days (feeds 7d)
+  { status: 'HandedToCarrier',         count: 9 },   // 3-8 days
+  { status: 'OutForDelivery',          count: 8 },   // 3-8 days
+  { status: 'DeliveredCOD_Confirmed',  count: 18 },  // 3-40 days (bulk of CA)
+  { status: 'COD_Remitted',            count: 10 },  // 3-40 days
+  { status: 'DeliveryFailed_Absent',   count: 6 },   // 5-30 days
+  { status: 'ReturnInTransit_Refused', count: 3 },
+  { status: 'LostInTransit',           count: 2 },
+  { status: 'Returned',               count: 5 },
+  { status: 'Cancelled',              count: 10 },  // 1-35 days
+  { status: 'Draft',                   count: 4 },   // today only
+];
+const TOTAL_ORDERS = STATUS_PLAN.reduce((s, p) => s + p.count, 0); // 108
+
+// Customer mapping: 108 orders → 15 customers.
+// CUST-001 = VIP → gets delivered/COD orders.
+// CUST-008 (HIGH risk) → gets some failures.
+// CUST-013/015 (blacklisted) → gets cancelled/failed orders.
 const ORDER_CUSTOMER_MAP = [
-  /* 0-8  AwaitingValidation */ 'CUST-013','CUST-002','CUST-003','CUST-004','CUST-005','CUST-006','CUST-007','CUST-008','CUST-014',
-  /* 9-15 Confirmed          */ 'CUST-001','CUST-001','CUST-002','CUST-003','CUST-004','CUST-015','CUST-005',
-  /* 16-19 AwaitingPickup    */ 'CUST-006','CUST-007','CUST-008','CUST-009',
-  /* 20-24 HandedToCarrier   */ 'CUST-010','CUST-011','CUST-012','CUST-013','CUST-009',
-  /* 25-29 OutForDelivery    */ 'CUST-001','CUST-002','CUST-003','CUST-004','CUST-005',
-  /* 30-35 DeliveredCOD_Conf */ 'CUST-001','CUST-001','CUST-001','CUST-006','CUST-007','CUST-002',
-  /* 36-37 COD_Remitted      */ 'CUST-001','CUST-001',
-  /* 38-40 DeliveryFailed    */ 'CUST-008','CUST-004','CUST-010',
-  /* 41-42 ReturnInTransit   */ 'CUST-012','CUST-014',
-  /* 43    LostInTransit     */ 'CUST-011',
-  /* 44-45 Returned          */ 'CUST-003','CUST-005',
-  /* 46-50 Cancelled         */ 'CUST-006','CUST-007','CUST-009','CUST-010','CUST-011',
-  /* 51-52 Draft             */ 'CUST-002','CUST-015',
+  /* 0-15  AwaitingValidation (16) */ 'CUST-002','CUST-003','CUST-004','CUST-005','CUST-006','CUST-007','CUST-009','CUST-010','CUST-011','CUST-001','CUST-014','CUST-012','CUST-001','CUST-002','CUST-005','CUST-006',
+  /* 16-25 Confirmed (10)          */ 'CUST-001','CUST-001','CUST-002','CUST-003','CUST-004','CUST-005','CUST-006','CUST-007','CUST-009','CUST-010',
+  /* 26-32 AwaitingPickup (7)      */ 'CUST-009','CUST-010','CUST-011','CUST-001','CUST-002','CUST-003','CUST-005',
+  /* 33-41 HandedToCarrier (9)     */ 'CUST-004','CUST-005','CUST-006','CUST-007','CUST-009','CUST-010','CUST-011','CUST-012','CUST-001',
+  /* 42-49 OutForDelivery (8)      */ 'CUST-001','CUST-002','CUST-003','CUST-004','CUST-005','CUST-006','CUST-007','CUST-009',
+  /* 50-67 DeliveredCOD_Conf (18)  */ 'CUST-001','CUST-001','CUST-001','CUST-001','CUST-002','CUST-002','CUST-003','CUST-005','CUST-006','CUST-007','CUST-009','CUST-010','CUST-011','CUST-012','CUST-004','CUST-001','CUST-002','CUST-006',
+  /* 68-77 COD_Remitted (10)       */ 'CUST-001','CUST-001','CUST-001','CUST-002','CUST-003','CUST-005','CUST-006','CUST-009','CUST-001','CUST-007',
+  /* 78-83 DeliveryFailed (6)      */ 'CUST-008','CUST-013','CUST-014','CUST-004','CUST-010','CUST-008',
+  /* 84-86 ReturnInTransit (3)     */ 'CUST-013','CUST-015','CUST-008',
+  /* 87-88 LostInTransit (2)       */ 'CUST-012','CUST-014',
+  /* 89-93 Returned (5)            */ 'CUST-003','CUST-008','CUST-013','CUST-015','CUST-014',
+  /* 94-103 Cancelled (10)         */ 'CUST-013','CUST-015','CUST-008','CUST-009','CUST-010','CUST-011','CUST-014','CUST-004','CUST-002','CUST-003',
+  /* 104-107 Draft (4)             */ 'CUST-002','CUST-015','CUST-007','CUST-001',
 ];
 
-const BASE_DATE = new Date('2026-03-25T12:00:00Z');
+// ─── Date strategy ─────────────────────────────────────────────────────────
+// Anchor to NOW so analytics always cover current period.
+// Orders spread across 45 days. Recent statuses (Draft, AwaitingValidation)
+// get dates in the last 3 days. Older terminal states (Delivered, Cancelled,
+// Returned) get dates spread across the full range.
+const NOW = new Date();
 const CARRIERS = ['Yalidine', 'Maystro', 'Ecotrack', 'Procolis'];
 const SOURCE_CHANNELS = ['Saisie manuelle', 'Instagram', 'Facebook', 'WhatsApp', 'Appel telephonique'];
 const CANCEL_REASONS = ['Expire (timer)', 'Client refuse', 'Adresse incorrecte', 'Doublon commande', 'Stock absent'];
@@ -48,78 +104,84 @@ const WILAYAS = [
   { code: '10', name: 'Bouira', commune: 'Bouira Centre', address: '22 Rue du 5 Juillet' },
 ];
 
-const NAMES = [
-  { fr: 'Mohamed Ben Ali', ar: 'Mohamed Ben Ali' },
-  { fr: 'Fatima Bouzid', ar: 'Fatima Bouzid' },
-  { fr: 'Karim Meziane', ar: 'Karim Meziane' },
-  { fr: 'Nadia Hamidi', ar: 'Nadia Hamidi' },
-  { fr: 'Youcef Belkassem', ar: 'Youcef Belkassem' },
-  { fr: 'Amina Khelifi', ar: 'Amina Khelifi' },
-  { fr: 'Rachid Boumediene', ar: 'Rachid Boumediene' },
-  { fr: 'Samira Hadj Ahmed', ar: 'Samira Hadj Ahmed' },
-  { fr: 'Abdelkader Ferhat', ar: 'Abdelkader Ferhat' },
-  { fr: 'Louisa Mansouri', ar: 'Louisa Mansouri' },
-  { fr: 'Mourad Zeroual', ar: 'Mourad Zeroual' },
-  { fr: 'Djamila Bensalem', ar: 'Djamila Bensalem' },
-  { fr: 'Hamza Tounsi', ar: 'Hamza Tounsi' },
-  { fr: 'Tarek Belmahi', ar: 'Tarek Belmahi' },
-  { fr: 'Naima Boukhari', ar: 'Naima Boukhari' },
-  { fr: 'Walid Djellouli', ar: 'Walid Djellouli' },
-  { fr: 'Chafia Larbi', ar: 'Chafia Larbi' },
-  { fr: 'Salim Ouahrani', ar: 'Salim Ouahrani' },
-  { fr: 'Houria Ziani', ar: 'Houria Ziani' },
-  { fr: 'Abdelaziz Kerroum', ar: 'Abdelaziz Kerroum' },
-];
-
-const ITEM_CATALOG = [
-  { sku: 'SKU-ELEC-001', nameFr: 'Samsung Galaxy A54', nameAr: 'Samsung Galaxy A54', priceTTC: 50000 },
-  { sku: 'SKU-MODE-011', nameFr: 'Robe Caftan Brodee', nameAr: 'Robe Caftan', priceTTC: 9000 },
-  { sku: 'SKU-ELEC-020', nameFr: 'Aspirateur Rowenta', nameAr: 'Aspirateur Rowenta', priceTTC: 30000 },
-  { sku: 'SKU-ELEC-033', nameFr: 'Tablette Huawei T10', nameAr: 'Tablette Huawei T10', priceTTC: 35000 },
-  { sku: 'SKU-ELEC-044', nameFr: 'Machine a cafe DeLonghi', nameAr: 'Machine a cafe', priceTTC: 20000 },
-  { sku: 'SKU-ELEC-055', nameFr: 'Smart TV Samsung 55', nameAr: 'Smart TV Samsung', priceTTC: 90000 },
-  { sku: 'SKU-MODE-022', nameFr: 'Ensemble Hijab Soie', nameAr: 'Ensemble Hijab', priceTTC: 3000 },
-  { sku: 'SKU-ELEC-070', nameFr: 'Console PlayStation 5', nameAr: 'Console PS5', priceTTC: 100000 },
-  { sku: 'SKU-COSM-005', nameFr: 'Coffret parfum', nameAr: 'Coffret parfum', priceTTC: 15000 },
-  { sku: 'SKU-ELEC-081', nameFr: 'Laptop Lenovo IdeaPad', nameAr: 'Laptop Lenovo', priceTTC: 80000 },
-  { sku: 'SKU-HOME-010', nameFr: 'Robot menager Moulinex', nameAr: 'Robot menager', priceTTC: 12000 },
-  { sku: 'SKU-ELEC-090', nameFr: 'iPhone 15 Pro Max', nameAr: 'iPhone 15 Pro Max', priceTTC: 200000 },
-  { sku: 'SKU-HOME-020', nameFr: 'Climatiseur Condor 12000', nameAr: 'Climatiseur Condor', priceTTC: 60000 },
-  { sku: 'SKU-ELEC-110', nameFr: 'Imprimante HP LaserJet', nameAr: 'Imprimante HP', priceTTC: 35000 },
-  { sku: 'SKU-COSM-010', nameFr: 'Coffret soin visage', nameAr: 'Coffret soin visage', priceTTC: 6000 },
-  { sku: 'SKU-MODE-030', nameFr: 'Djellaba brodee', nameAr: 'Djellaba', priceTTC: 12000 },
-  { sku: 'SKU-HOME-030', nameFr: 'Fer a repasser Philips', nameAr: 'Fer a repasser', priceTTC: 7000 },
-  { sku: 'SKU-ELEC-120', nameFr: 'Chargeur rapide USB-C', nameAr: 'Chargeur USB-C', priceTTC: 2500 },
-];
-
-const STATUS_PLAN = [
-  { status: 'AwaitingValidation', count: 9 },
-  { status: 'Confirmed', count: 7 },
-  { status: 'AwaitingPickup', count: 4 },
-  { status: 'HandedToCarrier', count: 5 },
-  { status: 'OutForDelivery', count: 5 },
-  { status: 'DeliveredCOD_Confirmed', count: 6 },
-  { status: 'COD_Remitted', count: 2 },
-  { status: 'DeliveryFailed_Absent', count: 3 },
-  { status: 'ReturnInTransit_Refused', count: 2 },
-  { status: 'LostInTransit', count: 1 },
-  { status: 'Returned', count: 2 },
-  { status: 'Cancelled', count: 5 },
-  { status: 'Draft', count: 2 },
-];
-
 const pad = (n, len = 5) => String(n).padStart(len, '0');
 const addHours = (d, h) => new Date(d.getTime() + h * 60 * 60 * 1000);
 const addDays = (d, days) => new Date(d.getTime() + days * 24 * 60 * 60 * 1000);
 
-function makePhone(idx) {
-  const prefix = ['05', '06', '07', '07'][idx % 4];
-  const rest = String(10000000 + (idx * 137) % 90000000);
-  return `${prefix}${rest}`;
-}
-
 function pick(list, idx) {
   return list[idx % list.length];
+}
+
+// Weighted carrier pick — realistic market share, breaks round-robin alignment
+// with status buckets that are all multiples of 4. Deterministic per idx.
+const CARRIER_SHARES = [
+  { name: 'Yalidine', weight: 40 },
+  { name: 'Maystro',  weight: 25 },
+  { name: 'Ecotrack', weight: 23 },
+  { name: 'Procolis', weight: 12 },
+];
+function pickCarrier(idx) {
+  const r = (idx * 37 + 11) % 100;
+  let acc = 0;
+  for (const c of CARRIER_SHARES) {
+    acc += c.weight;
+    if (r < acc) return c.name;
+  }
+  return CARRIER_SHARES[CARRIER_SHARES.length - 1].name;
+}
+
+/**
+ * Compute createdAt for a given order index.
+ * Strategy: distribute orders across 45 days ending today.
+ * Recent statuses (Draft, AwaitingValidation) → last 0-2 days.
+ * Active pipeline (Confirmed..OutForDelivery) → last 1-10 days.
+ * Terminal states → spread across 3-45 days ago.
+ */
+function computeCreatedAt(globalIdx, status) {
+  // Hash-based distribution within the status group ensures no clustering
+  const hashOffset = ((globalIdx * 7) + (globalIdx * 13) % 37) % 100;
+
+  if (status === 'Draft') {
+    // Created in last few hours
+    return addHours(NOW, -(hashOffset % 12));
+  }
+  if (status === 'AwaitingValidation') {
+    // Created in last 0-2 days (recent)
+    const hoursAgo = (hashOffset % 48);
+    return addHours(NOW, -hoursAgo);
+  }
+  if (status === 'Confirmed') {
+    // Created 1-4 days ago
+    const daysAgo = 1 + (hashOffset % 4);
+    return addDays(NOW, -daysAgo);
+  }
+  if (status === 'AwaitingPickup') {
+    // Created 2-5 days ago
+    const daysAgo = 2 + (hashOffset % 4);
+    return addDays(NOW, -daysAgo);
+  }
+  if (status === 'HandedToCarrier' || status === 'OutForDelivery') {
+    // Created 3-8 days ago
+    const daysAgo = 3 + (hashOffset % 6);
+    return addDays(NOW, -daysAgo);
+  }
+  if (status === 'DeliveredCOD_Confirmed' || status === 'COD_Remitted') {
+    // Spread across 3-40 days ago (covers full analytics range)
+    const daysAgo = 3 + Math.floor(hashOffset * 37 / 100);
+    return addDays(NOW, -daysAgo);
+  }
+  if (['DeliveryFailed_Absent', 'ReturnInTransit_Refused', 'LostInTransit', 'Returned'].includes(status)) {
+    // Failures: 5-30 days ago
+    const daysAgo = 5 + Math.floor(hashOffset * 25 / 100);
+    return addDays(NOW, -daysAgo);
+  }
+  if (status === 'Cancelled') {
+    // Cancelled: spread 1-35 days ago
+    const daysAgo = 1 + Math.floor(hashOffset * 34 / 100);
+    return addDays(NOW, -daysAgo);
+  }
+  // Fallback
+  return addDays(NOW, -(hashOffset % 30));
 }
 
 function makeItems(seed) {
@@ -130,10 +192,8 @@ function makeItems(seed) {
     const qty = 1 + ((seed + i) % 3);
     const total = item.priceTTC * qty;
     items.push({
-      productId: item.sku.replace('SKU', 'PRD'),
+      productId: item.productId,
       sku: item.sku,
-      nameFr: item.nameFr,
-      nameAr: item.nameAr,
       quantity: qty,
       qty,
       unitPriceHT: Math.round(item.priceTTC / 1.19),
@@ -225,12 +285,7 @@ function buildTracking(status, carrier, trackingNumber, createdAt, attemptCount)
     }
   }
 
-  return {
-    carrier,
-    trackingNumber,
-    events,
-    attempts,
-  };
+  return { carrier, trackingNumber, events, attempts };
 }
 
 function buildHistory(status, createdAt, updatedAt, confirmedBy, cancelReason) {
@@ -299,29 +354,20 @@ function paymentStatusFrom(orderStatus) {
 
 function buildOrder(idx, status) {
   const seq = pad(idx + 1);
-  const id = `ord-2025-${seq}`;
-  const reference = `ORD-2025-${seq}`;
-  const createdAt = addDays(BASE_DATE, -((idx * 2) % 30));
+  const id = `ord-2026-${seq}`;
+  const reference = `ORD-2026-${seq}`;
+  const createdAt = computeCreatedAt(idx, status);
   const updatedAt = addHours(createdAt, 4 + (idx % 48));
-
-  const riskLevel =
-    status === 'AwaitingValidation'
-      ? idx % 2 === 0
-        ? 'HIGH'
-        : 'MEDIUM'
-      : ['LOW', 'MEDIUM', 'HIGH'][idx % 3];
-  const fraudScore = riskLevel === 'HIGH' ? 0.78 : riskLevel === 'MEDIUM' ? 0.42 : 0.08;
 
   const customerId = ORDER_CUSTOMER_MAP[idx] || `CUST-${String((idx % 15) + 1).padStart(3, '0')}`;
   const crmCust = CRM_CUSTOMERS.find((c) => c.id === customerId) || CRM_CUSTOMERS[0];
-  const customerName = { fr: crmCust.nameFr, ar: crmCust.nameAr };
   const wilaya = pick(WILAYAS, idx);
   const phone = crmCust.phone;
 
   const items = makeItems(idx);
   const totals = computeTotals(items);
 
-  const carrier = statusNeedsCarrier(status) ? pick(CARRIERS, idx) : null;
+  const carrier = statusNeedsCarrier(status) ? pickCarrier(idx) : null;
   const trackingNumber = carrier ? `TRK-${carrier.slice(0, 3).toUpperCase()}-${10000 + idx}` : null;
 
   const attemptCount =
@@ -338,7 +384,7 @@ function buildOrder(idx, status) {
       : 0;
 
   const confirmedBy =
-    ['Confirmed', 'AwaitingPickup', 'HandedToCarrier', 'OutForDelivery', 'DeliveredCOD_Confirmed', 'COD_Remitted', 'DeliveryFailed_Absent', 'ReturnInTransit_Refused', 'LostInTransit', 'Returned']
+    ['Confirmed', 'AwaitingPickup', 'HandedToCarrier', 'OutForDelivery', 'DeliveredCOD_Confirmed', 'COD_Remitted', 'DeliveryFailed_Absent', 'ReturnInTransit_Refused', 'LostInTransit', 'Returned', 'Cancelled', 'AwaitingValidation']
       .includes(status)
       ? pick(OPERATORS, idx).name
       : null;
@@ -370,34 +416,12 @@ function buildOrder(idx, status) {
         : null,
   };
 
-  const customer = {
-    nameFr: customerName.fr,
-    nameAr: customerName.ar,
-    phone,
-    wilaya: wilaya.name,
-    wilayaCode: wilaya.code,
-    address: wilaya.address,
-    orderCount: 1 + (idx % 7),
-    fraudScore,
-    riskLevel,
-    riskSignals:
-      riskLevel === 'HIGH'
-        ? ['Premiere commande', 'Adresse incomplete', 'Wilaya taux retour eleve']
-        : riskLevel === 'MEDIUM'
-        ? ['Absence 1 tentative']
-        : [],
-    blacklisted: riskLevel === 'HIGH' && idx % 9 === 0,
-    lastDelivery: idx % 3 === 0 ? addDays(BASE_DATE, -(5 + (idx % 20))).toISOString() : null,
-  };
-
   return {
     id,
     reference,
     customerId,
     status,
     customerPhone: phone,
-    customerNameFr: customerName.fr,
-    customerNameAr: customerName.ar,
     wilayaCode: wilaya.code,
     address: wilaya.address,
     commune: wilaya.commune,
@@ -416,17 +440,12 @@ function buildOrder(idx, status) {
     deliveryAttempts: attemptCount,
     autoCancelAt,
 
-    riskLevel,
-    fraudScore,
-    riskSignals: customer.riskSignals,
-
     confirmedBy,
     cancelReason,
 
     history: buildHistory(status, createdAt, updatedAt, confirmedBy, cancelReason),
     tracking,
     paiement,
-    customer,
 
     createdBy: pick(OPERATORS, idx).id,
     createdAt: createdAt.toISOString(),

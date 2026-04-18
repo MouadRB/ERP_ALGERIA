@@ -6,7 +6,7 @@ import type { ApiResponse, Product } from '@ferza/shared';
 
 interface UpdateProductPayload {
   id: string;
-  body: Partial<Product>;
+  body: Partial<Product> & Record<string, unknown>;
 }
 
 export const useUpdateProduct = () => {
@@ -21,6 +21,9 @@ export const useUpdateProduct = () => {
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['pim', 'products'] });
       queryClient.invalidateQueries({ queryKey: ['pim', 'product', id] });
+      // SYNC-12: PIM is source of truth — Catalogue & Inventory derive names/prices from PIM
+      queryClient.invalidateQueries({ queryKey: ['catalogue'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };

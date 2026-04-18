@@ -1,5 +1,5 @@
 import LoadingState from "@/components/ui/LoadingState";
 
 export default function Loading() {
-  return <LoadingState label="Loading dashboard..." />;
+  return <LoadingState label="Chargement du tableau de bord..." />;
 }

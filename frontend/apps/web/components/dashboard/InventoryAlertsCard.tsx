@@ -1,53 +1,43 @@
 "use client";
 
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { alpha, useTheme, type Theme } from "@mui/material/styles";
+import { useParams, useRouter } from "next/navigation";
+import type { InventoryAlertVM, InventoryAlertsVM } from "@/modules/dashboard/types";
 
-const alerts = [
-  {
-    level: "RUPTURE",
-    levelColor: "#EF4444",
-    levelBg: "#FEE2E2",
-    product: "Samsung Galaxy A54 Coque Noire",
-    details: "0 unites - Alger Entrepot"
-  },
-  {
-    level: "CRITIQUE",
-    levelColor: "#F97316",
-    levelBg: "#FFEDD5",
-    product: "Nike Air Max 90 - Taille 42",
-    details: "3 unites - Seuil: 10"
-  },
-  {
-    level: "CRITIQUE",
-    levelColor: "#F97316",
-    levelBg: "#FFEDD5",
-    product: "Xiaomi Redmi Note 12 - 128GB",
-    details: "5 unites - Seuil: 15"
-  },
-  {
-    level: "FAIBLE",
-    levelColor: "#F59E0B",
-    levelBg: "#FEF3C7",
-    product: "Adidas Ultraboost 22 - Taille 40",
-    details: "8 unites - Seuil: 20"
-  },
-  {
-    level: "FAIBLE",
-    levelColor: "#F59E0B",
-    levelBg: "#FEF3C7",
-    product: "Apple AirPods Pro 2eme Gen",
-    details: "12 unites - Seuil: 25"
+type Props = {
+  data: InventoryAlertsVM | null;
+};
+
+const toneColor = (theme: Theme, tone: InventoryAlertVM['level']['tone']): string => {
+  switch (tone) {
+    case 'error':
+      return theme.palette.error.main;
+    case 'warning':
+      return theme.palette.warning.main;
+    case 'info':
+    default:
+      return theme.palette.info?.main ?? theme.palette.primary.main;
   }
-];
+};
 
-export default function InventoryAlertsCard() {
+export default function InventoryAlertsCard({ data }: Props) {
+  const theme = useTheme();
+  const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string | undefined) ?? 'fr';
+
+  if (!data) return null;
+  const { items, criticalCount } = data;
+
   return (
     <Paper
       elevation={0}
       sx={{
         borderRadius: 2.5,
-        border: "1px solid #E6EDF5",
-        backgroundColor: "#FFFFFF",
+        border: "1px solid",
+        borderColor: "divider",
+        backgroundColor: "background.paper",
         p: 2.5
       }}
     >
@@ -57,8 +47,8 @@ export default function InventoryAlertsCard() {
         </Typography>
         <Box
           sx={{
-            bgcolor: "#FEE2E2",
-            color: "#EF4444",
+            bgcolor: alpha(theme.palette.error.main, 0.15),
+            color: 'error.main',
             px: 1,
             py: 0.3,
             borderRadius: 999,
@@ -66,49 +56,50 @@ export default function InventoryAlertsCard() {
             fontWeight: 700
           }}
         >
-          7 critiques
+          {criticalCount} critiques
         </Box>
       </Stack>
 
       <Stack spacing={2}>
-        {alerts.map((item, index) => (
-          <Stack key={index} direction="row" spacing={2} alignItems="center">
-            <Box
-              sx={{
-                minWidth: 72,
-                textAlign: "center",
-                bgcolor: item.levelBg,
-                color: item.levelColor,
-                fontWeight: 700,
-                fontSize: 11,
-                px: 1,
-                py: 0.4,
-                borderRadius: 999
-              }}
-            >
-              {item.level}
-            </Box>
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="body2" fontWeight={600}>
-                {item.product}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {item.details}
-              </Typography>
-            </Box>
-            <Button
-              variant="contained"
-              size="small"
-              sx={{
-                bgcolor: "#1A4E8A",
-                textTransform: "none",
-                "&:hover": { bgcolor: "#143B68" }
-              }}
-            >
-              Reapprovisionner
-            </Button>
-          </Stack>
-        ))}
+        {items.map((item) => {
+          const color = toneColor(theme, item.level.tone);
+          return (
+            <Stack key={item.sku} direction="row" spacing={2} alignItems="center">
+              <Box
+                sx={{
+                  minWidth: 72,
+                  textAlign: "center",
+                  bgcolor: alpha(color, 0.15),
+                  color,
+                  fontWeight: 700,
+                  fontSize: 11,
+                  px: 1,
+                  py: 0.4,
+                  borderRadius: 999
+                }}
+              >
+                {item.level.label}
+              </Box>
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="body2" fontWeight={600}>
+                  {item.product}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {item.details}
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                size="small"
+                color="primary"
+                onClick={() => router.push(`/${locale}/inventory/${item.sku}`)}
+                sx={{ textTransform: "none" }}
+              >
+                Reapprovisionner
+              </Button>
+            </Stack>
+          );
+        })}
       </Stack>
     </Paper>
   );

@@ -10,6 +10,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { alpha, useTheme } from '@mui/material/styles';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon     from '@mui/icons-material/CancelOutlined';
 import AccessTimeIcon          from '@mui/icons-material/AccessTime';
@@ -23,14 +24,13 @@ import { formatDZD, getWilayaByCode } from '@ferza/shared';
 
 export type Priority = 1 | 2 | 3 | 4;
 
-const PRIORITY_STYLES: Record<
-  Priority,
-  { bg: string; color: string; label: string }
-> = {
-  1: { bg: '#FFEBEE', color: '#C62828', label: '1' },
-  2: { bg: '#FFF3E0', color: '#E65100', label: '2' },
-  3: { bg: '#FFFDE7', color: '#F9A825', label: '3' },
-  4: { bg: '#E8F5E9', color: '#2E7D32', label: '4' },
+type PaletteKey = 'error' | 'warning' | 'success';
+
+const PRIORITY_TOKENS: Record<Priority, { token: PaletteKey; label: string }> = {
+  1: { token: 'error',   label: '1' },
+  2: { token: 'warning', label: '2' },
+  3: { token: 'warning', label: '3' },
+  4: { token: 'success', label: '4' },
 };
 
 export function computePriority(order: Order): Priority {
@@ -148,8 +148,14 @@ export default function QueueRow({
 }: Props) {
   const router = useRouter();
   const locale = useLocale();
+  const theme  = useTheme();
 
-  const pStyle      = PRIORITY_STYLES[priority];
+  const pMeta        = PRIORITY_TOKENS[priority];
+  const pColorMain   = theme.palette[pMeta.token].main;
+  const riskToken: PaletteKey =
+    order.riskLevel === 'HIGH'   ? 'error'   :
+    order.riskLevel === 'MEDIUM' ? 'warning' : 'success';
+  const riskColor = theme.palette[riskToken].main;
   const customerName = locale === 'ar' ? order.customerNameAr : order.customerNameFr;
   const abbreviated  = abbreviateName(customerName);
   const phone        = toInternational(order.customerPhone);
@@ -185,11 +191,15 @@ export default function QueueRow({
       onClick={handleRowClick}
       sx={{
         cursor:          'pointer',
-        borderLeft:      '4px solid #FF8A00',
+        borderLeft:      '4px solid',
+        borderLeftColor: 'primary.main',
         '&:last-child td, &:last-child th': { border: 0 },
+        '&:hover': {
+          bgcolor: 'action.hover',
+        },
         '&.Mui-selected': {
-          backgroundColor: 'rgba(13,71,161,0.04)',
-          '&:hover': { backgroundColor: 'rgba(13,71,161,0.07)' },
+          bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
+          '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.12) },
         },
       }}
     >
@@ -211,25 +221,25 @@ export default function QueueRow({
       <TableCell sx={{ py: 1.25, pr: 1 }}>
         <Box
           sx={{
-            display:         'inline-flex',
-            alignItems:      'center',
-            justifyContent:  'center',
-            width:           22,
-            height:          22,
-            borderRadius:    '50%',
-            backgroundColor: pStyle.bg,
-            border:          `1.5px solid ${pStyle.color}`,
+            display:        'inline-flex',
+            alignItems:     'center',
+            justifyContent: 'center',
+            width:          22,
+            height:         22,
+            borderRadius:   '50%',
+            bgcolor:        alpha(pColorMain, 0.15),
+            border:         `1.5px solid ${pColorMain}`,
           }}
         >
           <Typography
             sx={{
               fontSize:   11,
               fontWeight: 700,
-              color:      pStyle.color,
+              color:      pColorMain,
               lineHeight: 1,
             }}
           >
-            {pStyle.label}
+            {pMeta.label}
           </Typography>
         </Box>
       </TableCell>
@@ -329,12 +339,15 @@ export default function QueueRow({
                                              'Risque faible'
             }
             size="small"
-            color={
-              order.riskLevel === 'HIGH'   ? 'error'   :
-              order.riskLevel === 'MEDIUM' ? 'warning' :
-                                             'success'
-            }
-            sx={{ fontWeight: 600, fontSize: 10, height: 20 }}
+            sx={{
+              fontWeight:  600,
+              fontSize:    10,
+              height:      20,
+              bgcolor:     alpha(riskColor, 0.15),
+              border:      '1px solid',
+              borderColor: riskColor,
+              color:       riskColor,
+            }}
           />
           {order.fraudScore !== null && (
             <Typography
@@ -357,12 +370,13 @@ export default function QueueRow({
               color="success"
               onClick={onConfirm}
               sx={{
-                p:               0.6,
-                border:          '1px solid',
-                borderColor:     'success.light',
-                borderRadius:    1,
+                p:            0.6,
+                border:       '1px solid',
+                borderColor:  'success.main',
+                borderRadius: 1,
+                color:        'success.main',
                 '&:hover': {
-                  backgroundColor: 'success.50',
+                  bgcolor: (t) => alpha(t.palette.success.main, 0.15),
                 },
               }}
             >
@@ -376,12 +390,13 @@ export default function QueueRow({
               color="error"
               onClick={onCancel}
               sx={{
-                p:               0.6,
-                border:          '1px solid',
-                borderColor:     'error.light',
-                borderRadius:    1,
+                p:            0.6,
+                border:       '1px solid',
+                borderColor:  'error.main',
+                borderRadius: 1,
+                color:        'error.main',
                 '&:hover': {
-                  backgroundColor: 'error.50',
+                  bgcolor: (t) => alpha(t.palette.error.main, 0.15),
                 },
               }}
             >

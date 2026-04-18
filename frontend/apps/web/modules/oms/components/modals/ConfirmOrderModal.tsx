@@ -95,11 +95,10 @@ export default function ConfirmOrderModal({ open, orderId, onClose }: Props) {
             {/* Order summary card */}
             <Box
               sx={{
-                border:          '1px solid',
-                borderColor:     'divider',
+                border: '1px solid', borderColor: 'divider',
                 borderRadius:    2,
                 p:               2,
-                backgroundColor: '#F8FAFC',
+                backgroundColor: (t) => t.palette.background.default,
                 mb:              2,
               }}
             >

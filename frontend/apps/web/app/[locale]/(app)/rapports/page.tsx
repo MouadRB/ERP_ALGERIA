@@ -371,8 +371,8 @@ function RapportsContent() {
             <Typography variant="body2" color="text.secondary">
               · Période: {PERIOD_LABELS[period] ?? period}
             </Typography>
-            <FiberManualRecordIcon sx={{ fontSize: 8, color: '#22c55e', ml: 0.5 }} />
-            <Typography variant="body2" sx={{ color: '#22c55e', fontWeight: 500 }}>
+            <FiberManualRecordIcon sx={{ fontSize: 8, color: 'success.main', ml: 0.5 }} />
+            <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 500 }}>
               Données en temps réel
             </Typography>
           </Box>

@@ -18,6 +18,8 @@ export const useConfirmOrder = () => {
 
     onSuccess: (_data, id) => {
       invalidateOMSQueries(queryClient, id);
+      // SYNC-12: Confirmation changes reservation split (soft→hard) in Inventory
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };

@@ -92,10 +92,10 @@ export default function CrossModuleTab({ period }: CrossModuleTabProps) {
   ];
 
   const supplyBarData = [
-    { label: 'BC en attente',    value: sc.bcPending,             color: '#f59e0b' },
-    { label: 'Alertes stock',    value: sc.stockAlerts,           color: '#ef4444' },
-    { label: 'Produits masqués', value: sc.maskedFromCatalogue,   color: '#6366f1' },
-    { label: 'On-Time %',        value: sc.avgSupplierOnTime,     color: '#22c55e' },
+    { label: 'BC en attente',    value: sc.bcPending,             color: 'warning.main' },
+    { label: 'Alertes stock',    value: sc.stockAlerts,           color: 'error.main' },
+    { label: 'Produits masqués', value: sc.maskedFromCatalogue,   color: '#a371f7' },
+    { label: 'On-Time %',        value: sc.avgSupplierOnTime,     color: 'success.main' },
   ];
 
   return (
@@ -119,8 +119,8 @@ export default function CrossModuleTab({ period }: CrossModuleTabProps) {
               {[
                 { label: 'Commandes', value: fmtNumber(ots.totalOrders), color: CATEGORICAL[0] },
                 { label: 'Valeur Stock', value: fmtDZDShort(ots.stockValue), color: CATEGORICAL[1] },
-                { label: 'Alertes Réappro', value: String(ots.alertes), color: ots.alertes > 5 ? '#ef4444' : '#f59e0b' },
-                { label: 'Produits Masqués', value: String(ots.maskedProducts), color: ots.maskedProducts > 10 ? '#ef4444' : '#f59e0b' },
+                { label: 'Alertes Réappro', value: String(ots.alertes), color: ots.alertes > 5 ? '#f85149' : '#d29922' },
+                { label: 'Produits Masqués', value: String(ots.maskedProducts), color: ots.maskedProducts > 10 ? '#f85149' : '#d29922' },
               ].map((stat) => (
                 <Grid item xs={6} key={stat.label}>
                   <Box sx={{ p: 2, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
@@ -189,7 +189,7 @@ export default function CrossModuleTab({ period }: CrossModuleTabProps) {
                   <PieChart>
                     <Pie data={clientPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3}>
                       <Cell fill={CATEGORICAL[1]} />
-                      <Cell fill="#d1d5db" />
+                      <Cell fill="#30363d" />
                     </Pie>
                     <Tooltip />
                     <Legend />

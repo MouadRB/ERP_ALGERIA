@@ -16,6 +16,7 @@ import {
   Grid,
   Chip,
   Alert,
+  useTheme,
 } from '@mui/material';
 import TrendingUpIcon   from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
@@ -58,7 +59,8 @@ interface VentesData {
   statusDistribution: { status: string; count: number }[];
   operatorPerformance: { name: string; tauxConfirmation: number }[];
   teamAvgTauxConfirmation: number;
-  carrierPerformance: { name: string; total: number; delivered: number; failed: number; tauxLivraison: number; delaiMoyen: number; wilayas: number }[];
+  carrierPerformance: { name: string; total: number; delivered: number; failed: number; partPct: number; tauxLivraison: number | null; delaiMoyen: number | null; wilayas: number }[];
+  carrierDistribution: { totalOrdersWithCarrier: number; parts: { name: string; value: number; partPct: number }[] };
   failureReasons: { raison: string; count: number; color: string }[];
   volumeByHour: { hour: string; count: number }[];
   montantDistribution: { label: string; count: number }[];
@@ -78,24 +80,24 @@ const STATUS_LABELS: Record<string, string> = {
   returned:   'Retournées',
 };
 
-const STATUS_DONUT_COLORS = ['#22c55e', '#ef4444', '#f97316', '#3b82f6', '#6b7280', '#a855f7'];
+const STATUS_DONUT_COLORS = ['#2ea043', '#f85149', '#fd8c73', '#58a6ff', '#8b949e', '#bc8cff'];
 
 // A. Operator performance: threshold-based coloring (instant interpretation)
 function operatorColor(taux: number): string {
-  if (taux >= 80) return '#16a34a'; // green — good
-  if (taux >= 60) return '#d97706'; // orange — average
-  return '#dc2626';                 // red — needs training
+  if (taux >= 80) return '#2ea043'; // green — good
+  if (taux >= 60) return '#d29922'; // orange — average
+  return '#f85149';                 // red — needs training
 }
 
 // C. Failure reasons: dark-red → light-red scale by frequency rank
-const FAILURE_RED_SCALE = ['#7f1d1d', '#991b1b', '#b91c1c', '#dc2626', '#ef4444', '#f87171', '#fca5a5'];
+const FAILURE_RED_SCALE = ['#7f1d1d', '#f85149', '#f85149', '#f85149', '#f85149', '#f87171', '#fca5a5'];
 function failureColor(rank: number, total: number): string {
   const idx = Math.round((rank / Math.max(total - 1, 1)) * (FAILURE_RED_SCALE.length - 1));
   return FAILURE_RED_SCALE[idx];
 }
 
 // E. Montant distribution: light-blue → dark-blue scale by basket size rank
-const BASKET_BLUE_SCALE = ['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8', '#1e3a8a'];
+const BASKET_BLUE_SCALE = ['rgba(88,166,255,0.15)', '#58a6ff', '#58a6ff', '#58a6ff', '#58a6ff'];
 function basketColor(idx: number, total: number): string {
   const i = Math.round((idx / Math.max(total - 1, 1)) * (BASKET_BLUE_SCALE.length - 1));
   return BASKET_BLUE_SCALE[i];
@@ -130,6 +132,8 @@ function LoadingSkeleton() {
 /* ------------------------------------------------------------------ */
 
 export default function VentesOMSTab({ period }: VentesOMSTabProps) {
+  const theme = useTheme();
+  const gridStroke = theme.palette.divider;
   const { data: responseData, isLoading } = useRapportsVentes(period, true);
   const d = responseData?.data as VentesData | undefined;
 
@@ -143,7 +147,7 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
   return (
     <Box>
       {/* Source label */}
-      <Typography variant="caption" sx={{ color: '#ea580c', fontWeight: 500, display: 'block', mb: 2 }}>
+      <Typography variant="caption" sx={{ color: '#fd8c73', fontWeight: 500, display: 'block', mb: 2 }}>
         Source: Module OMS · Toutes données COD
       </Typography>
 
@@ -185,7 +189,7 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
               {minDay && (
                 <Box>
                   <Typography variant="h6" fontWeight={700}>{fmtDZD(minDay.ca)}</Typography>
-                  <Typography variant="caption" color="text.secondary">Jour calme (Vendredi)</Typography>
+                  <Typography variant="caption" color="text.secondary">Jour calme ({minDay.date})</Typography>
                 </Box>
               )}
             </Box>
@@ -199,38 +203,41 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
               Statuts Commandes — {fmtNumber(totalOrders)} total
             </Typography>
 
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={d.statusDistribution}
-                  dataKey="count"
-                  nameKey="status"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={65}
-                  outerRadius={110}
-                  paddingAngle={2}
-                  label={({ status, percent }: { status: string; percent: number }) =>
-                    `${STATUS_LABELS[status] ?? status}: ${(percent * 100).toFixed(0)}%`
-                  }
-                  labelLine={{ strokeWidth: 1 }}
-                >
-                  {d.statusDistribution.map((_, idx) => (
-                    <Cell key={idx} fill={STATUS_DONUT_COLORS[idx % STATUS_DONUT_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value: number, name: string) => [value, STATUS_LABELS[name] ?? name]} />
-              </PieChart>
-            </ResponsiveContainer>
+            <TableContainer sx={{ maxHeight: 280 }}>
+              <Table size="small" stickyHeader sx={{ '& td, & th': { py: 0.75, fontSize: 12 } }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>STATUT</TableCell>
+                    <TableCell sx={{ fontWeight: 700, textAlign: 'right' }}>COMMANDES</TableCell>
+                    <TableCell sx={{ fontWeight: 700, textAlign: 'right' }}>%</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {[...d.statusDistribution]
+                    .sort((a, b) => b.count - a.count)
+                    .map((row, idx) => {
+                      const pct = totalOrders > 0 ? (row.count / totalOrders) * 100 : 0;
+                      return (
+                        <TableRow key={row.status}>
+                          <TableCell>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: STATUS_DONUT_COLORS[idx % STATUS_DONUT_COLORS.length] }} />
+                              {STATUS_LABELS[row.status] ?? row.status}
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ fontFamily: 'monospace', fontWeight: 700, textAlign: 'right' }}>
+                            {fmtNumber(row.count)}
+                          </TableCell>
+                          <TableCell sx={{ fontFamily: 'monospace', textAlign: 'right', color: 'text.secondary' }}>
+                            {pct.toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-            {/* Insight banner */}
-            <Alert
-              severity="info"
-              icon={<TrendingUpIcon />}
-              sx={{ mt: 1, borderRadius: 1.5, '& .MuiAlert-message': { fontSize: 12 } }}
-            >
-              Livrées +2.3 pts vs M-1 · Échecs -11 pts · Les annulations auto (expiré) représentent 19% — principale perte de revenu.
-            </Alert>
           </Paper>
         </Grid>
       </Grid>
@@ -260,9 +267,9 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
                 </Bar>
                 <ReferenceLine
                   x={d.teamAvgTauxConfirmation}
-                  stroke="#ef4444"
+                  stroke="#f85149"
                   strokeDasharray="5 5"
-                  label={{ value: `Moy. ${d.teamAvgTauxConfirmation.toFixed(0)}%`, position: 'top', fill: '#ef4444', fontSize: 11 }}
+                  label={{ value: `Moy. ${d.teamAvgTauxConfirmation.toFixed(0)}%`, position: 'top', fill: '#f85149', fontSize: 11 }}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -294,7 +301,8 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>Carrier</TableCell>
-                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }} align="right">%</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }} align="right">Part</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: 12 }} align="right">Livrées %</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }} align="right">Délai</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }} align="right">Wilayas</TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }} align="right">Échecs</TableCell>
@@ -305,9 +313,14 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
                     <TableRow key={row.name}>
                       <TableCell sx={{ fontWeight: 600, fontSize: 13 }}>{row.name}</TableCell>
                       <TableCell align="right">
-                        <Box display="flex" alignItems="center" gap={0.5} justifyContent="flex-end">
-                          <Typography variant="body2" fontWeight={600}>{(row.tauxLivraison ?? 0).toFixed(0)}%</Typography>
-                        </Box>
+                        <Typography variant="body2" fontWeight={600} fontFamily="monospace">
+                          {(row.partPct ?? 0).toFixed(1)}%
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" fontWeight={600}>
+                          {row.tauxLivraison != null ? `${row.tauxLivraison.toFixed(0)}%` : '—'}
+                        </Typography>
                       </TableCell>
                       <TableCell align="right">{row.delaiMoyen != null ? `${row.delaiMoyen.toFixed(1)}j` : '—'}</TableCell>
                       <TableCell align="right">{row.wilayas}/48</TableCell>
@@ -322,16 +335,22 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
               </Table>
             </TableContainer>
 
-            {/* Worst carrier insight */}
-            {d.carrierPerformance.length > 0 && (() => {
-              const worst = [...d.carrierPerformance].sort((a, b) => a.tauxLivraison - b.tauxLivraison)[0];
+            {/* Worst carrier insight — only when enough concluded shipments exist to rank */}
+            {(() => {
+              const ranked = d.carrierPerformance
+                .filter((c) => c.tauxLivraison != null && (c.delivered + c.failed) >= 3)
+                .sort((a, b) => (a.tauxLivraison ?? 0) - (b.tauxLivraison ?? 0));
+              if (ranked.length < 2) return null;
+              const worst = ranked[0];
+              const best  = ranked[ranked.length - 1];
+              if ((worst.tauxLivraison ?? 0) >= 70 || worst.name === best.name) return null;
               return (
                 <Alert
                   severity="warning"
                   icon={<WarningAmberIcon />}
                   sx={{ mt: 1.5, borderRadius: 1.5, '& .MuiAlert-message': { fontSize: 11 } }}
                 >
-                  {worst.name}: taux livraison {(worst.tauxLivraison ?? 0).toFixed(0)}% (seuil: 70%). Réduire attribution {worst.name}, augmenter Maystro.
+                  {worst.name}: taux livraison {(worst.tauxLivraison ?? 0).toFixed(0)}% (seuil: 70%). Réduire attribution {worst.name}, augmenter {best.name}.
                 </Alert>
               );
             })()}
@@ -399,29 +418,29 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
               <AreaChart data={d.volumeByHour}>
                 <defs>
                   <linearGradient id="gradientVol" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#58a6ff" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#58a6ff" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridStroke} />
                 <XAxis dataKey="hour" tick={{ fontSize: 11 }} tickFormatter={(h) => `${h}h`} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip labelFormatter={(h) => `${h}h00`} />
                 {/* Peak zone 1: 10h–12h */}
-                <ReferenceArea x1={10} x2={12} fill="#dcfce7" fillOpacity={0.5} />
+                <ReferenceArea x1={10} x2={12} fill="rgba(46,160,67,0.15)" fillOpacity={0.5} />
                 {/* Peak zone 2: 20h–22h */}
-                <ReferenceArea x1={20} x2={22} fill="#dcfce7" fillOpacity={0.5} />
+                <ReferenceArea x1={20} x2={22} fill="rgba(46,160,67,0.15)" fillOpacity={0.5} />
                 {/* Trough: 14h–16h */}
                 <ReferenceArea x1={14} x2={16} fill="#f3f4f6" fillOpacity={0.7} />
                 <Area
                   type="monotone"
                   dataKey="count"
                   name="Commandes"
-                  stroke="#2563eb"
+                  stroke="#58a6ff"
                   strokeWidth={2.5}
                   fill="url(#gradientVol)"
                   dot={false}
-                  activeDot={{ r: 5, fill: '#2563eb' }}
+                  activeDot={{ r: 5, fill: '#58a6ff' }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -432,10 +451,10 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
               <Chip label="Pic 2: 20h–22h" size="small" color="primary" variant="outlined" icon={<TrendingUpIcon />} />
               <Chip label="Creux: 14h–16h" size="small" color="default" variant="outlined" icon={<TrendingDownIcon />} />
             </Box>
-            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#ea580c' }}>
+            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#fd8c73' }}>
               Pic 1: Ouverture sessions · Pic 2: Après-dîner · Creux: Sieste Algérie
             </Typography>
-            <Typography variant="caption" sx={{ color: '#ea580c' }}>
+            <Typography variant="caption" sx={{ color: '#fd8c73' }}>
               Staffing OMS optimal: +2 opérateurs 10h–12h et 20h–22h
             </Typography>
           </Paper>
@@ -465,7 +484,7 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
                   label={{
                     value: `Panier moyen: ${fmtDZD(d.panierMoyen)}`,
                     position: 'insideTopRight',
-                    fill: '#ef4444',
+                    fill: '#f85149',
                     fontSize: 12,
                   }}
                 />
@@ -473,7 +492,7 @@ export default function VentesOMSTab({ period }: VentesOMSTabProps) {
             </ResponsiveContainer>
 
             <Box display="flex" gap={1} mt={1} alignItems="center">
-              <Box sx={{ width: 60, height: 6, borderRadius: 1, background: 'linear-gradient(to right, #dbeafe, #1e3a8a)' }} />
+              <Box sx={{ width: 60, height: 6, borderRadius: 1, background: 'linear-gradient(to right, rgba(88,166,255,0.15), #58a6ff)' }} />
               <Typography variant="caption" color="text.secondary">Valeur panier: faible → élevé</Typography>
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>

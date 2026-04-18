@@ -7,6 +7,9 @@ export { useOMSQueue }      from './hooks/useOMSQueue';
 export { useConfirmOrder }  from './hooks/useConfirmOrder';
 export { useCancelOrder }   from './hooks/useCancelOrder';
 export { useAssignCarrier } from './hooks/useAssignCarrier';
+export { useDeliverOrder }  from './hooks/useDeliverOrder';
+export { useCreateOrder }   from './hooks/useCreateOrder';
+export { useReturnAction }  from './hooks/useReturnAction';
 
 // ─── stats/ — Subtask 2 ───────────────────────────────────────────────────────
 export { default as OMSPageHeader }    from './components/stats/OMSPageHeader';

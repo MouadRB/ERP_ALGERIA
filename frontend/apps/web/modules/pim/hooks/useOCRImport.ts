@@ -9,12 +9,14 @@ export const useOCRImport = () => {
 
   return useMutation({
     mutationFn: (body: { imageUrl: string }) =>
-      fetchBFF<ApiResponse<Partial<Product>>>('/bff/pim/ocr-import', {
+      fetchBFF<ApiResponse<Array<Partial<Product>>>>('/bff/pim/ocr-import', {
         method: 'POST',
         body,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pim', 'products'] });
+      // SYNC-12: OCR-imported products may appear in Catalogue enrichment
+      queryClient.invalidateQueries({ queryKey: ['catalogue'] });
     },
   });
 };

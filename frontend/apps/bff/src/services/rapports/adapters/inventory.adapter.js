@@ -1,80 +1,141 @@
-// Inventory Adapter — MOCK (static data)
-// TODO: Replace with real API call when Inventory module is merged
+// Inventory Adapter — LIVE data computed via inventory.service.
+// Rapport consumes the same enrichment pipeline Inventory itself uses so
+// reservations, FIFO valuation, movements and alerts always stay in sync.
 
-const env = require('../../../config/env');
+const inventoryService = require('../../inventory.service');
+const inventoryMocks   = () => require('../../../mocks/inventory.mock');
+const pimProducts      = () => require('../../../mocks/pim.mock').products;
+
+const CATEGORY_LABEL = {
+  Electronique: 'Électronique',
+  Mode:         'Mode & Vêtements',
+  Sport:        'Sport & Loisirs',
+  Maison:       'Maison & Déco',
+  Beaute:       'Beauté & Santé',
+  Alimentation: 'Alimentation',
+};
+
+function catLabel(key) { return CATEGORY_LABEL[key] || key || 'Autre'; }
 
 async function getInventoryOverview(/* period */) {
-  // if (!env.useMock) { return await fetch(...) }
+  const stock      = await inventoryService.getStock({ page: 1, pageSize: 1000 });
+  const alerts     = await inventoryService.getAlerts();
+  const movements  = (inventoryMocks().movements) || [];
+  const products   = pimProducts();
+
+  const items = stock.data || [];
+
+  // ── FIFO valuation ──
+  const totalValue = items.reduce((s, it) => s + (it.stockValue || 0), 0);
+  const valorisationFIFO = {
+    total: totalValue,
+    byWarehouse: [
+      { code: 'WH-01', name: 'Entrepôt Central Alger', value: totalValue, pct: 100 },
+    ],
+  };
+
+  // ── Alertes reappro ──
+  const alertesReappro = alerts.map((it) => ({
+    sku:     it.sku,
+    nameFr:  it.nameFr,
+    stock:   it.quantityAvailable,
+    seuil:   it.reorderPoint,
+    urgency: it.quantityAvailable <= 0 ? 'critique'
+           : it.quantityAvailable <= (it.reorderPoint || 0) / 2 ? 'haute'
+           : 'moyenne',
+  }));
+  const totalAlertes = alertesReappro.length;
+
+  // ── Movement type distribution ──
+  const typeMap = { reception: 0, sortie: 0, retour: 0, transfert: 0 };
+  movements.forEach((m) => {
+    if (m.type === 'receipt')         typeMap.reception += 1;
+    else if (m.type === 'sale')       typeMap.sortie    += 1;
+    else if (m.type === 'return')     typeMap.retour    += 1;
+    else if (m.type === 'transfer')   typeMap.transfert += 1;
+    else if (m.quantity > 0)          typeMap.reception += 1;
+    else                              typeMap.sortie    += 1;
+  });
+  const typesMouvements = { total: movements.length, ...typeMap };
+
+  // ── Active reservations (from enriched items, derived from OMS) ──
+  let soft = 0, hard = 0, quarantaine = 0;
+  items.forEach((it) => {
+    soft += it.softReserved || 0;
+    hard += it.hardReserved || 0;
+    quarantaine += it.quantityQuarantined || 0;
+  });
+  const reservationsActives = { total: soft + hard + quarantaine, soft, hard, quarantaine };
+
+  // ── Stock in quarantine ──
+  const stockQuarantaine = items
+    .filter((it) => (it.quantityQuarantined || 0) > 0 || (it.returns || []).some((r) => r.status === 'Quarantaine'))
+    .map((it) => ({
+      sku:        it.sku,
+      nameFr:     it.nameFr,
+      qty:        it.quantityQuarantined || (it.returns || []).filter((r) => r.status === 'Quarantaine').reduce((s, r) => s + (r.quantity || 0), 0),
+      reason:     (it.returns?.[0]?.reason) || 'Retour client',
+      inspection: (it.returns?.[0]?.inspectionStatus === 'pending') ? 'En attente' : 'Inspecté',
+    }));
+  const totalQuarantaine = stockQuarantaine.reduce((s, q) => s + (q.qty || 0), 0);
+
+  // ── Rotation by category ──
+  const catMap = {};
+  items.forEach((it) => {
+    const key = catLabel(it.categoryId);
+    if (!catMap[key]) catMap[key] = { category: key, stock: 0, vendu: 0 };
+    catMap[key].stock += it.stockValue || 0;
+    // Vendu = sum of sale movements for this SKU * costFifo
+    const saleQty = movements
+      .filter((m) => m.sku === it.sku && m.type === 'sale')
+      .reduce((s, m) => s + Math.abs(m.quantity || 0), 0);
+    catMap[key].vendu += saleQty * (it.costFifo || 0);
+  });
+  const rotationStock = Object.values(catMap).map((c) => ({
+    ...c,
+    rotation: c.stock > 0 ? Math.round((c.vendu / c.stock) * 10) / 10 : 0,
+  }));
+
+  // ── Top reserved SKUs (by reserved qty) ──
+  const topReserved = items
+    .filter((it) => (it.quantityReserved || 0) > 0)
+    .sort((a, b) => (b.quantityReserved || 0) - (a.quantityReserved || 0))
+    .slice(0, 5)
+    .map((it) => ({
+      sku:      it.sku,
+      nameFr:   it.nameFr,
+      reserved: it.quantityReserved,
+      type:     (it.hardReserved || 0) >= (it.softReserved || 0) ? 'hard' : 'soft',
+    }));
+
+  // ── FIFO layers by month × category ──
+  const layerMap = {};
+  items.forEach((it) => {
+    const cat = catLabel(it.categoryId).toLowerCase().split(' ')[0];
+    (it.fifoLayers || []).forEach((layer) => {
+      const m = new Date(layer.receivedAt).toISOString().slice(0, 7);
+      if (!layerMap[m]) layerMap[m] = { month: m, electronique: 0, mode: 0, sport: 0, autre: 0 };
+      const val = (layer.quantityRemaining || 0) * (layer.unitCostHT || 0);
+      if (cat.startsWith('élec') || cat.startsWith('elec')) layerMap[m].electronique += val;
+      else if (cat.startsWith('mode')) layerMap[m].mode += val;
+      else if (cat.startsWith('sport')) layerMap[m].sport += val;
+      else layerMap[m].autre += val;
+    });
+  });
+  const couchesFIFO = Object.values(layerMap).sort((a, b) => a.month.localeCompare(b.month));
 
   return {
-    valorisationFIFO: {
-      total: 48420000,
-      byWarehouse: [
-        { code: 'WH-01', name: 'Entrepôt Central Alger', value: 48420000, pct: 100 },
-      ],
-    },
-
-    alertesReappro: [
-      { sku: 'SKU-ELEC-001', nameFr: 'Écouteurs Bluetooth V5.3', stock: 12, seuil: 50, urgency: 'critique' },
-      { sku: 'SKU-MODE-005', nameFr: 'Veste Cuir Homme', stock: 3, seuil: 20, urgency: 'critique' },
-      { sku: 'SKU-ELEC-012', nameFr: 'Chargeur Rapide 65W', stock: 28, seuil: 100, urgency: 'haute' },
-      { sku: 'SKU-SPORT-007', nameFr: 'Tapis Yoga Premium', stock: 15, seuil: 40, urgency: 'haute' },
-      { sku: 'SKU-MODE-022', nameFr: 'Sneakers Running 42', stock: 42, seuil: 60, urgency: 'moyenne' },
-      { sku: 'SKU-MAISON-003', nameFr: 'Lampe LED Bureau', stock: 55, seuil: 80, urgency: 'moyenne' },
-      { sku: 'SKU-BEAUTE-008', nameFr: 'Parfum Oriental 50ml', stock: 8, seuil: 30, urgency: 'haute' },
-      { sku: 'SKU-ALIM-011', nameFr: 'Coffret Dattes Premium 1kg', stock: 22, seuil: 50, urgency: 'moyenne' },
-    ],
-    totalAlertes: 8,
-
-    typesMouvements: {
-      total: 1247,
-      reception:  520,
-      sortie:     480,
-      retour:     147,
-      transfert:  100,
-    },
-
-    reservationsActives: {
-      total:       342,
-      soft:        180,
-      hard:        120,
-      quarantaine: 42,
-    },
-
-    couchesFIFO: [
-      { month: 'Oct 2024', electronique: 12400000, mode: 8200000, sport: 3100000, autre: 2800000 },
-      { month: 'Nov 2024', electronique: 13100000, mode: 8800000, sport: 3400000, autre: 3000000 },
-      { month: 'Déc 2024', electronique: 14500000, mode: 9500000, sport: 3800000, autre: 3200000 },
-      { month: 'Jan 2025', electronique: 13800000, mode: 9100000, sport: 3500000, autre: 3100000 },
-      { month: 'Fév 2025', electronique: 14200000, mode: 9300000, sport: 3700000, autre: 3200000 },
-      { month: 'Mar 2025', electronique: 14800000, mode: 9600000, sport: 3900000, autre: 3100000 },
-    ],
-
+    valorisationFIFO,
+    alertesReappro,
+    totalAlertes,
+    typesMouvements,
+    reservationsActives,
+    couchesFIFO,
     transfertsInterEntrepot: [],
-
-    stockQuarantaine: [
-      { sku: 'SKU-ELEC-042', nameFr: 'Câble USB-C 2m', qty: 15, reason: 'Retour client – défaut', inspection: 'En attente' },
-      { sku: 'SKU-MODE-118', nameFr: 'T-shirt Oversize XL', qty: 8, reason: 'Retour client – taille', inspection: 'Inspecté' },
-      { sku: 'SKU-SPORT-033', nameFr: 'Ballon Football Pro', qty: 5, reason: 'Dommage transport', inspection: 'En attente' },
-    ],
-    totalQuarantaine: 42,
-
-    rotationStock: [
-      { category: 'Électronique',   rotation: 4.2, stock: 14800000, vendu: 62160000 },
-      { category: 'Mode & Vêtements', rotation: 3.8, stock: 9600000,  vendu: 36480000 },
-      { category: 'Sport & Loisirs',  rotation: 3.1, stock: 3900000,  vendu: 12090000 },
-      { category: 'Maison & Déco',    rotation: 2.5, stock: 3100000,  vendu: 7750000  },
-      { category: 'Beauté & Santé',   rotation: 2.8, stock: 2200000,  vendu: 6160000  },
-      { category: 'Alimentation',     rotation: 5.2, stock: 1800000,  vendu: 9360000  },
-    ],
-
-    topReserved: [
-      { sku: 'SKU-ELEC-001', nameFr: 'Écouteurs Bluetooth V5.3', reserved: 78, type: 'hard' },
-      { sku: 'SKU-MODE-022', nameFr: 'Sneakers Running 42',       reserved: 64, type: 'soft' },
-      { sku: 'SKU-ELEC-012', nameFr: 'Chargeur Rapide 65W',       reserved: 51, type: 'hard' },
-      { sku: 'SKU-SPORT-007', nameFr: 'Tapis Yoga Premium',       reserved: 38, type: 'soft' },
-      { sku: 'SKU-MODE-005', nameFr: 'Veste Cuir Homme',          reserved: 29, type: 'soft' },
-    ],
+    stockQuarantaine,
+    totalQuarantaine,
+    rotationStock,
+    topReserved,
   };
 }
 

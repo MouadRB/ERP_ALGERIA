@@ -7,10 +7,10 @@ import type { OperateursData, OperateurRow } from '../../hooks/useOMSAnalytics';
 
 /* ── Bar color ramp based on confirmation rate ─────────── */
 function getBarColor(taux: number, avg: number): string {
-  if (taux >= avg + 0.10) return '#2E7D32'; // excellent — green
-  if (taux >= avg)        return '#0D47A1'; // above avg — blue
-  if (taux >= avg - 0.10) return '#FF8A00'; // slightly below — amber
-  return '#C62828';                          // significantly below — red
+  if (taux >= avg + 0.10) return '#2ea043'; // excellent — green
+  if (taux >= avg)        return '#58a6ff'; // above avg — blue
+  if (taux >= avg - 0.10) return '#d29922'; // slightly below — amber
+  return '#f85149';                          // significantly below — red
 }
 
 /* ── Props ─────────────────────────────────────────────── */
@@ -68,12 +68,12 @@ export default function OperateurPerformanceChart({ data }: OperateurPerformance
             px: 1.5,
             py: 1,
             borderRadius: 2,
-            backgroundColor: '#FFFDE7',
-            border: '1px solid #FFF9C4',
+            backgroundColor: 'rgba(210,153,34,0.12)',
+            border: '1px solid #d29922',
           }}
         >
-          <WarningAmberRoundedIcon sx={{ fontSize: 16, color: '#F9A825' }} />
-          <Typography sx={{ fontSize: 11, color: '#5D4037', lineHeight: 1.4 }}>
+          <WarningAmberRoundedIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+          <Typography sx={{ fontSize: 11, color: 'text.primary', lineHeight: 1.4 }}>
             {underperformers.map((u) => u.name).join(', ')}:{' '}
             taux sous moyenne équipe ({Math.round(avg * 100)}%) — Formation recommandée.
           </Typography>
@@ -141,7 +141,7 @@ function OperatorRow({
             flex: 1,
             height: 10,
             borderRadius: 5,
-            backgroundColor: '#F0F0F0',
+            backgroundColor: 'action.hover',
             '& .MuiLinearProgress-bar': {
               borderRadius: 5,
               backgroundColor: barColor,

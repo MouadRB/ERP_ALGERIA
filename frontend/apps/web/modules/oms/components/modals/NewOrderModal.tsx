@@ -671,10 +671,9 @@ export default function NewOrderModal({ open, onClose }: Props) {
             {selectedItems.length === 0 && (
               <Box
                 sx={{
-                  border:          '1px solid',
-                  borderColor:     'divider',
+                  border: '1px solid', borderColor: 'divider',
                   borderRadius:    2,
-                  backgroundColor: '#F8FAFC',
+                  backgroundColor: (t) => t.palette.background.default,
                   py:              5,
                   display:         'flex',
                   flexDirection:   'column',
