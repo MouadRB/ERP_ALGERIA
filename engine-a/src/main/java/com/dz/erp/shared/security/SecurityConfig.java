@@ -28,7 +28,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**", "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/actuator/**").permitAll()
+                                "/actuator/**",
+                                "/oms/v1/carriers/webhook/**").permitAll()
 
                         .anyRequest().authenticated())
                 .build();

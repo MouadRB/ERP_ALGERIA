@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Generates JWT tokens for testing.
  *
- * Run with: mvn exec:java -Dexec.mainClass="com.dz.erp.shared.security.JwtTokenGenerator"
+ * Run with: mvn exec:java -Dexec.mainClass=" com.dz.erp.shared.security.JwtTokenGenerator"
  * Or just run the main method from your IDE.
  *
  * The tokens match exactly what JwtAuthenticationFilter expects:
