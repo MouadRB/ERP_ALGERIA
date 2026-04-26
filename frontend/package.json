@@ -3,7 +3,8 @@
   "private": true,
   "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "dev": "pnpm -r --parallel --filter @ferza/web --filter @ferza/bff dev",
+    "predev": "node scripts/postinstall.js",
+    "dev": "node scripts/dev.js",
     "build": "pnpm --filter @ferza/web build",
     "lint": "pnpm --filter @ferza/web lint",
     "typecheck": "pnpm -r run typecheck",
