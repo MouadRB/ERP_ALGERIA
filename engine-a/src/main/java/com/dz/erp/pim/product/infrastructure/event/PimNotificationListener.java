@@ -63,4 +63,32 @@ public class PimNotificationListener {
                         .params(Map.of("nameFr", e.nameFr(), "skuCode", e.skuCode(), "actorName", e.discontinuedBy()))
                         .referenceId(e.aggregateId()).referenceType("PRODUCT").build()));
     }
+
+    // ── Stock alert notifications (from Inventory via ProductIntraEngineEventListener) ──
+
+    @EventListener
+    public void on(ProductDomainEvent.StockLow e) {
+        List.of("INVENTORY_MANAGER", "PRODUCT_MANAGER", "SUPER_ADMIN").forEach(role ->
+                notificationService.create(NotificationCreateCommand.builder()
+                        .tenantId(e.tenantId()).targetRole(role).module("PIM")
+                        .eventType("PRODUCT_STOCK_LOW")
+                        .titleKey("notification.pim.PRODUCT_STOCK_LOW.title")
+                        .bodyKey("notification.pim.PRODUCT_STOCK_LOW.body")
+                        .params(Map.of("skuCode", e.skuCode(),
+                                "currentStock", String.valueOf(e.currentStock()),
+                                "threshold", String.valueOf(e.threshold())))
+                        .referenceId(e.aggregateId()).referenceType("PRODUCT").build()));
+    }
+
+    @EventListener
+    public void on(ProductDomainEvent.OutOfStock e) {
+        List.of("INVENTORY_MANAGER", "PROCUREMENT_MANAGER", "PRODUCT_MANAGER", "SUPER_ADMIN").forEach(role ->
+                notificationService.create(NotificationCreateCommand.builder()
+                        .tenantId(e.tenantId()).targetRole(role).module("PIM")
+                        .eventType("PRODUCT_OUT_OF_STOCK")
+                        .titleKey("notification.pim.PRODUCT_OUT_OF_STOCK.title")
+                        .bodyKey("notification.pim.PRODUCT_OUT_OF_STOCK.body")
+                        .params(Map.of("skuCode", e.skuCode()))
+                        .referenceId(e.aggregateId()).referenceType("PRODUCT").build()));
+    }
 }

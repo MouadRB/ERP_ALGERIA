@@ -4,6 +4,7 @@ import com.dz.erp.pim.variant.application.VariantAttributeService;
 import com.dz.erp.pim.variant.application.dto.SetVariantAttributeCommand;
 import com.dz.erp.pim.variant.application.dto.VariantAttributeResponse;
 import com.dz.erp.shared.api.ApiResult;
+import com.dz.erp.shared.security.Roles;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ public class VariantAttributeController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<VariantAttributeResponse> add(@PathVariable String productId,
                                                    @PathVariable String variantId,
                                                    @Valid @RequestBody SetVariantAttributeCommand cmd) {
@@ -29,7 +30,7 @@ public class VariantAttributeController {
     }
 
     @PutMapping("/{attributeId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<VariantAttributeResponse> update(@PathVariable String productId,
                                                       @PathVariable String variantId,
                                                       @PathVariable String attributeId,
@@ -38,14 +39,16 @@ public class VariantAttributeController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "','"
+            + Roles.INVENTORY_MANAGER + "','" + Roles.FINANCE_MANAGER + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<List<VariantAttributeResponse>> list(@PathVariable String productId,
                                                           @PathVariable String variantId) {
         return ApiResult.ok(svc.listByVariant(variantId));
     }
 
     @DeleteMapping("/{attributeId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<Void> delete(@PathVariable String productId,
                                   @PathVariable String variantId,
                                   @PathVariable String attributeId) {
