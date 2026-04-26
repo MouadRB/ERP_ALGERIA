@@ -14,6 +14,8 @@ export const useProcurementBCs = (params: UseProcurementBCsParams = {}) => {
   return useQuery({
     queryKey: ['procurement', 'bcs', params],
     queryFn: () =>
-      fetchBFF<ApiResponse<BonCommande[]>>('/bff/procurement', { params: params as Record<string, ParamValue> }),
+      fetchBFF<ApiResponse<BonCommande[]>>('/bff/procurement', {
+        params: params as Record<string, ParamValue>,
+      }),
   });
 };
