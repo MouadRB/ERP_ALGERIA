@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface OutboxJpaRepository extends JpaRepository<OutboxEventEntity, UUID> {
 
-    @Query("SELECT e FROM OutboxEventEntity e WHERE e.status IN (com.dz.erp.shared.outbox.OutboxStatus.NEW, com.dz.erp.shared.outbox.OutboxStatus.FAILED) " +
+    @Query("SELECT e FROM OutboxEventEntity e WHERE e.status IN ( com.dz.erp.shared.outbox.OutboxStatus.NEW,  com.dz.erp.shared.outbox.OutboxStatus.FAILED) " +
             "AND e.nextRetryAt <= :now ORDER BY e.createdAt ASC LIMIT :batch")
     List<OutboxEventEntity> findPending(@Param("now") Instant now, @Param("batch") int batch);
 
@@ -21,6 +21,6 @@ public interface OutboxJpaRepository extends JpaRepository<OutboxEventEntity, UU
     List<Object[]> countByStatus();
 
     @Modifying
-    @Query("DELETE FROM OutboxEventEntity e WHERE e.status = com.dz.erp.shared.outbox.OutboxStatus.SENT AND e.publishedAt < :cutoff")
+    @Query("DELETE FROM OutboxEventEntity e WHERE e.status =  com.dz.erp.shared.outbox.OutboxStatus.SENT AND e.publishedAt < :cutoff")
     int deleteSentBefore(@Param("cutoff") Instant cutoff);
 }
