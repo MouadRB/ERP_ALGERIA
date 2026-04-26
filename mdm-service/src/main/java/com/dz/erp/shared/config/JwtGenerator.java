@@ -19,7 +19,7 @@ public class JwtGenerator {
 
         String jwt = Jwts.builder()
                 .setClaims(claims)
-                .setSubject("user1222qd222222")
+                .setSubject("user1222222")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 3600_000)) // صلاحية ساعة
                 .signWith(key, SignatureAlgorithm.HS256)

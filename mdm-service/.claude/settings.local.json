@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Bash(curl -s -w '\\\\nHTTP:%{http_code}\\\\n' -X PATCH http://localhost:8080/mdm/v1/skus/__TRACKED_VAR__/discontinue -H 'Authorization: Bearer __TRACKED_VAR__')",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' http://localhost:8080/mdm/v1/skus/__TRACKED_VAR__)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' 'http://localhost:8081/pim/v1/products?search=__TRACKED_VAR__')",
+      "Bash(python -c ' *)"
+    ]
+  }
+}
