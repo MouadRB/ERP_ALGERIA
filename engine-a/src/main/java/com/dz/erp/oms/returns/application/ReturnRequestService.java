@@ -74,7 +74,8 @@ public class ReturnRequestService {
                 .toList();
         var request = ReturnRequest.create(tenantId, cmd.orderId(), lines,
                 cmd.reasonCode(), cmd.reasonMessage(),
-                AuthContext.currentUserId(), LocalDateTime.now());
+                AuthContext.currentUserId(), LocalDateTime.now(),
+                order.getShippingAddress().phone(), order.getExternalOrderRef());
 
         var saved = persistAndPublish(request);
         order.markReturnRequested(AuthContext.currentUserId(), LocalDateTime.now());
@@ -115,11 +116,13 @@ public class ReturnRequestService {
             inventoryReturns.approveInspection(tenantId, req.getInspectionId(),
                     AuthContext.currentUserId());
         }
-        req.closeApproved(LocalDateTime.now());
-        var saved = persistAndPublish(req);
 
         var order = orderRepo.findById(tenantId, req.getOrderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.OMS_ORDER_NOT_FOUND, req.getOrderId()));
+        req.closeApproved(LocalDateTime.now(),
+                order.getShippingAddress().phone(), order.getExternalOrderRef());
+        var saved = persistAndPublish(req);
+
         order.markReturned(AuthContext.currentUserId(), LocalDateTime.now());
         orderRepo.save(order);
         return saved;
@@ -136,11 +139,13 @@ public class ReturnRequestService {
             inventoryReturns.rejectInspection(tenantId, req.getInspectionId(),
                     AuthContext.currentUserId());
         }
-        req.closeRejected(LocalDateTime.now());
-        var saved = persistAndPublish(req);
 
         var order = orderRepo.findById(tenantId, req.getOrderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.OMS_ORDER_NOT_FOUND, req.getOrderId()));
+        req.closeRejected(LocalDateTime.now(),
+                order.getShippingAddress().phone(), order.getExternalOrderRef());
+        var saved = persistAndPublish(req);
+
         // Rejected returns leave the order in its current return-in-inspection state — CS may
         // reopen or transition to COMPLETED manually. We auto-complete for now.
         order.markCompleted(AuthContext.currentUserId(), LocalDateTime.now());

@@ -6,6 +6,7 @@ import com.dz.erp.inventory.returns.application.dto.ReturnInspectionResponse;
 import com.dz.erp.inventory.returns.application.service.ReturnInspectionService;
 import com.dz.erp.inventory.returns.domain.model.InspectionStatus;
 import com.dz.erp.shared.api.ApiResult;
+import com.dz.erp.shared.security.Roles;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,26 +23,31 @@ public class ReturnInspectionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "')")
     public ApiResult<ReturnInspectionResponse> createReturn(@Valid @RequestBody CreateReturnCommand cmd) {
         return ApiResult.ok(svc.createReturn(cmd), "return.created");
     }
 
     @PatchMapping("/{id}/approve")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "')")
     public ApiResult<ReturnInspectionResponse> approve(@PathVariable String id) {
         return ApiResult.ok(svc.approveReturn(id), "return.approved");
     }
 
     @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "')")
     public ApiResult<ReturnInspectionResponse> reject(@PathVariable String id,
                                                        @Valid @RequestBody InspectReturnCommand cmd) {
         return ApiResult.ok(svc.rejectReturn(id, cmd), "return.rejected");
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "','" + Roles.PROCUREMENT_MANAGER + "','"
+            + Roles.LOGISTICS_AGENT + "','" + Roles.REPORTING_ANALYST + "')")
     public ApiResult<Page<ReturnInspectionResponse>> list(
             @RequestParam(required = false) InspectionStatus status,
             Pageable pageable) {
@@ -49,7 +55,9 @@ public class ReturnInspectionController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "','" + Roles.PROCUREMENT_MANAGER + "','"
+            + Roles.LOGISTICS_AGENT + "','" + Roles.REPORTING_ANALYST + "')")
     public ApiResult<ReturnInspectionResponse> getById(@PathVariable String id) {
         return ApiResult.ok(svc.getById(id), "return.found");
     }

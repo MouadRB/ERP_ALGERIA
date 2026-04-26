@@ -128,13 +128,20 @@ public class Order {
         order.pendingEvents.add(new OrderDomainEvent.OrderReceived(
                 UUID.randomUUID().toString(), OmsEventTypes.ORDER_RECEIVED, 1,
                 tenantId, OmsEventTypes.AGGREGATE_ORDER, orderId.toString(), toInstant(now),
-                channelCode, externalOrderRef, customerId, paymentMethod, currency, grandTotalTtc));
+                channelCode, externalOrderRef, customerId, paymentMethod, currency, grandTotalTtc,
+                shippingAddress.phone(), shippingAddress.recipientName(), parseWilaya(shippingAddress.wilayaCode())));
 
         return order;
     }
 
     private static Instant toInstant(LocalDateTime ts) {
         return ts.toInstant(ZoneOffset.UTC);
+    }
+
+    private static Integer parseWilaya(String code) {
+        if (code == null || code.isBlank()) return null;
+        try { return Integer.valueOf(code.trim()); }
+        catch (NumberFormatException e) { return null; }
     }
 
     /**
@@ -234,7 +241,9 @@ public class Order {
         this.pendingEvents.add(new OrderDomainEvent.OrderRejected(
                 UUID.randomUUID().toString(), OmsEventTypes.ORDER_REJECTED, 1,
                 tenantId, OmsEventTypes.AGGREGATE_ORDER, orderId.toString(), toInstant(now),
-                reasonCode, reasonMessage));
+                reasonCode, reasonMessage,
+                shippingAddress.phone(), shippingAddress.recipientName(), parseWilaya(shippingAddress.wilayaCode()),
+                externalOrderRef));
     }
 
     // ──────────────────────────────────────────────
@@ -281,7 +290,9 @@ public class Order {
         this.confirmedAt = now;
         this.pendingEvents.add(new OrderDomainEvent.OrderConfirmed(
                 UUID.randomUUID().toString(), OmsEventTypes.ORDER_CONFIRMED, 1,
-                tenantId, OmsEventTypes.AGGREGATE_ORDER, orderId.toString(), toInstant(now)));
+                tenantId, OmsEventTypes.AGGREGATE_ORDER, orderId.toString(), toInstant(now),
+                shippingAddress.phone(), shippingAddress.recipientName(), parseWilaya(shippingAddress.wilayaCode()),
+                externalOrderRef));
     }
 
     /**
@@ -303,7 +314,9 @@ public class Order {
         this.pendingEvents.add(new OrderDomainEvent.OrderCancelled(
                 UUID.randomUUID().toString(), OmsEventTypes.ORDER_CANCELLED, 1,
                 tenantId, OmsEventTypes.AGGREGATE_ORDER, orderId.toString(), toInstant(now),
-                reasonCode, reasonMessage));
+                reasonCode, reasonMessage,
+                shippingAddress.phone(), shippingAddress.recipientName(), parseWilaya(shippingAddress.wilayaCode()),
+                externalOrderRef));
     }
 
     // ──────────────────────────────────────────────
@@ -440,7 +453,9 @@ public class Order {
         this.pendingEvents.add(new OrderDomainEvent.OrderStatusChanged(
                 UUID.randomUUID().toString(), eventType, 1,
                 tenantId, OmsEventTypes.AGGREGATE_ORDER, orderId.toString(), toInstant(now),
-                previous, to, eventType));
+                previous, to, eventType,
+                shippingAddress.phone(), shippingAddress.recipientName(), parseWilaya(shippingAddress.wilayaCode()),
+                externalOrderRef, grandTotalTtc));
     }
 
     // ──────────────────────────────────────────────

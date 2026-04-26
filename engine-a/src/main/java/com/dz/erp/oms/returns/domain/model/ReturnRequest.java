@@ -39,7 +39,8 @@ public class ReturnRequest {
 
     public static ReturnRequest create(String tenantId, UUID orderId, List<ReturnLine> lines,
                                        String reasonCode, String reasonMessage,
-                                       String requestedBy, LocalDateTime now) {
+                                       String requestedBy, LocalDateTime now,
+                                       String customerPhone, String externalOrderRef) {
         if (lines == null || lines.isEmpty()) throw new IllegalArgumentException("at least one line");
         var r = new ReturnRequest(UUID.randomUUID(), tenantId, orderId, reasonCode, reasonMessage,
                 requestedBy, new ArrayList<>(lines), ReturnStatus.REQUESTED,
@@ -47,7 +48,8 @@ public class ReturnRequest {
         r.pendingEvents.add(new ReturnDomainEvent.ReturnRequested(
                 UUID.randomUUID().toString(), OmsEventTypes.RETURN_REQUESTED, 1,
                 tenantId, OmsEventTypes.AGGREGATE_RETURN, r.returnId.toString(), toInstant(now),
-                orderId.toString(), lines.size(), reasonCode));
+                orderId.toString(), lines.size(), reasonCode,
+                reasonMessage, customerPhone, externalOrderRef));
         return r;
     }
 
@@ -104,7 +106,7 @@ public class ReturnRequest {
                 orderId.toString(), carrierCode));
     }
 
-    public void closeApproved(LocalDateTime now) {
+    public void closeApproved(LocalDateTime now, String customerPhone, String externalOrderRef) {
         if (status != ReturnStatus.IN_INSPECTION) {
             throw new IllegalStateException("Cannot close return from " + status);
         }
@@ -114,10 +116,11 @@ public class ReturnRequest {
         this.pendingEvents.add(new ReturnDomainEvent.ReturnClosed(
                 UUID.randomUUID().toString(), OmsEventTypes.RETURN_CLOSED, 1,
                 tenantId, OmsEventTypes.AGGREGATE_RETURN, returnId.toString(), toInstant(now),
-                orderId.toString(), true));
+                orderId.toString(), true,
+                customerPhone, externalOrderRef));
     }
 
-    public void closeRejected(LocalDateTime now) {
+    public void closeRejected(LocalDateTime now, String customerPhone, String externalOrderRef) {
         if (status != ReturnStatus.IN_INSPECTION) {
             throw new IllegalStateException("Cannot close return from " + status);
         }
@@ -127,7 +130,8 @@ public class ReturnRequest {
         this.pendingEvents.add(new ReturnDomainEvent.ReturnClosed(
                 UUID.randomUUID().toString(), OmsEventTypes.RETURN_CLOSED, 1,
                 tenantId, OmsEventTypes.AGGREGATE_RETURN, returnId.toString(), toInstant(now),
-                orderId.toString(), false));
+                orderId.toString(), false,
+                customerPhone, externalOrderRef));
     }
 
     public List<ReturnDomainEvent> drainEvents() {

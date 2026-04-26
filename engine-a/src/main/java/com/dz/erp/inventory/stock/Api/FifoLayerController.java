@@ -4,6 +4,7 @@ import com.dz.erp.inventory.stock.application.dto.FifoLayerResponse;
 import com.dz.erp.inventory.stock.application.dto.FifoSummaryResponse;
 import com.dz.erp.inventory.stock.application.service.FifoLayerService;
 import com.dz.erp.shared.api.ApiResult;
+import com.dz.erp.shared.security.Roles;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,13 +21,17 @@ public class FifoLayerController {
     private final FifoLayerService fifoLayerService;
 
     @GetMapping("/by-stock-record/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "','" + Roles.FINANCE_MANAGER + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<List<FifoLayerResponse>> getLayersByStockRecord(@PathVariable String id) {
         return ApiResult.ok(fifoLayerService.getLayersByStockRecordId(id), "fifo.layers");
     }
 
     @GetMapping("/summary/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "','" + Roles.FINANCE_MANAGER + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<FifoSummaryResponse> getSummary(@PathVariable String id) {
         return ApiResult.ok(fifoLayerService.getSummary(id), "fifo.summary");
     }

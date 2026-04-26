@@ -1,0 +1,117 @@
+===========================================================
+ CATALOG API TEST REPORT
+ Target:   http://localhost:8081
+ Date:     Fri Apr 24 10:14:31 WCAST 2026
+ RBAC:     Authoritative Matrix v2.0
+ Seed:     category=ELEC-SMARTPHONES, sku=SKU12345
+===========================================================
+
+ SUMMARY:  PASS=34   FAIL=0   TOTAL=34
+===========================================================
+
+========= SUCCESSFUL (PASS) ================================
+[CAT01] GET   /catalog/v1/analytics                                role=INVENTORY_MANAGER    exp=200 got=200
+      body: {"success":true,"data":{"publicationStabilityPercent":100.0,"maxPublished":1,"maxMasked":0,"topSearches":[],"searchGaps":[],"coverage":{"webAndWhatsapp":0,"webOnly":1,"waOnly":0,"unpublished":0},"indexAlerts":[]},"timest
+
+[CAT02] GET   /catalog/v1/analytics                                role=WAREHOUSE_OPERATOR   exp=403 got=403
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T09:14:22.980834500Z"}
+
+[CAT03] GET   /catalog/v1/categories                               role=INVENTORY_MANAGER    exp=200 got=200
+      body: {"success":true,"data":[{"id":"96efb41e-d734-47f1-854f-8635a45500ea","code":"ELEC-SMARTPHONES","nameFr":"Smartphones & Tablettes","nameAr":"الهواتف والأجهزة اللوحية","position":1,"active":true,"prod
+
+[CAT04] GET   /catalog/v1/categories/ELEC-SMARTPHONES              role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"96efb41e-d734-47f1-854f-8635a45500ea","tenantId":"default","parentId":null,"code":"ELEC-SMARTPHONES","nameFr":"Smartphones & Tablettes","nameAr":"الهواتف والأجهزة اللوحي
+
+[CAT05] POST  /catalog/v1/categories                               role=PRODUCT_MANAGER      exp=201 got=201
+      body: {"success":true,"data":{"id":"63e54e35-2281-4a87-b5da-c8b1db1bed22","tenantId":"default","parentId":null,"code":"TEST-CAT-001","nameFr":"Test Category","nameAr":"??? ??????","slugFr":"test-category","slugAr":"","metaTitl
+
+[CAT06] POST  /catalog/v1/categories                               role=WAREHOUSE_OPERATOR   exp=403 got=403
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T09:14:23.985086Z"}
+
+[CAT07] PUT   /catalog/v1/categories/TEST-CAT-001                  role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"63e54e35-2281-4a87-b5da-c8b1db1bed22","tenantId":"default","parentId":null,"code":"TEST-CAT-001","nameFr":"Test Category Updated","nameAr":"?????","slugFr":"test-category-updated","slugAr":"
+
+[CAT08] DELETE /catalog/v1/categories/TEST-CAT-001                  role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"message":"category.deleted","timestamp":"2026-04-24T09:14:24.362683400Z"}
+
+[CAT09] GET   /catalog/v1/categories                               role=LOGISTICS_AGENT      exp=403 got=403
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T09:14:24.629970100Z"}
+
+[CAT10] GET   /catalog/v1/channels                                 role=INVENTORY_MANAGER    exp=200 got=200
+      body: {"success":true,"data":[{"id":"570b5adc-8bc0-4e67-83eb-acb698d6d2d7","channelType":"WEB","active":false,"rules":{"autoMaskOnZeroStock":true,"autoRepublishOnStock":true,"excludeZeroPrice":true,"excludeNegativeStock":true,
+
+[CAT11] GET   /catalog/v1/channels/WEB                             role=INVENTORY_MANAGER    exp=200 got=200
+      body: {"success":true,"data":{"id":"570b5adc-8bc0-4e67-83eb-acb698d6d2d7","channelType":"WEB","active":false,"rules":{"autoMaskOnZeroStock":true,"autoRepublishOnStock":true,"excludeZeroPrice":true,"excludeNegativeStock":true,"
+
+[CAT12] PUT   /catalog/v1/channels/WEB/rules                       role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"570b5adc-8bc0-4e67-83eb-acb698d6d2d7","channelType":"WEB","active":false,"rules":{"autoMaskOnZeroStock":true,"autoRepublishOnStock":true,"excludeZeroPrice":true,"excludeNegativeStock":true,"
+
+[CAT13] PATCH /catalog/v1/channels/WEB/activate                    role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"570b5adc-8bc0-4e67-83eb-acb698d6d2d7","channelType":"WEB","active":true,"rules":{"autoMaskOnZeroStock":true,"autoRepublishOnStock":true,"excludeZeroPrice":true,"excludeNegativeStock":true,"e
+
+[CAT14] PATCH /catalog/v1/channels/WEB/deactivate                  role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"570b5adc-8bc0-4e67-83eb-acb698d6d2d7","channelType":"WEB","active":false,"rules":{"autoMaskOnZeroStock":true,"autoRepublishOnStock":true,"excludeZeroPrice":true,"excludeNegativeStock":true,"
+
+[CAT15] PATCH /catalog/v1/channels/WEB/activate                    role=WAREHOUSE_OPERATOR   exp=403 got=403
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T09:14:25.635219500Z"}
+
+[CAT16] GET   /catalog/v1/channels/whatsapp/sync/status            role=SUPER_ADMIN          exp=200 got=200
+      body: {"success":true,"data":{"lastSyncAt":null,"productsSynced":0,"errorsLastRun":0,"nextSyncAt":null},"timestamp":"2026-04-24T09:14:25.814522700Z"}
+
+[CAT17] POST  /catalog/v1/channels/whatsapp/sync                   role=SUPER_ADMIN          exp=200 got=200
+      body: {"success":true,"data":{"syncedCount":0,"excludedCount":0,"errorCount":0,"durationMs":0},"message":"whatsapp.sync.triggered","timestamp":"2026-04-24T09:14:25.956236200Z"}
+
+[CAT18] POST  /catalog/v1/channels/whatsapp/sync                   role=WAREHOUSE_OPERATOR   exp=403 got=403
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T09:14:26.123378800Z"}
+
+[CAT19] POST  /catalog/v1/products/SKU12345/publish                role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"506ef998-3c40-4bb0-afc1-7920bc4d8ed6","skuCode":"SKU12345","categoryId":"96efb41e-d734-47f1-854f-8635a45500ea","tenantId":"default","status":"PUBLISHED","maskedReason":null,"activeChannels":
+
+[CAT20] GET   /catalog/v1/products/SKU12345                        role=INVENTORY_MANAGER    exp=200 got=200
+      body: {"success":true,"data":{"id":"506ef998-3c40-4bb0-afc1-7920bc4d8ed6","skuCode":"SKU12345","categoryId":"96efb41e-d734-47f1-854f-8635a45500ea","tenantId":"default","status":"PUBLISHED","maskedReason":null,"activeChannels":
+
+[CAT21] GET   /catalog/v1/products/SKU12345/diagnostic             role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"skuCode":"SKU12345","totalScore":1.00,"checks":[{"rule":"Stock disponible > 0","passed":true,"detail":"Visible"},{"rule":"Statut PIM: Actif","passed":true,"detail":"Actif"},{"rule":"Prix > 0 DZD"
+
+[CAT22] POST  /catalog/v1/products/SKU12345/channels/WEB/toggle?enabled=false role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"506ef998-3c40-4bb0-afc1-7920bc4d8ed6","skuCode":"SKU12345","categoryId":"96efb41e-d734-47f1-854f-8635a45500ea","tenantId":"default","status":"PUBLISHED","maskedReason":null,"activeChannels":
+
+[CAT23] POST  /catalog/v1/products/SKU12345/rules/MASK_IF_STOCK_ZERO/toggle?enabled=true role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"506ef998-3c40-4bb0-afc1-7920bc4d8ed6","skuCode":"SKU12345","categoryId":"96efb41e-d734-47f1-854f-8635a45500ea","tenantId":"default","status":"PUBLISHED","maskedReason":null,"activeChannels":
+
+[CAT24] POST  /catalog/v1/products/SKU12345/schedule               role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"506ef998-3c40-4bb0-afc1-7920bc4d8ed6","skuCode":"SKU12345","categoryId":"96efb41e-d734-47f1-854f-8635a45500ea","tenantId":"default","status":"SCHEDULED","maskedReason":null,"activeChannels":
+
+[CAT25] DELETE /catalog/v1/products/SKU12345/schedule               role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"506ef998-3c40-4bb0-afc1-7920bc4d8ed6","skuCode":"SKU12345","categoryId":"96efb41e-d734-47f1-854f-8635a45500ea","tenantId":"default","status":"DRAFT","maskedReason":null,"activeChannels":["WH
+
+[CAT26] POST  /catalog/v1/products/SKU12345/unpublish              role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"id":"506ef998-3c40-4bb0-afc1-7920bc4d8ed6","skuCode":"SKU12345","categoryId":"96efb41e-d734-47f1-854f-8635a45500ea","tenantId":"default","status":"MASKED_MANUAL","maskedReason":"MANUAL","activeCh
+
+[CAT27] POST  /catalog/v1/products/bulk                            role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"total":1,"success":1,"failed":0,"results":[{"skuCode":"SKU12345","success":true,"error":null}]},"message":"catalog.bulk.completed","timestamp":"2026-04-24T09:14:30.257057400Z"}
+
+[CAT28] POST  /catalog/v1/products/SKU12345/publish                role=WAREHOUSE_OPERATOR   exp=403 got=403
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T09:14:30.393672600Z"}
+
+[CAT29] GET   /catalog/v1/search?q=smartphone&page=0&size=10       role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"hits":[{"skuCode":"SKU12345","nameFr":"Casque Audio Sans Fil","nameAr":"سماعة رأس لاسلكية","principalImageUrl":null,"priceTtc":"2500.0","stockDisponible":500,"badges":[],"score":0.
+
+[CAT30] GET   /catalog/v1/search/suggest?q=smart                   role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"suggestions":[]},"timestamp":"2026-04-24T09:14:31.014216900Z"}
+
+[CAT31] GET   /catalog/v1/search/index-status                      role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"data":{"clusterStatus":"yellow","documentCount":1,"averageLatencyMs":25,"lastIndexedAgo":"live","relevanceScore":0.87},"timestamp":"2026-04-24T09:14:31.150077700Z"}
+
+[CAT32] POST  /catalog/v1/search/reindex                           role=PRODUCT_MANAGER      exp=200 got=200
+      body: {"success":true,"message":"opensearch.reindex.triggered","timestamp":"2026-04-24T09:14:31.359928300Z"}
+
+[CAT33] POST  /catalog/v1/search/reindex                           role=WAREHOUSE_OPERATOR   exp=403 got=403
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T09:14:31.503367Z"}
+
+[CAT34] GET   /catalog/v1/categories                               role=NO_TOKEN             exp=403 got=403
+      body: 
+
+========= FAILED (FAIL) ====================================
+(none)
+

@@ -1,6 +1,7 @@
 package com.dz.erp.oms.order.Api;
 
 import com.dz.erp.oms.common.OmsApiPaths;
+import com.dz.erp.oms.common.OmsRoles;
 import com.dz.erp.oms.order.application.OrderSearchService;
 import com.dz.erp.oms.order.application.dto.OrderSearchResponse;
 import com.dz.erp.shared.api.ApiResult;
@@ -30,7 +31,10 @@ public class OrderSearchController {
     private final OrderSearchService searchService;
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('" + OmsRoles.SUPER_ADMIN + "','" + OmsRoles.SALES_MANAGER + "','"
+            + OmsRoles.CS_AGENT + "','" + OmsRoles.CRM_AGENT + "','" + OmsRoles.WAREHOUSE_OPERATOR + "','"
+            + OmsRoles.LOGISTICS_AGENT + "','" + OmsRoles.PROCUREMENT_MANAGER + "','"
+            + OmsRoles.FINANCE_MANAGER + "','" + OmsRoles.REPORTING_ANALYST + "')")
     public ApiResult<OrderSearchResponse> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String status,

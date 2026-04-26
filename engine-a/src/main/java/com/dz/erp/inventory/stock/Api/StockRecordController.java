@@ -5,6 +5,7 @@ import com.dz.erp.inventory.stock.application.service.StockMovementService;
 import com.dz.erp.inventory.stock.application.service.StockRecordService;
 import com.dz.erp.inventory.stock.domain.model.StockStatus;
 import com.dz.erp.shared.api.ApiResult;
+import com.dz.erp.shared.security.Roles;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,7 +21,9 @@ public class StockRecordController {
     private final StockMovementService movementService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER','WAREHOUSE_OPERATOR')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "','" + Roles.PROCUREMENT_MANAGER + "','"
+            + Roles.LOGISTICS_AGENT + "','" + Roles.REPORTING_ANALYST + "')")
     public ApiResult<Page<StockRecordResponse>> search(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) StockStatus status,
@@ -29,40 +32,48 @@ public class StockRecordController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER','WAREHOUSE_OPERATOR')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "','" + Roles.PROCUREMENT_MANAGER + "','"
+            + Roles.LOGISTICS_AGENT + "','" + Roles.REPORTING_ANALYST + "')")
     public ApiResult<StockRecordResponse> getById(@PathVariable String id) {
         return ApiResult.ok(stockRecordService.getById(id), "stock.found");
     }
 
     @GetMapping("/by-sku/{skuCode}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "','" + Roles.PROCUREMENT_MANAGER + "','"
+            + Roles.LOGISTICS_AGENT + "','" + Roles.REPORTING_ANALYST + "')")
     public ApiResult<StockRecordResponse> getBySkuCode(@PathVariable String skuCode) {
         return ApiResult.ok(stockRecordService.getBySkuCode(skuCode), "stock.found");
     }
 
     @PostMapping("/{id}/receive")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "')")
     public ApiResult<StockRecordResponse> receiveStock(@PathVariable String id,
                                                         @Valid @RequestBody ReceiveStockCommand cmd) {
         return ApiResult.ok(stockRecordService.receiveStock(id, cmd), "stock.received");
     }
 
     @PostMapping("/{id}/adjust")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "')")
     public ApiResult<StockRecordResponse> adjustStock(@PathVariable String id,
                                                        @Valid @RequestBody AdjustStockCommand cmd) {
         return ApiResult.ok(stockRecordService.adjustStock(id, cmd), "stock.adjusted");
     }
 
     @PatchMapping("/{id}/threshold")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "')")
     public ApiResult<StockRecordResponse> updateThreshold(@PathVariable String id,
                                                            @Valid @RequestBody UpdateThresholdCommand cmd) {
         return ApiResult.ok(stockRecordService.updateThresholds(id, cmd), "stock.threshold.updated");
     }
 
     @GetMapping("/{id}/evolution")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "','" + Roles.PROCUREMENT_MANAGER + "','"
+            + Roles.LOGISTICS_AGENT + "','" + Roles.REPORTING_ANALYST + "')")
     public ApiResult<StockEvolutionResponse> getEvolution(@PathVariable String id) {
         return ApiResult.ok(movementService.getEvolution(id), "stock.evolution");
     }

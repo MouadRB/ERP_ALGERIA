@@ -5,6 +5,7 @@ import com.dz.erp.catalog.product.application.dto.*;
 import com.dz.erp.catalog.shared.domain.ChannelType;
 import com.dz.erp.catalog.shared.domain.VisibilityRule;
 import com.dz.erp.shared.api.ApiResult;
+import com.dz.erp.shared.security.Roles;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,13 +21,15 @@ public class CatalogProductController {
     private final CatalogProductService service;
 
     @GetMapping("/{skuCode}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER','INVENTORY_MANAGER','FINANCE_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "','"
+            + Roles.INVENTORY_MANAGER + "','" + Roles.FINANCE_MANAGER + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<CatalogProductResponse> getDetail(@PathVariable String skuCode) {
         return ApiResult.ok(service.getProductDetail(skuCode));
     }
 
     @PostMapping("/{skuCode}/publish")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<CatalogProductResponse> publish(@PathVariable String skuCode,
                                                       @Valid @RequestBody PublishProductCommand cmd) {
         validatePathMatchesBody(skuCode, cmd.skuCode());
@@ -34,13 +37,13 @@ public class CatalogProductController {
     }
 
     @PostMapping("/{skuCode}/unpublish")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<CatalogProductResponse> unpublish(@PathVariable String skuCode) {
         return ApiResult.ok(service.unpublishProduct(new UnpublishProductCommand(skuCode)), "catalog.product.unpublished");
     }
 
     @PostMapping("/{skuCode}/schedule")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<CatalogProductResponse> schedule(@PathVariable String skuCode,
                                                        @Valid @RequestBody SchedulePublicationCommand cmd) {
         validatePathMatchesBody(skuCode, cmd.skuCode());
@@ -48,13 +51,13 @@ public class CatalogProductController {
     }
 
     @DeleteMapping("/{skuCode}/schedule")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<CatalogProductResponse> cancelSchedule(@PathVariable String skuCode) {
         return ApiResult.ok(service.cancelSchedule(skuCode), "catalog.product.schedule.cancelled");
     }
 
     @PostMapping("/{skuCode}/channels/{channel}/toggle")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<CatalogProductResponse> toggleChannel(@PathVariable String skuCode,
                                                             @PathVariable String channel,
                                                             @RequestParam boolean enabled) {
@@ -63,7 +66,7 @@ public class CatalogProductController {
     }
 
     @PostMapping("/{skuCode}/rules/{rule}/toggle")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<CatalogProductResponse> toggleRule(@PathVariable String skuCode,
                                                          @PathVariable String rule,
                                                          @RequestParam boolean enabled) {
@@ -72,13 +75,14 @@ public class CatalogProductController {
     }
 
     @GetMapping("/{skuCode}/diagnostic")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<DiagnosticResponse> diagnostic(@PathVariable String skuCode) {
         return ApiResult.ok(service.getDiagnostic(skuCode));
     }
 
     @PostMapping("/bulk")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<BulkActionResponse> bulk(@Valid @RequestBody BulkActionCommand cmd) {
         return ApiResult.ok(service.bulkAction(cmd), "catalog.bulk.completed");
     }

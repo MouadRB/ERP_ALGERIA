@@ -62,7 +62,10 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('" + OmsRoles.SUPER_ADMIN + "','" + OmsRoles.SALES_MANAGER + "','"
+            + OmsRoles.CS_AGENT + "','" + OmsRoles.CRM_AGENT + "','" + OmsRoles.WAREHOUSE_OPERATOR + "','"
+            + OmsRoles.LOGISTICS_AGENT + "','" + OmsRoles.PROCUREMENT_MANAGER + "','"
+            + OmsRoles.FINANCE_MANAGER + "','" + OmsRoles.REPORTING_ANALYST + "')")
     public ApiResult<OrderResponse> getOne(@PathVariable UUID id) {
         return ApiResult.ok(intake.getById(id));
     }
@@ -94,17 +97,22 @@ public class OrderController {
     /**
      * Warehouse signals packing is complete — transitions CONFIRMED → PACKED.
      * The PACKED status change fires {@code OrderPackedListener}, which submits
-     * the shipment to the resolved carrier automatically.
+     * the shipment to the resolved carrier automatically. Logistics Agent may
+     * also drive this transition per the RBAC matrix (Orders: Update).
      */
     @PostMapping("/{id}/packed")
-    @PreAuthorize("hasAnyRole('" + OmsRoles.SUPER_ADMIN + "','" + OmsRoles.WAREHOUSE_STAFF + "')")
+    @PreAuthorize("hasAnyRole('" + OmsRoles.SUPER_ADMIN + "','" + OmsRoles.WAREHOUSE_OPERATOR
+            + "','" + OmsRoles.LOGISTICS_AGENT + "')")
     public ApiResult<OrderResponse> markPacked(@PathVariable UUID id) {
         shipment.markPacked(id);
         return ApiResult.ok(intake.getById(id), "oms.order.packed");
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('" + OmsRoles.SUPER_ADMIN + "','" + OmsRoles.SALES_MANAGER + "','"
+            + OmsRoles.CS_AGENT + "','" + OmsRoles.CRM_AGENT + "','" + OmsRoles.WAREHOUSE_OPERATOR + "','"
+            + OmsRoles.LOGISTICS_AGENT + "','" + OmsRoles.PROCUREMENT_MANAGER + "','"
+            + OmsRoles.FINANCE_MANAGER + "','" + OmsRoles.REPORTING_ANALYST + "')")
     public ApiResult<List<OrderResponse>> listRecent(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size

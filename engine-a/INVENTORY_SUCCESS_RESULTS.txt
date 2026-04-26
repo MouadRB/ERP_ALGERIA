@@ -1,0 +1,82 @@
+===========================================================
+ INVENTORY — SUCCESSFUL BUSINESS RESPONSES
+ The 11 endpoints are now called with an AUTHORISED role
+ so you can see the actual data the API returns.
+ Date: Fri Apr 24 10:01:18 WCAST 2026
+===========================================================
+
+-----------------------------------------------------------
+[T03] GET /inventory/v1/stock-records?size=5
+      role   : INVENTORY_MANAGER
+      status : 200 (expected 200) => PASS
+      response:
+{"success":true,"data":{"content":[{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":459,"softReserved":15,"hardReserved":0,"quarantine":4,"available":440,"reorderThreshold":20,"reorderQuantity":60,"trackable":true,"frozen":false,"status":"IN_STOCK","fifoValuation":20000.00,"weightedAvgCost":50.0000,"stockValue":20000.00,"createdAt":"2026-04-23T22:56:28.326179Z","updatedAt":"2026-04-23T23:15:49.709048Z","version":20}],"empty":false,"first":true,"last":true,"number":0,"numberOfElements":1,"pageable":{"offset":0,"pageNumber":0,"pageSize":5,"paged":true,"sort":{"empty":true,"sorted":false,"unsorted":true},"unpaged":false},"size":5,"sort":{"empty":true,"sorted":false,"unsorted":true},"totalElements":1,"totalPages":1},"message":"stock.list","timestamp":"2026-04-24T09:01:18.236384400Z"}
+-----------------------------------------------------------
+[T07] POST /inventory/v1/stock-records/sr-test-001/receive
+      role   : WAREHOUSE_OPERATOR
+      request: {"stockRecordId":"sr-test-001","purchaseOrderRef":"PO-003","supplierCode":"SUP1001","quantity":30,"unitCost":55.00}
+      status : 200 (expected 200) => PASS
+      response:
+{"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":489,"softReserved":15,"hardReserved":0,"quarantine":4,"available":470,"reorderThreshold":20,"reorderQuantity":60,"trackable":true,"frozen":false,"status":"IN_STOCK","fifoValuation":21650.0000,"weightedAvgCost":50.3488,"stockValue":21650.0000,"createdAt":"2026-04-23T22:56:28.326179Z","updatedAt":"2026-04-24T09:01:18.774673Z","version":20},"message":"stock.received","timestamp":"2026-04-24T09:01:18.980087500Z"}
+-----------------------------------------------------------
+[T09] POST /inventory/v1/stock-records/sr-test-001/adjust
+      role   : INVENTORY_MANAGER
+      request: {"quantityChange":7,"reason":"Cycle count correction"}
+      status : 200 (expected 200) => PASS
+      response:
+{"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":496,"softReserved":15,"hardReserved":0,"quarantine":4,"available":477,"reorderThreshold":20,"reorderQuantity":60,"trackable":true,"frozen":false,"status":"IN_STOCK","fifoValuation":21650.00,"weightedAvgCost":50.3488,"stockValue":21650.00,"createdAt":"2026-04-23T22:56:28.326179Z","updatedAt":"2026-04-24T09:01:19.236271900Z","version":21},"message":"stock.adjusted","timestamp":"2026-04-24T09:01:19.265365600Z"}
+-----------------------------------------------------------
+[T11] PATCH /inventory/v1/stock-records/sr-test-001/threshold
+      role   : INVENTORY_MANAGER
+      request: {"reorderThreshold":25,"reorderQuantity":80}
+      status : 200 (expected 200) => PASS
+      response:
+{"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":496,"softReserved":15,"hardReserved":0,"quarantine":4,"available":477,"reorderThreshold":25,"reorderQuantity":80,"trackable":true,"frozen":false,"status":"IN_STOCK","fifoValuation":21650.00,"weightedAvgCost":50.3488,"stockValue":21650.00,"createdAt":"2026-04-23T22:56:28.326179Z","updatedAt":"2026-04-24T09:01:19.530386700Z","version":22},"message":"stock.threshold.updated","timestamp":"2026-04-24T09:01:19.546001Z"}
+-----------------------------------------------------------
+[T15] GET /inventory/v1/movements/audit-journal?size=10
+      role   : INVENTORY_MANAGER
+      status : 200 (expected 200) => PASS
+      response:
+{"success":true,"data":{"content":[{"movementId":"4821eb9b-f4b1-4abb-9b61-a51d2f105169","skuCode":"SKU12345","movementType":"ADJUSTMENT_IN","quantityChange":7,"quantityBefore":489,"quantityAfter":496,"unitCost":null,"totalCost":null,"referenceType":"ADJUSTMENT","referenceId":null,"reason":"Cycle count correction","performedBy":"user-78","performedAt":"2026-04-24T09:01:19.238271Z","auditHash":"2c31fec858fc41c83b64f1363651503c9edc3b90931807460da34ba7ce4162a7"},{"movementId":"1a1d8f86-7494-4c41-9e8c-19f566d8eef5","skuCode":"SKU12345","movementType":"RECEPTION","quantityChange":30,"quantityBefore":459,"quantityAfter":489,"unitCost":55.0000,"totalCost":1650.00,"referenceType":"PURCHASE_ORDER","referenceId":"PO-003","reason":null,"performedBy":"user-90","performedAt":"2026-04-24T09:01:18.868508Z","auditHash":"2c4892fc18c3a72f7fa8b157be750082ddf3242a44f847ba485a65164e8f1aff"},{"movementId":"81bd771b-fcb2-417f-bb85-b2d85e30b276","skuCode":"SKU12345","movementType":"RETURN_QUARANTINE","quantityChange":2,"quantityBefore":457,"quantityAfter":459,"unitCost":null,"totalCost":null,"referenceType":"RETURN","referenceId":"ord-test-001","reason":"DEFECTIVE","performedBy":"user-90","performedAt":"2026-04-23T23:15:49.712044Z","auditHash":"6f57d77a672de196bbd0cedef0de4c746cef1f06c5b5ec14b35dcdb9702218eb"},{"movementId":"d7b3ed87-b675-4148-b777-1af6865e9d43","skuCode":"SKU12345","movementType":"SOFT_RESERVE","quantityChange":-5,"quantityBefore":457,"quantityAfter":457,"unitCost":null,"totalCost":null,"referenceType":"ORDER","referenceId":"ord-test-001","reason":null,"performedBy":"user-78","performedAt":"2026-04-23T23:15:49.207835Z","auditHash":"b8b27fd5b9ac0b06f7c9656e694ef34ad230a7293793b4dc21147796ad308f86"},{"movementId":"9564ed35-1cb5-4e92-809e-d7c2bc54bfed","skuCode":"SKU12345","movementType":"ADJUSTMENT_IN","quantityChange":10,"quantityBefore":447,"quantityAfter":457,"unitCost":null,"totalCost":null,"referenceType":"ADJUSTMENT","referenceId":null,"reason":"Bulk test","performedBy":"user-90","performedAt":"2026-04-23T23:15:47.148079Z","auditHash":"b5311754c86d0b84910e000402dd2e62b82e3dc19197bc76493589daddd049fc"},{"movementId":"c4f7487a-7062-4ddf-bbb2-37d6a9828b24","skuCode":"SKU12345","movementType":"ADJUSTMENT_IN","quantityChange":5,"quantityBefore":442,"quantityAfter":447,"unitCost":null,"totalCost":null,"referenceType":"ADJUSTMENT","referenceId":null,"reason":"Test adjustment","performedBy":"user-78","performedAt":"2026-04-23T23:15:46.175547Z","auditHash":"99b04c7d88bb69fe6f6bdb722a9829efd48c9f0a7f4d0bdcb201c0ce92f25981"},{"movementId":"2e7195c4-31d5-474b-be65-8baba6641945","skuCode":"SKU12345","movementType":"RECEPTION","quantityChange":100,"quantityBefore":342,"quantityAfter":442,"unitCost":50.0000,"totalCost":5000.00,"referenceType":"PURCHASE_ORDER","referenceId":"PO-001","reason":null,"performedBy":"user-90","performedAt":"2026-04-23T23:15:45.926663Z","auditHash":"3fd2306be3796a9dbb68cf335367d2586cf28d10c3fde91206ca885d49334365"},{"movementId":"f56e7061-f1fa-406b-8e8e-d90c2f8aaf8d","skuCode":"SKU12345","movementType":"RETURN_QUARANTINE","quantityChange":2,"quantityBefore":340,"quantityAfter":342,"unitCost":null,"totalCost":null,"referenceType":"RETURN","referenceId":"ord-test-001","reason":"DEFECTIVE","performedBy":"user-90","performedAt":"2026-04-23T23:15:24.726916Z","auditHash":"5761abd0c4d66059426c1faecfe7b4a82aa93b47f6f03f58321c372669e77034"},{"movementId":"8f64641a-4aab-4e09-8f41-3273363db008","skuCode":"SKU12345","movementType":"SOFT_RESERVE","quantityChange":-5,"quantityBefore":340,"quantityAfter":340,"unitCost":null,"totalCost":null,"referenceType":"ORDER","referenceId":"ord-test-001","reason":null,"performedBy":"user-78","performedAt":"2026-04-23T23:15:24.215797Z","auditHash":"ce76ee8e751c8bf3ba1aba794e0fb4d20c7249e69366e067fb7b472ece6604e5"},{"movementId":"66b3d3b7-bc47-4fe6-ad31-24b4aa2c1640","skuCode":"SKU12345","movementType":"ADJUSTMENT_IN","quantityChange":10,"quantityBefore":330,"quantityAfter":340,"unitCost":null,"totalCost":null,"referenceType":"ADJUSTMENT","referenceId":null,"reason":"Bulk test","performedBy":"user-90","performedAt":"2026-04-23T23:15:22.676107Z","auditHash":"d2aac96a9c4555f98b5000645fd99fdd403f87e72ecd14c2f7e4a3f8905a661c"}],"empty":false,"first":true,"last":false,"number":0,"numberOfElements":10,"pageable":{"offset":0,"pageNumber":0,"pageSize":10,"paged":true,"sort":{"empty":true,"sorted":false,"unsorted":true},"unpaged":false},"size":10,"sort":{"empty":true,"sorted":false,"unsorted":true},"totalElements":18,"totalPages":2},"message":"movement.journal","timestamp":"2026-04-24T09:01:19.832530100Z"}
+-----------------------------------------------------------
+[T17] POST /inventory/v1/movements/bulk
+      role   : WAREHOUSE_OPERATOR
+      request: {"stockRecordIds":["sr-test-001"],"movementType":"ADJUSTMENT_IN","quantity":4,"reason":"Bulk authorised run"}
+      status : 200 (expected 200) => PASS
+      response:
+{"success":true,"message":"movement.bulk.completed","timestamp":"2026-04-24T09:01:20.282977500Z"}
+-----------------------------------------------------------
+[T20] GET /inventory/v1/dashboard
+      role   : INVENTORY_MANAGER
+      status : 200 (expected 200) => PASS
+      response:
+{"success":true,"data":{"totalFifoValuation":21650.00,"outOfStockCount":0,"belowThresholdCount":0,"totalSoftReserved":15,"totalHardReserved":0,"movementsTodayIn":14,"movementsTodayOut":0,"totalVariants":1},"message":"dashboard.loaded","timestamp":"2026-04-24T09:01:20.735444800Z"}
+-----------------------------------------------------------
+[T23] GET /inventory/v1/fifo-layers/summary/sr-test-001
+      role   : FINANCE_MANAGER
+      status : 200 (expected 200) => PASS
+      response:
+{"success":true,"data":{"activeLayersCount":5,"totalFifoStock":430,"weightedAvgCost":50.3488,"totalValue":21650.0000,"nextSaleInfo":"100 units from Layer #1 (cost: 50.0000 DZD)"},"message":"fifo.summary","timestamp":"2026-04-24T09:01:21.155725500Z"}
+-----------------------------------------------------------
+[T26] GET /inventory/v1/alerts/reorder-suggestions
+      role   : PROCUREMENT_MANAGER
+      status : 200 (expected 200) => PASS
+      response:
+{"success":true,"data":[],"message":"alert.reorder.suggestions","timestamp":"2026-04-24T09:01:21.464964400Z"}
+-----------------------------------------------------------
+[T29] POST /inventory/v1/reservations/soft
+      role   : INVENTORY_MANAGER
+      request: {"skuCode":"SKU12345","orderId":"ord-test-003","clientRef":"CLI-003","quantity":3,"omsStatus":"PENDING"}
+      status : 201 (expected 201) => PASS
+      response:
+{"success":true,"data":{"reservationId":"98961b65-d473-4810-9118-54b658d6a48f","skuCode":"SKU12345","orderId":"ord-test-003","clientRef":"CLI-003","reservationType":"SOFT","quantity":3,"status":"ACTIVE","omsStatus":"PENDING","expiresAt":"2026-04-26T09:00:21.751997300Z","createdAt":"2026-04-24T09:01:21.759028300Z"},"message":"reservation.created","timestamp":"2026-04-24T09:01:21.780085700Z"}
+-----------------------------------------------------------
+[T33] POST /inventory/v1/returns
+      role   : WAREHOUSE_OPERATOR
+      request: {"skuCode":"SKU12345","orderId":"ord-test-001","customerRef":"CUST-042","returnReason":"WRONG_SIZE","productCondition":"NEW","quantity":1}
+      status : 201 (expected 201) => PASS
+      response:
+{"success":true,"data":{"inspectionId":"bee58c99-37de-4dbd-8fa7-d8a8b710db08","skuCode":"SKU12345","orderId":"ord-test-001","customerRef":"CUST-042","returnDate":"2026-04-24T09:01:22.043408300Z","returnReason":"WRONG_SIZE","productCondition":"NEW","quantity":1,"inspectionStatus":"PENDING","inspectorId":null,"inspectedAt":null,"rejectionReason":null,"disposition":null},"message":"return.created","timestamp":"2026-04-24T09:01:22.073118800Z"}
+===========================================================
+ SUMMARY: PASS=11  FAIL=0  TOTAL=11
+===========================================================

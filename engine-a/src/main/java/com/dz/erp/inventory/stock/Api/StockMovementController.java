@@ -8,6 +8,7 @@ import com.dz.erp.inventory.stock.application.dto.AdjustStockCommand;
 import com.dz.erp.inventory.stock.application.dto.ReceiveStockCommand;
 import com.dz.erp.inventory.stock.domain.model.MovementType;
 import com.dz.erp.shared.api.ApiResult;
+import com.dz.erp.shared.security.Roles;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,13 +26,16 @@ public class StockMovementController {
     private final StockRecordService stockRecordService;
 
     @GetMapping("/by-stock-record/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "','" + Roles.PROCUREMENT_MANAGER + "','"
+            + Roles.LOGISTICS_AGENT + "','" + Roles.REPORTING_ANALYST + "')")
     public ApiResult<Page<StockMovementResponse>> findByStockRecord(@PathVariable String id, Pageable pageable) {
         return ApiResult.ok(movementService.findByStockRecordId(id, pageable), "movement.list");
     }
 
     @GetMapping("/audit-journal")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<Page<StockMovementResponse>> auditJournal(
             @RequestParam(required = false) MovementType type,
             Pageable pageable) {
@@ -39,7 +43,8 @@ public class StockMovementController {
     }
 
     @PostMapping("/bulk")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.INVENTORY_MANAGER + "','"
+            + Roles.WAREHOUSE_OPERATOR + "')")
     public ApiResult<Void> bulkMovement(@Valid @RequestBody BulkMovementCommand cmd) {
         var movementType = MovementType.valueOf(cmd.movementType());
         for (var stockRecordId : cmd.stockRecordIds()) {

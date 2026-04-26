@@ -8,6 +8,7 @@ import com.dz.erp.catalog.search.application.dto.SearchSuggestResponse;
 import com.dz.erp.catalog.search.domain.port.SearchIndexPort;
 import com.dz.erp.shared.api.ApiResult;
 import com.dz.erp.shared.security.AuthContext;
+import com.dz.erp.shared.security.Roles;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +39,10 @@ public class SearchController {
      * GET /catalog/v1/search?q=nike+air+max&category=chaussures&page=0&size=25
      */
     @GetMapping("/catalog/v1/search")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER','FINANCE_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "','"
+            + Roles.INVENTORY_MANAGER + "','" + Roles.FINANCE_MANAGER + "','"
+            + Roles.SALES_MANAGER + "','" + Roles.CS_AGENT + "','" + Roles.CRM_AGENT + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<SearchResultResponse> search(
             @RequestParam("q") String query,
             @RequestParam(value = "category", required = false) String category,
@@ -55,7 +59,10 @@ public class SearchController {
      * GET /catalog/v1/search/suggest?q=nik
      */
     @GetMapping("/catalog/v1/search/suggest")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER','FINANCE_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "','"
+            + Roles.INVENTORY_MANAGER + "','" + Roles.FINANCE_MANAGER + "','"
+            + Roles.SALES_MANAGER + "','" + Roles.CS_AGENT + "','" + Roles.CRM_AGENT + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<SearchSuggestResponse> suggest(
             @RequestParam("q") String prefix) {
         return ApiResult.ok(searchService.suggest(prefix));
@@ -71,7 +78,8 @@ public class SearchController {
      * GET /catalog/v1/opensearch/status  (backward-compatible alias)
      */
     @GetMapping({"/catalog/v1/search/index-status", "/catalog/v1/opensearch/status"})
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<SearchIndexPort.IndexStatus> indexStatus() {
         return ApiResult.ok(indexer.getIndexHealth(AuthContext.currentTenantId()));
 
@@ -85,7 +93,7 @@ public class SearchController {
      * POST /catalog/v1/opensearch/reindex  (backward-compatible alias)
      */
     @PostMapping({"/catalog/v1/search/reindex", "/catalog/v1/opensearch/reindex"})
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<Void> reindex() {
         indexer.reindexAll(AuthContext.currentTenantId());
         return ApiResult.ok(null, "opensearch.reindex.triggered");

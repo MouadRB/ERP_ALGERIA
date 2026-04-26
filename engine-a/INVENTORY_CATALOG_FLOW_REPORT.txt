@@ -1,0 +1,73 @@
+============================================================
+ INVENTORY → CATALOG  EVENT-FLOW TEST (unidirectional)
+ Date: Fri Apr 24 16:45:58 WCAST 2026
+ SKU:  SKU12345   (seeded, already PUBLISHED)
+ Stock record: sr-test-001
+============================================================
+
+============================================================
+ STEP 0 — Capture baseline + ensure catalog is PUBLISHED
+============================================================
+  baseline total_quantity = 501
+  baseline publication_status = PUBLISHED
+  ✓ Precondition: catalog is PUBLISHED → PUBLISHED
+
+============================================================
+ STEP 1 — Inventory adjust -501 → StockZero → Catalog auto-masked
+============================================================
+  POST adjust -501 → HTTP 200   {"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":0,"softReserved":18,"hardReserved":0,"quarantine":5,"available":-23,"reorderThreshold":25,"reorderQuantity":80,"trackabl
+  ✓ Inventory adjust 200 → 200
+  Inventory total_quantity = 0
+  ✓ Inventory total_quantity=0 → 0
+  Catalog publication_status = MASKED_AUTO
+  ✓ Catalog auto-masked (Inv→Cat StockZero) → MASKED_AUTO
+  Catalog masked_reason = AUTO_STOCK_ZERO
+  ✓ Catalog masked_reason=AUTO_STOCK_ZERO → AUTO_STOCK_ZERO
+
+============================================================
+ STEP 2 — Inventory receive 100 → StockReplenished → Catalog re-published
+============================================================
+  POST receive 100 → HTTP 200   {"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":100,"softReserved":18,"hardReserved":0,"quarantine":5,"available":77,"reorderThreshold":25,"reorderQuantity":80,"trackab
+  ✓ Inventory receive 200 → 200
+  Inventory total_quantity = 100
+  ✓ Inventory total_quantity=100 after receive → 100
+  Catalog publication_status = PUBLISHED
+  ✓ Catalog unmasked → PUBLISHED (Inv→Cat StockReplenished) → PUBLISHED
+  Catalog masked_reason = NULL
+  ✓ Catalog masked_reason cleared (NULL) → NULL
+
+============================================================
+ STEP 3 — Second zero cycle → Catalog re-masked (handler is stateful)
+============================================================
+  POST adjust -100 → HTTP 200   {"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":0,"softReserved":18,"hardReserved":0,"quarantine":5,"available":-23,"reorderThreshold":25,"reorderQuantity":80,"trackabl
+  ✓ Inventory adjust 200 → 200
+  Catalog status=MASKED_AUTO reason=AUTO_STOCK_ZERO
+  ✓ Catalog re-masked after second zero → MASKED_AUTO
+  ✓ Catalog reason AUTO_STOCK_ZERO again → AUTO_STOCK_ZERO
+
+============================================================
+ STEP 4 — Final replenish → back to PUBLISHED
+============================================================
+  POST receive 501 → HTTP 200   {"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":501,"softReserved":18,"hardReserved":0,"quarantine":5,"available":478,"reorderThreshold":25,"reorderQuantity":80,"tracka
+  Catalog publication_status = PUBLISHED
+  ✓ Catalog PUBLISHED after final replenish → PUBLISHED
+
+============================================================
+ CLEANUP — Restore baseline stock quantity
+============================================================
+  current=501 baseline=501 delta=0
+  restored total_quantity = 501
+
+============================================================
+ SUMMARY
+============================================================
+  PASS=13  FAIL=0  TOTAL=13
+
+ Inventory → Catalog paths exercised:
+   StockZero        → catalog.publication_status = MASKED_AUTO / AUTO_STOCK_ZERO
+   StockReplenished → catalog.publication_status = PUBLISHED   / NULL
+   (repeated twice to show the listener is stateful, not one-shot)
+
+ Design note: Catalog → Inventory is intentionally not implemented.
+ Catalog is downstream of Inventory — no publication-side event causes
+ stock mutation, so the flow is unidirectional by design.

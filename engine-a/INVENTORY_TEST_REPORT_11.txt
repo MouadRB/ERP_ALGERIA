@@ -1,0 +1,44 @@
+===========================================================
+ INVENTORY — 11 PREVIOUSLY-FAILING TESTS (re-run after fix)
+ Fix applied: GlobalExceptionHandler now maps
+   AccessDeniedException -> 403
+   AuthenticationException -> 401
+ Date: Fri Apr 24 09:58:58 WCAST 2026
+===========================================================
+
+[T03] GET   /inventory/v1/stock-records?size=5                      role=FINANCE_MANAGER      exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:58:58.717352Z"}
+
+[T07] POST  /inventory/v1/stock-records/sr-test-001/receive         role=LOGISTICS_AGENT      exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:58:59.326113300Z"}
+
+[T09] POST  /inventory/v1/stock-records/sr-test-001/adjust          role=PROCUREMENT_MANAGER  exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:58:59.532715800Z"}
+
+[T11] PATCH /inventory/v1/stock-records/sr-test-001/threshold       role=WAREHOUSE_OPERATOR   exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:58:59.723201500Z"}
+
+[T15] GET   /inventory/v1/movements/audit-journal?size=10           role=WAREHOUSE_OPERATOR   exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:58:59.910614900Z"}
+
+[T17] POST  /inventory/v1/movements/bulk                            role=LOGISTICS_AGENT      exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:59:00.082528200Z"}
+
+[T20] GET   /inventory/v1/dashboard                                 role=FINANCE_MANAGER      exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:59:00.215891500Z"}
+
+[T23] GET   /inventory/v1/fifo-layers/summary/sr-test-001           role=LOGISTICS_AGENT      exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:59:00.347033500Z"}
+
+[T26] GET   /inventory/v1/alerts/reorder-suggestions                role=LOGISTICS_AGENT      exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:59:00.478050Z"}
+
+[T29] POST  /inventory/v1/reservations/soft                         role=LOGISTICS_AGENT      exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:59:00.614872400Z"}
+
+[T33] POST  /inventory/v1/returns                                   role=LOGISTICS_AGENT      exp=403 got=403 => PASS
+      body: {"success":false,"message":"Forbidden","timestamp":"2026-04-24T08:59:00.763414Z"}
+
+===========================================================
+ SUMMARY: PASS=11  FAIL=0  TOTAL=11
+===========================================================

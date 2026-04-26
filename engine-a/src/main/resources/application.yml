@@ -9,19 +9,20 @@ spring:
       enabled: true
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/erp_db}
-    username: ${SPRING_DATASOURCE_USERNAME:erp_admin}
-    password: ${SPRING_DATASOURCE_PASSWORD:local_dev_password}
+    url: jdbc:postgresql://localhost:5432/ERP
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:2004}
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
 
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      timeout: 2000ms
+    data:
+      redis:
+        host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
+        password: ${REDIS_PASSWORD:}
+        timeout: 2000ms
+
 
   jpa:
     open-in-view: false
@@ -49,6 +50,34 @@ app:
 
   oms:
     base-url: ${OMS_BASE_URL:http://localhost:8082/api}
+
+  outbox:
+    poll-interval-ms: 1000
+    batch-size: 50
+    retry-max: 3
+    timeout-ms: 5000
+    # Engine-b exposes a single ingest endpoint at /api/events/ingest (port 5220 in dev).
+    # Internally, EventDispatcher routes to handlers by eventType:
+    #   OmsOrderEventHandler  → CRM (customer + interactions) + Finance (invoice on COMPLETED/DELIVERED)
+    #   OmsReturnEventHandler → CRM (support tickets)
+    #   InventoryEventHandler → Procurement (stock alerts)
+    # Routes are listed explicitly per event (no DEFAULT wildcard) so unmapped events
+    # surface as "No route" in the poller log instead of silently fanning out.
+    targets:
+      - name: engine-b
+        routes:
+          OMS_ORDER_RECEIVED:     "http://localhost:5220/api/events/ingest"
+          OMS_ORDER_CONFIRMED:    "http://localhost:5220/api/events/ingest"
+          OMS_ORDER_CANCELLED:    "http://localhost:5220/api/events/ingest"
+          OMS_ORDER_REJECTED:     "http://localhost:5220/api/events/ingest"
+          OMS_ORDER_COMPLETED:    "http://localhost:5220/api/events/ingest"
+          OMS_SHIPMENT_DELIVERED: "http://localhost:5220/api/events/ingest"
+          OMS_RETURN_REQUESTED:   "http://localhost:5220/api/events/ingest"
+          OMS_RETURN_CLOSED:      "http://localhost:5220/api/events/ingest"
+          ReorderTriggered:       "http://localhost:5220/api/events/ingest"
+          StockZero:              "http://localhost:5220/api/events/ingest"
+          StockReplenished:       "http://localhost:5220/api/events/ingest"
+          CostUpdated:            "http://localhost:5220/api/events/ingest"
 
 oms:
   mdm:
@@ -129,29 +158,6 @@ oms:
     dashboard-cache-ttl-seconds: 120
     reserve-expiry-check-ms: 60000
     alert-check-ms: 300000
-
-  outbox:
-    poll-interval-ms: 1000
-    batch-size: 50
-    retry-max: 3
-    timeout-ms: 5000
-    targets:
-      - name: engine-b
-        routes:
-          DEFAULT: "http://localhost:8082/api/events/ingest"
-          STOCK_UPDATED: "http://localhost:8082/api/events/ingest"
-          RESERVATION_CREATED: "http://localhost:8082/api/events/ingest"
-
-      - name: engine-b-crm
-        routes:
-          SKU_REGISTERED: "http://localhost:8083/api/mdm/skus/registered"
-          SKU_ACTIVATED: "http://localhost:8083/api/mdm/skus/activated"
-          SUPPLIER_REGISTERED: "http://localhost:8083/api/procurement/suppliers/new"
-
-      - name: procurement
-        routes:
-          REORDER_TRIGGERED: "http://localhost:8084/api/procurement/reorder"
-          COST_UPDATED: "http://localhost:8084/api/procurement/cost-update"
 
 management:
   endpoints:

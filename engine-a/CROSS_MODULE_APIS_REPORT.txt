@@ -1,0 +1,72 @@
+============================================================
+ CROSS-MODULE API HEALTH CHECK
+ Date:    Fri Apr 24 19:10:27 WCAST 2026
+ MDM:     http://localhost:8080
+ engine:  http://localhost:8081
+============================================================
+
+============================================================
+ A1 — PIM → MDM  (MdmRestClient endpoints)
+============================================================
+  ✓ GET /mdm/v1/skus/{code}                    (SKU validation)  →  200
+  ✓ GET /mdm/v1/suppliers/{code}               (supplier validation)  →  200
+  ✓ GET /mdm/v1/tax-rules/resolve              (tax rule resolve)  →  404
+  ✓ GET /mdm/v1/wilayas/deliverable           (deliverable wilayas)  →  200
+
+============================================================
+ A2 — Catalog → PIM  (PimRestClient endpoints for indexer)
+============================================================
+  Resolved productId for SKU12345 = 7b01ec5f-347f-427f-9fa5-965df8ceada7
+  ✓ GET /pim/v1/products?search=               (by-SKU lookup)  →  200
+  ✓ GET /pim/v1/products/{id}/variants        (variant enrichment)  →  200
+  ✓ GET /pim/v1/products/{id}/pricing         (pricing snapshot)  →  200
+  ✓ GET /pim/v1/products/{id}/attributes      (attribute enrichment)  →  200
+  ✓ GET /pim/v1/products/{id}/seo             (SEO metadata)  →  200
+  ✓ GET /pim/v1/products/{id}/media           (media URLs)  →  200
+
+============================================================
+ A3 — OMS → MDM  (MdmAddressRestAdapter)
+============================================================
+  ✗ GET /mdm/v1/wilayas/{code}                (wilaya 16 = Algiers)  →  got 404 expected 200   body: {"success":false,"message":"Wilaya introuvable : 16","timestamp":"2026-04-24T18:10:31.675748900Z"}
+
+============================================================
+ A4 — Catalog → MDM  (deliverable wilayas during search)
+============================================================
+  ✓ GET /mdm/v1/wilayas/deliverable (as INV)  (Catalog→MDM)  →  200
+
+============================================================
+ A5 — PIM endpoints reserved for OMS service account
+============================================================
+  ✓ PATCH /pim/v1/products/{sku}/sales-stats  (OMS→PIM stats)  →  200
+  ✓ PATCH /pim/v1/products/return-rate/{sku}  (OMS→PIM return rate)  →  200
+
+============================================================
+ A6 — OMS endpoints called by PIM OmsRestClient
+============================================================
+  ✗ GET /oms/v1/products/return-rates       (PIM→OMS pull)  →  got 500 expected one of 200,404
+
+============================================================
+ B — End-to-end OMS order placement (OMS→Catalog/Inventory/MDM in one flow)
+============================================================
+  POST /oms/v1/orders → HTTP 500
+    request Idempotency-Key: idem-1777054232-15966
+    response: {"success":false,"message":"Internal server error","timestamp":"2026-04-24T18:10:33.265007Z"}
+  ✗ OMS order placement failed (HTTP 500)
+
+============================================================
+ C — Event-driven integrations (summary — verified in prior tests)
+============================================================
+  ✓ PIM→Inventory   ProductCreated/Activated/Discontinued, VariantCreated,
+                    LogisticsThresholdUpdated    [test-event-flow.sh 12/12]
+  ✓ Inventory→PIM   StockUpdated/StockZero/StockReplenished
+                                                 [test-inventory-pim-flow.sh 21/21]
+  ✓ PIM→Catalog     ProductActivated/Discontinued/Updated
+                                                 [test-event-flow.sh 12/12]
+  ✓ Inventory→Catalog StockZero/StockReplenished
+                                                 [test-inventory-catalog-flow.sh 13/13]
+  ✓ MDM→PIM         REST sync (SKU validation)   [test-event-flow.sh]
+
+============================================================
+ SUMMARY
+============================================================
+  PASS=13  FAIL=3  TOTAL=16

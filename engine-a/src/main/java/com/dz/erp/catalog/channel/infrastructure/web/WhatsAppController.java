@@ -5,15 +5,13 @@ import com.dz.erp.catalog.channel.application.dto.SyncJobResponse;
 import com.dz.erp.catalog.channel.application.dto.SyncStatusResponse;
 import com.dz.erp.shared.api.ApiResult;
 import com.dz.erp.shared.security.AuthContext;
+import com.dz.erp.shared.security.Roles;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for WhatsApp Business catalog sync.
- *
- * POST /catalog/v1/channels/whatsapp/sync          → trigger manual sync (CATALOG_ADMIN)
- * GET  /catalog/v1/channels/whatsapp/sync/status    → current sync status
  */
 @RestController
 @RequestMapping("/catalog/v1/channels/whatsapp")
@@ -23,7 +21,7 @@ public class WhatsAppController {
     private final WhatsAppSyncService syncService;
 
     @PostMapping("/sync")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<SyncJobResponse> triggerSync() {
         return ApiResult.ok(
                 syncService.triggerSync(AuthContext.currentTenantId()),
@@ -31,7 +29,8 @@ public class WhatsAppController {
     }
 
     @GetMapping("/sync/status")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<SyncStatusResponse> getSyncStatus() {
         return ApiResult.ok(syncService.getSyncStatus(AuthContext.currentTenantId()));
     }

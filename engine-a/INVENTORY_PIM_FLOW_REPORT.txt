@@ -1,0 +1,91 @@
+============================================================
+ INVENTORY ↔ PIM  BIDIRECTIONAL EVENT-FLOW TEST
+ Date:        Fri Apr 24 15:39:04 WCAST 2026
+ PRODUCT_SKU: SKU-PIM-1777041543
+ VARIANT_SKU: VAR-PIM-1777041544
+ MDM:         http://localhost:8080    engine-a: http://localhost:8081
+============================================================
+
+============================================================
+ STEP 1 — MDM: register + activate PRODUCT_SKU
+============================================================
+  POST /mdm/v1/skus → HTTP 201   {"success":true,"data":{"skuCode":"SKU-PIM-1777041543","tenantId":"default","baseUom":"EA","productType":"SIMPLE","status":"DRAFT","createdBy":"user-01","createdAt":"2026-04-24T14:39:04.106583600Z","updatedBy":null,"updatedAt":null,"version":0},"message":"SKU enregistr� avec succ�s","timestamp":
+  ✓ MDM PRODUCT_SKU registered → 201
+  PATCH activate → HTTP 200   {"success":true,"data":{"skuCode":"SKU-PIM-1777041543","tenantId":"default","baseUom":"EA","productType":"SIMPLE","status":"ACTIVE","createdBy":"user-01","createdAt":"2026-04-24T14:39:04.106584Z","updatedBy":"user-78","updatedAt":"2026-04-24T14:39:04.210958400Z","version":0},"message":"SKU activ� 
+  ✓ MDM PRODUCT_SKU activated → 200
+
+============================================================
+ STEP 2 — PIM create product → Inventory stock_record (fwd)
+============================================================
+  POST /pim/v1/products → HTTP 201   {"success":true,"data":{"productId":"1c283d8b-cb40-40ad-b283-317b1d3f6235","tenantId":"default","skuCode":"SKU-PIM-1777041543","skuStatus":"ACTIVE","supplierCode":null,"supplierRef":null,"categoryCode":"ELEC-SMARTPHONES","nameFr":"Inv-PIM Flow Test","nameAr":"AR-NAME","descriptionFr":null,"descripti
+  ✓ PIM product created → 201
+  → PRODUCT_ID = 1c283d8b-cb40-40ad-b283-317b1d3f6235
+  ✓ Inventory stock_record auto-created for PRODUCT_SKU (PIM→Inv) → SKU-PIM-1777041543
+
+============================================================
+ STEP 3 — PIM activate → Inventory trackable
+============================================================
+  PATCH activate → HTTP 200   {"success":true,"data":{"productId":"1c283d8b-cb40-40ad-b283-317b1d3f6235","tenantId":"default","skuCode":"SKU-PIM-1777041543","skuStatus":"ACTIVE","supplierCode":null,"supplierRef":null,"categoryCode":"ELEC-SMARTPHONES","nameFr":"Inv-PIM Flow Test","nameAr":"AR-NAME","descriptionFr":null,"descripti
+  ✓ PIM product activated → 200
+  ✓ Inventory trackable (Activated event) → t
+
+============================================================
+ STEP 4 — MDM: register + activate VARIANT_SKU
+============================================================
+  POST /mdm/v1/skus → HTTP 201   {"success":true,"data":{"skuCode":"VAR-PIM-1777041544","tenantId":"default","baseUom":"EA","productType":"SIMPLE","status":"DRAFT","createdBy":"user-01","createdAt":"2026-04-24T14:39:09.490871900Z","updatedBy":null,"updatedAt":null,"version":0},"message":"SKU enregistr� avec succ�s","timestamp":
+  ✓ MDM VARIANT_SKU registered → 201
+  PATCH activate → HTTP 200   {"success":true,"data":{"skuCode":"VAR-PIM-1777041544","tenantId":"default","baseUom":"EA","productType":"SIMPLE","status":"ACTIVE","createdBy":"user-01","createdAt":"2026-04-24T14:39:09.490872Z","updatedBy":"user-78","updatedAt":"2026-04-24T14:39:09.615015800Z","version":0},"message":"SKU activ� 
+  ✓ MDM VARIANT_SKU activated → 200
+
+============================================================
+ STEP 5 — PIM create variant → Inventory stock_record (fwd)
+============================================================
+  POST variants → HTTP 201   {"success":true,"data":{"variantId":"536391cd-d7fe-404c-898c-d6f741dad4c0","productId":"1c283d8b-cb40-40ad-b283-317b1d3f6235","skuCode":"VAR-PIM-1777041544","label":"Variant A","barcode":"6001234567890","priceOverride":15000.00,"costOverride":12000.00,"stockQuantity":0,"stockThreshold":5,"status":"A
+  ✓ PIM variant created → 201
+  → VARIANT_ID = 536391cd-d7fe-404c-898c-d6f741dad4c0
+  Inventory stock_record_id for VARIANT_SKU = 17df64c8-1b3c-4aa1-b0f0-230e6dece7c1
+  ✓ Inventory stock_record auto-created for VARIANT_SKU (Variant.Created→Inv) → 17df64c8-1b3c-4aa1-b0f0-230e6dece7c1
+  PIM variant initial stock_quantity=0 status=ACTIVE
+
+============================================================
+ STEP 6 — Inventory receive 100 → PIM variant updated (Inv→PIM StockUpdated)
+============================================================
+  POST receive → HTTP 200   {"success":true,"data":{"stockRecordId":"17df64c8-1b3c-4aa1-b0f0-230e6dece7c1","tenantId":"default","skuCode":"VAR-PIM-1777041544","productId":null,"variantId":"1c283d8b-cb40-40ad-b283-317b1d3f6235","totalQuantity":100,"softReserved":0,"hardReserved":0,"quarantine":0,"available":100,"reorderThreshol
+  ✓ Inventory receive 200 → 200
+  Inventory total_quantity = 100
+  ✓ Inventory total_quantity=100 → 100
+  PIM variant.stock_quantity = 100
+  ✓ PIM variant.stock_quantity synced (Inv→PIM StockUpdated) → 100
+  PIM variant.status = ACTIVE
+  ✓ PIM variant.status=ACTIVE after receive → ACTIVE
+
+============================================================
+ STEP 7 — Inventory adjust -100 → PIM variant OUT_OF_STOCK (Inv→PIM StockZero)
+============================================================
+  POST adjust → HTTP 200   {"success":true,"data":{"stockRecordId":"17df64c8-1b3c-4aa1-b0f0-230e6dece7c1","tenantId":"default","skuCode":"VAR-PIM-1777041544","productId":null,"variantId":"1c283d8b-cb40-40ad-b283-317b1d3f6235","totalQuantity":0,"softReserved":0,"hardReserved":0,"quarantine":0,"available":0,"reorderThreshold":1
+  ✓ Inventory adjust 200 → 200
+  Inventory total_quantity = 0
+  ✓ Inventory total_quantity=0 after adjust → 0
+  PIM variant.stock_quantity = 0
+  ✓ PIM variant.stock_quantity=0 (Inv→PIM StockUpdated) → 0
+  PIM variant.status = OUT_OF_STOCK
+  ✓ PIM variant.status=OUT_OF_STOCK (Inv→PIM zero) → OUT_OF_STOCK
+
+============================================================
+ STEP 8 — Inventory adjust +50 → PIM variant ACTIVE (Inv→PIM StockReplenished)
+============================================================
+  POST adjust +50 → HTTP 200   {"success":true,"data":{"stockRecordId":"17df64c8-1b3c-4aa1-b0f0-230e6dece7c1","tenantId":"default","skuCode":"VAR-PIM-1777041544","productId":null,"variantId":"1c283d8b-cb40-40ad-b283-317b1d3f6235","totalQuantity":50,"softReserved":0,"hardReserved":0,"quarantine":0,"available":50,"reorderThreshold"
+  ✓ Inventory replenish 200 → 200
+  PIM variant.stock_quantity=50 status=ACTIVE
+  ✓ PIM variant.stock_quantity=50 after replenish → 50
+  ✓ PIM variant.status=ACTIVE after replenish → ACTIVE
+
+============================================================
+ SUMMARY
+============================================================
+  PASS=21  FAIL=0  TOTAL=21
+
+ Cross-service paths exercised:
+   PIM→Inventory : stock_record auto-create (product + variant), trackable flag
+   Inventory→PIM : variant.stock_quantity + variant.status via
+                   StockUpdated / StockZero / StockReplenished listeners

@@ -49,7 +49,10 @@ public class ReturnController {
     }
 
     @GetMapping("/{returnId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('" + OmsRoles.SUPER_ADMIN + "','" + OmsRoles.SALES_MANAGER + "','"
+            + OmsRoles.CS_AGENT + "','" + OmsRoles.CRM_AGENT + "','" + OmsRoles.WAREHOUSE_OPERATOR + "','"
+            + OmsRoles.LOGISTICS_AGENT + "','" + OmsRoles.PROCUREMENT_MANAGER + "','"
+            + OmsRoles.FINANCE_MANAGER + "','" + OmsRoles.REPORTING_ANALYST + "')")
     public ApiResult<ReturnRequestResponse> getOne(@PathVariable UUID returnId) {
         return ApiResult.ok(service.toResponse(service.findById(returnId)));
     }

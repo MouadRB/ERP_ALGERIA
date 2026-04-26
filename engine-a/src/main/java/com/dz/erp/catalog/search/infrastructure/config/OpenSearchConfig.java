@@ -1,5 +1,8 @@
 package com.dz.erp.catalog.search.infrastructure.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.core5.http.HttpHost;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
@@ -34,9 +37,13 @@ public class OpenSearchConfig {
     public OpenSearchClient openSearchClient() {
         var httpHost = new HttpHost(scheme, host, port);
 
+        var objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
         var transport = ApacheHttpClient5TransportBuilder
                 .builder(httpHost)
-                .setMapper(new JacksonJsonpMapper())
+                .setMapper(new JacksonJsonpMapper(objectMapper))
                 .build();
 
         return new OpenSearchClient(transport);

@@ -1,0 +1,154 @@
+===========================================================
+ INVENTORY API TEST REPORT
+ Target:   http://localhost:8081
+ Date:     Fri Apr 24 00:15:45 WCAST 2026
+ RBAC:     Authoritative Matrix v2.0
+ Seed:     stock-record id=sr-test-001, sku=SKU12345
+===========================================================
+
+--- StockRecordController (/inventory/v1/stock-records) ---
+[T01] GET   /inventory/v1/stock-records?size=5                      role=INVENTORY_MANAGER    exp=200 got=200 => PASS
+      body: {"success":true,"data":{"content":[{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":342,"softReserved":10,"hardReserved":0,"quarantine":2,"available":330,"reorderThreshold":20,"reorderQuantity
+
+[T02] GET   /inventory/v1/stock-records?size=5                      role=LOGISTICS_AGENT      exp=200 got=200 => PASS
+      body: {"success":true,"data":{"content":[{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":342,"softReserved":10,"hardReserved":0,"quarantine":2,"available":330,"reorderThreshold":20,"reorderQuantity
+
+[T03] GET   /inventory/v1/stock-records?size=5                      role=FINANCE_MANAGER      exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:45.521858300Z"}
+
+[T04] GET   /inventory/v1/stock-records/sr-test-001                 role=SUPER_ADMIN          exp=200 got=200 => PASS
+      body: {"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":342,"softReserved":10,"hardReserved":0,"quarantine":2,"available":330,"reorderThreshold":20,"reorderQuantity":60,"tracka
+
+[T05] GET   /inventory/v1/stock-records/by-sku/SKU12345             role=WAREHOUSE_OPERATOR   exp=200 got=200 => PASS
+      body: {"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":342,"softReserved":10,"hardReserved":0,"quarantine":2,"available":330,"reorderThreshold":20,"reorderQuantity":60,"tracka
+
+[T06] POST  /inventory/v1/stock-records/sr-test-001/receive         role=WAREHOUSE_OPERATOR   exp=200 got=200 => PASS
+      body: {"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":442,"softReserved":10,"hardReserved":0,"quarantine":2,"available":430,"reorderThreshold":20,"reorderQuantity":60,"tracka
+
+[T07] POST  /inventory/v1/stock-records/sr-test-001/receive         role=LOGISTICS_AGENT      exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:46.062452300Z"}
+
+[T08] POST  /inventory/v1/stock-records/sr-test-001/adjust          role=INVENTORY_MANAGER    exp=200 got=200 => PASS
+      body: {"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":447,"softReserved":10,"hardReserved":0,"quarantine":2,"available":435,"reorderThreshold":20,"reorderQuantity":60,"tracka
+
+[T09] POST  /inventory/v1/stock-records/sr-test-001/adjust          role=PROCUREMENT_MANAGER  exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:46.294635500Z"}
+
+[T10] PATCH /inventory/v1/stock-records/sr-test-001/threshold       role=INVENTORY_MANAGER    exp=200 got=200 => PASS
+      body: {"success":true,"data":{"stockRecordId":"sr-test-001","tenantId":"default","skuCode":"SKU12345","productId":"7b01ec5f-347f-427f-9fa5-965df8ceada7","variantId":null,"totalQuantity":447,"softReserved":10,"hardReserved":0,"quarantine":2,"available":435,"reorderThreshold":20,"reorderQuantity":60,"tracka
+
+[T11] PATCH /inventory/v1/stock-records/sr-test-001/threshold       role=WAREHOUSE_OPERATOR   exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:46.531363400Z"}
+
+[T12] GET   /inventory/v1/stock-records/sr-test-001/evolution       role=SUPER_ADMIN          exp=200 got=200 => PASS
+      body: {"success":true,"data":{"data":[{"date":"2026-03-26","quantity":0},{"date":"2026-03-27","quantity":0},{"date":"2026-03-28","quantity":0},{"date":"2026-03-29","quantity":0},{"date":"2026-03-30","quantity":0},{"date":"2026-03-31","quantity":0},{"date":"2026-04-01","quantity":0},{"date":"2026-04-02","q
+
+
+--- StockMovementController (/inventory/v1/movements) ---
+[T13] GET   /inventory/v1/movements/by-stock-record/sr-test-001?size=10 role=INVENTORY_MANAGER    exp=200 got=200 => PASS
+      body: {"success":true,"data":{"content":[{"movementId":"c4f7487a-7062-4ddf-bbb2-37d6a9828b24","skuCode":"SKU12345","movementType":"ADJUSTMENT_IN","quantityChange":5,"quantityBefore":442,"quantityAfter":447,"unitCost":null,"totalCost":null,"referenceType":"ADJUSTMENT","referenceId":null,"reason":"Test adju
+
+[T14] GET   /inventory/v1/movements/audit-journal?size=10           role=INVENTORY_MANAGER    exp=200 got=200 => PASS
+      body: {"success":true,"data":{"content":[{"movementId":"c4f7487a-7062-4ddf-bbb2-37d6a9828b24","skuCode":"SKU12345","movementType":"ADJUSTMENT_IN","quantityChange":5,"quantityBefore":442,"quantityAfter":447,"unitCost":null,"totalCost":null,"referenceType":"ADJUSTMENT","referenceId":null,"reason":"Test adju
+
+[T15] GET   /inventory/v1/movements/audit-journal?size=10           role=WAREHOUSE_OPERATOR   exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:47.003086Z"}
+
+[T16] POST  /inventory/v1/movements/bulk                            role=WAREHOUSE_OPERATOR   exp=200 got=200 => PASS
+      body: {"success":true,"message":"movement.bulk.completed","timestamp":"2026-04-23T23:15:47.161841500Z"}
+
+[T17] POST  /inventory/v1/movements/bulk                            role=LOGISTICS_AGENT      exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:47.297199300Z"}
+
+
+--- StockDashboardController (/inventory/v1/dashboard) ---
+[T18] GET   /inventory/v1/dashboard                                 role=INVENTORY_MANAGER    exp=200 got=200 => PASS
+      body: {"success":true,"data":{"totalFifoValuation":20000.00,"outOfStockCount":0,"belowThresholdCount":0,"totalSoftReserved":10,"totalHardReserved":0,"movementsTodayIn":11,"movementsTodayOut":0,"totalVariants":1},"message":"dashboard.loaded","timestamp":"2026-04-23T23:15:47.437692100Z"}
+
+[T19] GET   /inventory/v1/dashboard                                 role=LOGISTICS_AGENT      exp=200 got=200 => PASS
+      body: {"success":true,"data":{"totalFifoValuation":20000.00,"outOfStockCount":0,"belowThresholdCount":0,"totalSoftReserved":10,"totalHardReserved":0,"movementsTodayIn":11,"movementsTodayOut":0,"totalVariants":1},"message":"dashboard.loaded","timestamp":"2026-04-23T23:15:47.714262300Z"}
+
+[T20] GET   /inventory/v1/dashboard                                 role=FINANCE_MANAGER      exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:48.038169300Z"}
+
+
+--- FifoLayerController (/inventory/v1/fifo-layers) ---
+[T21] GET   /inventory/v1/fifo-layers/by-stock-record/sr-test-001   role=INVENTORY_MANAGER    exp=200 got=200 => PASS
+      body: {"success":true,"data":[{"layerId":"8b0e7dbd-fdc9-4a5f-9858-29670f249922","layerNumber":1,"receptionDate":"2026-04-23T23:13:20.953397Z","purchaseOrderRef":"PO-001","supplierCode":"SUP1001","initialQuantity":100,"remainingQuantity":100,"unitCost":50.0000,"remainingValue":5000.0000,"status":"ACTIVE"},
+
+[T22] GET   /inventory/v1/fifo-layers/summary/sr-test-001           role=FINANCE_MANAGER      exp=200 got=200 => PASS
+      body: {"success":true,"data":{"activeLayersCount":4,"totalFifoStock":400,"weightedAvgCost":50.0000,"totalValue":20000.0000,"nextSaleInfo":"100 units from Layer #1 (cost: 50.0000 DZD)"},"message":"fifo.summary","timestamp":"2026-04-23T23:15:48.389519Z"}
+
+[T23] GET   /inventory/v1/fifo-layers/summary/sr-test-001           role=LOGISTICS_AGENT      exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:48.557206600Z"}
+
+
+--- StockAlertController (/inventory/v1/alerts) ---
+[T24] GET   /inventory/v1/alerts                                    role=INVENTORY_MANAGER    exp=200 got=200 => PASS
+      body: {"success":true,"data":[],"message":"alert.list","timestamp":"2026-04-23T23:15:48.719545800Z"}
+
+[T25] GET   /inventory/v1/alerts/reorder-suggestions                role=PROCUREMENT_MANAGER  exp=200 got=200 => PASS
+      body: {"success":true,"data":[],"message":"alert.reorder.suggestions","timestamp":"2026-04-23T23:15:48.848534900Z"}
+
+[T26] GET   /inventory/v1/alerts/reorder-suggestions                role=LOGISTICS_AGENT      exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:48.954874500Z"}
+
+[T27] PATCH /inventory/v1/alerts/bogus-id/resolve                   role=WAREHOUSE_OPERATOR   exp=404 got=404 => PASS
+      body: {"success":false,"message":"Stock alert not found","timestamp":"2026-04-23T23:15:49.072163900Z"}
+
+
+--- ReservationController (/inventory/v1/reservations) ---
+[T28] POST  /inventory/v1/reservations/soft                         role=INVENTORY_MANAGER    exp=201 got=201 => PASS
+      body: {"success":true,"data":{"reservationId":"42a24ed6-0ef5-4340-9dfd-2398234a8c8e","skuCode":"SKU12345","orderId":"ord-test-001","clientRef":"CLI-001","reservationType":"SOFT","quantity":5,"status":"ACTIVE","omsStatus":"PENDING","expiresAt":"2026-04-26T09:00:49.201247500Z","createdAt":"2026-04-23T23:15:
+
+[T29] POST  /inventory/v1/reservations/soft                         role=LOGISTICS_AGENT      exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:49.343230100Z"}
+
+[T30] GET   /inventory/v1/reservations/by-order/ord-test-001        role=LOGISTICS_AGENT      exp=200 got=200 => PASS
+      body: {"success":true,"data":[{"reservationId":"cce6ca45-4c89-40ba-a6f3-e8ac61a769a5","skuCode":"SKU12345","orderId":"ord-test-001","clientRef":"CLI-001","reservationType":"SOFT","quantity":5,"status":"ACTIVE","omsStatus":"PENDING","expiresAt":"2026-04-26T09:00:20.813664Z","createdAt":"2026-04-23T23:14:20
+
+[T31] GET   /inventory/v1/reservations/by-stock-record/sr-test-001  role=WAREHOUSE_OPERATOR   exp=200 got=200 => PASS
+      body: {"success":true,"data":[{"reservationId":"cce6ca45-4c89-40ba-a6f3-e8ac61a769a5","skuCode":"SKU12345","orderId":"ord-test-001","clientRef":"CLI-001","reservationType":"SOFT","quantity":5,"status":"ACTIVE","omsStatus":"PENDING","expiresAt":"2026-04-26T09:00:20.813664Z","createdAt":"2026-04-23T23:14:20
+
+
+--- ReturnInspectionController (/inventory/v1/returns) ---
+[T32] POST  /inventory/v1/returns                                   role=WAREHOUSE_OPERATOR   exp=201 got=201 => PASS
+      body: {"success":true,"data":{"inspectionId":"c4ef4cb8-3c87-4066-932d-6b67e1cebdf3","skuCode":"SKU12345","orderId":"ord-test-001","customerRef":"CUST-001","returnDate":"2026-04-23T23:15:49.710045400Z","returnReason":"DEFECTIVE","productCondition":"USED","quantity":2,"inspectionStatus":"PENDING","inspector
+
+[T33] POST  /inventory/v1/returns                                   role=LOGISTICS_AGENT      exp=403 got=500 => FAIL
+      body: {"success":false,"message":"Internal server error","timestamp":"2026-04-23T23:15:49.838972600Z"}
+
+[T34] GET   /inventory/v1/returns?size=10                           role=INVENTORY_MANAGER    exp=200 got=200 => PASS
+      body: {"success":true,"data":{"content":[{"inspectionId":"c4ef4cb8-3c87-4066-932d-6b67e1cebdf3","skuCode":"SKU12345","orderId":"ord-test-001","customerRef":"CUST-001","returnDate":"2026-04-23T23:15:49.710045Z","returnReason":"DEFECTIVE","productCondition":"USED","quantity":2,"inspectionStatus":"PENDING","
+
+
+--- Auth negative test ---
+[T35] GET   /inventory/v1/stock-records                             role=NO_TOKEN             exp=403 got=403 => PASS
+      body: 
+
+
+===========================================================
+ SUMMARY: PASS=24  FAIL=11  TOTAL=35
+===========================================================
+
+ FINDINGS
+ --------
+ 1. All business paths (CREATE / READ / UPDATE / BULK) work as
+    expected for authorised roles. 100% of positive cases pass.
+
+ 2. BUG: RBAC denials return HTTP 500 instead of 403.
+    Root cause: GlobalExceptionHandler.handleUnexpected(Exception)
+    catches Spring's AuthorizationDeniedException/AccessDeniedException
+    before the framework can translate it to 403.
+    File: shared/exception/GlobalExceptionHandler.java
+    Fix : add an explicit @ExceptionHandler for
+          org.springframework.security.access.AccessDeniedException
+          (and/or AuthorizationDeniedException) returning 403.
+    Impact: RBAC is actually enforced (denied caller never reaches
+          the service), but the HTTP status misleads clients.
+
+ 3. Seed: one stock_record (id=sr-test-001, sku=SKU12345) was
+    inserted directly into inventory_schema.stock_records because
+    stock records are initialised only via PIM Product/Variant
+    events (no direct CREATE endpoint).
+===========================================================

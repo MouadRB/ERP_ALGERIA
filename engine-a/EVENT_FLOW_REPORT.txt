@@ -1,0 +1,72 @@
+============================================================
+ END-TO-END CROSS-MODULE EVENT-FLOW TEST
+ Date:   Fri Apr 24 15:30:00 WCAST 2026
+ SKU:    SKU-EVT-1777041000
+ MDM:    http://localhost:8080    |    engine-a: http://localhost:8081
+============================================================
+
+============================================================
+ STEP 1 — MDM register SKU (SKU-EVT-1777041000)
+============================================================
+  POST /mdm/v1/skus → HTTP 201
+    {"success":true,"data":{"skuCode":"SKU-EVT-1777041000","tenantId":"default","baseUom":"EA","productType":"SIMPLE","status":"DRAFT","createdBy":"user-01","createdAt":"2026-04-24T14:30:00.768135500Z","updatedBy":null,"updatedAt":null,"version":0},"message":"SKU enregistr� avec succ�s","timestamp":
+  ✓ MDM SKU registered (201) → 201
+
+============================================================
+ STEP 2 — MDM activate SKU
+============================================================
+  PATCH /mdm/v1/skus/SKU-EVT-1777041000/activate → HTTP 200
+    {"success":true,"data":{"skuCode":"SKU-EVT-1777041000","tenantId":"default","baseUom":"EA","productType":"SIMPLE","status":"ACTIVE","createdBy":"user-01","createdAt":"2026-04-24T14:30:00.768136Z","updatedBy":"user-78","updatedAt":"2026-04-24T14:30:00.890118700Z","version":0},"message":"SKU activ� 
+  ✓ MDM SKU activate (200) → 200
+
+============================================================
+ STEP 3 — PIM create product → should trigger Inventory stock_record creation
+============================================================
+  POST /pim/v1/products → HTTP 201
+    {"success":true,"data":{"productId":"ad565e9b-790f-4ba4-8116-69860fae6980","tenantId":"default","skuCode":"SKU-EVT-1777041000","skuStatus":"ACTIVE","supplierCode":null,"supplierRef":null,"categoryCode":"ELEC-SMARTPHONES","nameFr":"Event Flow Test Product","nameAr":"AR-NAME","descriptionFr":null,"des
+  ✓ PIM product created (201) → 201
+  → PRODUCT_ID = ad565e9b-790f-4ba4-8116-69860fae6980
+  Inventory row: 6b170b24-966c-4d88-bb49-c1b7ad1a9c5d|SKU-EVT-1777041000|0|true
+  ✓ Inventory stock_record auto-created via PIM→Inventory event → 6b170b24-966c-4d88-bb49-c1b7ad1a9c5d|SKU-EVT-1777041000|0|true
+
+============================================================
+ STEP 4 — PIM activate → Inventory.markTrackable + Catalog creates DRAFT row
+============================================================
+  PATCH /pim/v1/products/ad565e9b-790f-4ba4-8116-69860fae6980/activate → HTTP 200
+    {"success":true,"data":{"productId":"ad565e9b-790f-4ba4-8116-69860fae6980","tenantId":"default","skuCode":"SKU-EVT-1777041000","skuStatus":"ACTIVE","supplierCode":null,"supplierRef":null,"categoryCode":"ELEC-SMARTPHONES","nameFr":"Event Flow Test Product","nameAr":"AR-NAME","descriptionFr":null,"des
+  ✓ PIM product activated (200) → 200
+  Inventory is_trackable: t
+  ✓ Inventory marked trackable (event listener) → t
+  Catalog row: SKU-EVT-1777041000|DRAFT
+  ✓ Catalog catalog_product auto-created in DRAFT → SKU-EVT-1777041000|DRAFT
+
+============================================================
+ STEP 5 — PIM logistics update → Inventory threshold sync
+============================================================
+  PUT /pim/v1/products/ad565e9b-790f-4ba4-8116-69860fae6980/logistics → HTTP 200
+    {"success":true,"data":{"productId":"ad565e9b-790f-4ba4-8116-69860fae6980","stockAlertThreshold":42,"reorderQuantity":99,"reorderLeadDays":5,"autoReorderEnabled":true,"weightGrams":null,"lengthCm":null,"widthCm":null,"heightCm":null,"volumeCm3":null,"packagingWeightGrams":null,"shippingWeightGrams":
+  ✓ PIM logistics updated (200) → 200
+  Inventory thresholds: 42|99
+  ✓ Inventory reorder_threshold synced via LogisticsDomainEvent.ThresholdUpdated → 42|99
+
+============================================================
+ STEP 6 — PIM discontinue → Inventory freeze + Catalog mark discontinued
+============================================================
+  PATCH /pim/v1/products/ad565e9b-790f-4ba4-8116-69860fae6980/discontinue → HTTP 200
+    {"success":true,"data":{"productId":"ad565e9b-790f-4ba4-8116-69860fae6980","tenantId":"default","skuCode":"SKU-EVT-1777041000","skuStatus":"ACTIVE","supplierCode":null,"supplierRef":null,"categoryCode":"ELEC-SMARTPHONES","nameFr":"Event Flow Test Product","nameAr":"AR-NAME","descriptionFr":null,"des
+  ✓ PIM product discontinued (200) → 200
+  Inventory is_frozen: t
+  ✓ Inventory stock frozen by Discontinued event → t
+  Catalog publication_status: DISCONTINUED
+  ✓ Catalog product marked DISCONTINUED → DISCONTINUED
+
+============================================================
+ SUMMARY
+============================================================
+  PASS=12  FAIL=0  TOTAL=12
+
+ Cross-module propagation summary:
+   MDM→PIM       (REST validation of SKU on create/activate)
+   PIM→Inventory (stock_record creation + trackable + freeze)
+   PIM→Catalog   (catalog_product creation + discontinue)
+   PIM Logistics→Inventory (threshold sync)
