@@ -1,73 +1,172 @@
-  server:
-    port: 8081
+server:
+  port: 8081
 
-  spring:
-    application:
-      name: erp
-    threads:
-      virtual:
-        enabled: true
+spring:
+  application:
+    name: erp
+  threads:
+    virtual:
+      enabled: true
 
-    datasource:
-       url: jdbc:postgresql://localhost:5432/erp_db
-       username: ${DB_USERNAME:erp_admin}
-       password: ${DB_PASSWORD:local_dev_password}
-       hikari:
-         maximum-pool-size: 20
-         minimum-idle: 5
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ERP
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:2004}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
 
-    jpa:
-      open-in-view: false
+    data:
+      redis:
+        host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
+        password: ${REDIS_PASSWORD:}
+        timeout: 2000ms
+
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
       hibernate:
-        ddl-auto: none
-      properties:
-        hibernate:
-          format_sql: true
-          jdbc:
-            time_zone: Africa/Algiers
+        format_sql: true
+        jdbc:
+          time_zone: Africa/Algiers
 
-  jackson:
-    default-property-inclusion: non_null
-    serialization:
-      write-dates-as-timestamps: false
+jackson:
+  default-property-inclusion: non_null
+  serialization:
+    write-dates-as-timestamps: false
 
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:changeme-in-production-use-256-bit-minimum-key-here-please}
+      expiration-ms: 900000
 
-  app:
-    security:
-      jwt:
-        secret: ${JWT_SECRET:changeme-in-production-use-256-bit-minimum-key-here-please}
-        expiration-ms: 900000
+  mdm:
+    base-url: ${MDM_BASE_URL:http://localhost:8080}
 
-    mdm:
-      base-url: ${MDM_BASE_URL:http://localhost:8080}
+  oms:
+    base-url: ${OMS_BASE_URL:http://localhost:8082/api}
 
-    oms:
-      base-url: ${OMS_BASE_URL:http://localhost:8082/api}
+  outbox:
+    poll-interval-ms: 1000
+    batch-size: 50
+    retry-max: 3
+    timeout-ms: 5000
+    # Engine-b exposes a single ingest endpoint at /api/events/ingest (port 5220 in dev).
+    # Internally, EventDispatcher routes to handlers by eventType:
+    #   OmsOrderEventHandler  → CRM (customer + interactions) + Finance (invoice on COMPLETED/DELIVERED)
+    #   OmsReturnEventHandler → CRM (support tickets)
+    #   InventoryEventHandler → Procurement (stock alerts)
+    # Routes are listed explicitly per event (no DEFAULT wildcard) so unmapped events
+    # surface as "No route" in the poller log instead of silently fanning out.
+    targets:
+      - name: engine-b
+        routes:
+          OMS_ORDER_RECEIVED:     "http://localhost:5220/api/events/ingest"
+          OMS_ORDER_CONFIRMED:    "http://localhost:5220/api/events/ingest"
+          OMS_ORDER_CANCELLED:    "http://localhost:5220/api/events/ingest"
+          OMS_ORDER_REJECTED:     "http://localhost:5220/api/events/ingest"
+          OMS_ORDER_COMPLETED:    "http://localhost:5220/api/events/ingest"
+          OMS_SHIPMENT_DELIVERED: "http://localhost:5220/api/events/ingest"
+          OMS_RETURN_REQUESTED:   "http://localhost:5220/api/events/ingest"
+          OMS_RETURN_CLOSED:      "http://localhost:5220/api/events/ingest"
+          ReorderTriggered:       "http://localhost:5220/api/events/ingest"
+          StockZero:              "http://localhost:5220/api/events/ingest"
+          StockReplenished:       "http://localhost:5220/api/events/ingest"
+          CostUpdated:            "http://localhost:5220/api/events/ingest"
 
-    outbox:
-      poll-interval-ms: 1000
+oms:
+  mdm:
+    base-url: ${OMS_MDM_BASE_URL:http://localhost:8080}
+    connect-timeout-ms: 1000
+    read-timeout-ms: 2000
+    revalidate:
+      enabled: true
+      fixed-delay-ms: 30000
       batch-size: 50
-      retry-max: 3
-      timeout-ms: 5000
-      targets:
-        - name: engine-b
-          routes:
-            DEFAULT: "http://localhost:8082/api/events/ingest"
+  returns:
+    window-days: 14
+  integration:
+    default-carrier: MANUAL
+    manual:
+      webhook-secret: ${OMS_MANUAL_WEBHOOK_SECRET:manual-secret}
 
-        - name: engine-b-crm
-          routes:
-            SKU_REGISTERED: "http://localhost:8083/api/mdm/skus/registered"
-            SKU_ACTIVATED: "http://localhost:8083/api/mdm/skus/activated"
-            SUPPLIER_REGISTERED: "http://localhost:8083/api/procurement/suppliers/new"
+  # ── Stage 9: Real carrier adapters ──
+  # Each carrier is disabled by default. Flip `enabled=true` and set the real
+  # credentials (never commit them — use env vars). The base-url values below are
+  # the public defaults for each provider; swap them freely when your contract
+  # gives you a different endpoint.
+  carriers:
+    yalidine:
+      enabled: ${OMS_YALIDINE_ENABLED:false}
+      base-url: ${OMS_YALIDINE_BASE_URL:https://api.yalidine.app/v1}
+      api-id: ${OMS_YALIDINE_API_ID:}
+      api-token: ${OMS_YALIDINE_API_TOKEN:}
+      webhook-secret: ${OMS_YALIDINE_WEBHOOK_SECRET:}
+      connect-timeout-ms: 2000
+      read-timeout-ms: 5000
+    zrexpress:
+      enabled: ${OMS_ZREXPRESS_ENABLED:false}
+      base-url: ${OMS_ZREXPRESS_BASE_URL:https://procolis.com/api_v1}
+      token: ${OMS_ZREXPRESS_TOKEN:}
+      key: ${OMS_ZREXPRESS_KEY:}
+      webhook-secret: ${OMS_ZREXPRESS_WEBHOOK_SECRET:}
+      connect-timeout-ms: 2000
+      read-timeout-ms: 5000
+    ecotrack:
+      enabled: ${OMS_ECOTRACK_ENABLED:false}
+      base-url: ${OMS_ECOTRACK_BASE_URL:https://app.noest-dz.com/api/public}
+      api-token: ${OMS_ECOTRACK_TOKEN:}
+      user-guid: ${OMS_ECOTRACK_USER_GUID:}
+      webhook-secret: ${OMS_ECOTRACK_WEBHOOK_SECRET:}
+      connect-timeout-ms: 2000
+      read-timeout-ms: 5000
+    maystro:
+      enabled: ${OMS_MAYSTRO_ENABLED:false}
+      base-url: ${OMS_MAYSTRO_BASE_URL:https://backend.maystro-delivery.com/api/stores}
+      api-key: ${OMS_MAYSTRO_API_KEY:}
+      webhook-secret: ${OMS_MAYSTRO_WEBHOOK_SECRET:}
+      connect-timeout-ms: 2000
+      read-timeout-ms: 5000
 
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: health,info,metrics
+  # ── Stage 11: OpenSearch read model for orders ──
+  # Disabled by default; when enabled, the OmsSearchIndexer listens to order
+  # lifecycle events and upserts a denormalized document into `index-name`.
+  search:
+    enabled: ${OMS_SEARCH_ENABLED:false}
+    index-name: ${OMS_SEARCH_INDEX:oms-orders}
+    opensearch:
+      host: ${OMS_OPENSEARCH_HOST:localhost}
+      port: ${OMS_OPENSEARCH_PORT:9200}
+      scheme: ${OMS_OPENSEARCH_SCHEME:http}
+      username: ${OMS_OPENSEARCH_USERNAME:}
+      password: ${OMS_OPENSEARCH_PASSWORD:}
+    backfill:
+      enabled: ${OMS_SEARCH_BACKFILL_ENABLED:false}
+      fixed-delay-ms: 300000
+      batch-size: 200
 
-  logging:
-    level:
-      com.dz.erp: DEBUG
-    pattern:
-      console: "%d{ISO8601} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
+  inventory:
+    soft-reserve-expiry-minutes: 120
+    stale-reserve-alert-minutes: 60
+    default-reorder-threshold: 10
+    default-reorder-quantity: 50
+    dashboard-cache-ttl-seconds: 120
+    reserve-expiry-check-ms: 60000
+    alert-check-ms: 300000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    com.dz.erp: DEBUG
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
