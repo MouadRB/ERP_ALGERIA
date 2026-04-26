@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
 
 
 spring:
@@ -36,7 +36,9 @@ jackson:
 app:
   security:
     jwt:
-      secret: ${JWT_SECRET:changeme-in-production-use-256-bit-minimum-key-here-please}
+      # Shared HMAC secret used by engine-a, mdm-service and engine-b so JWTs
+      # issued by any side validate everywhere. Override in every environment.
+      secret: ${ERP_JWT_SECRET:${JWT_SECRET:changeme-in-production-use-256-bit-minimum-key-here-please}}
       expiration-ms: 900000
 
   outbox:
@@ -45,23 +47,12 @@ app:
     retry-max: 3
     timeout-ms: 5000
 
-    # ── Each target has a routes map: eventType → url ──
+    # MDM only emits SKU_*/SUPPLIER_* style master-data events for engine-b.
+    # Single target — DEFAULT routes everything to engine-b's ingest endpoint.
     targets:
       - name: engine-b
         routes:
-          DEFAULT: http://localhost:8082/events/ingest
-
-      - name: engine-b-crm
-        routes:
-          SKU_REGISTERED: http://localhost:8083/mdm/skus/registered
-          SKU_ACTIVATED: http://localhost:8083/mdm/skus/activated
-          SUPPLIER_REGISTERED: http://localhost:8083/procurement/suppliers/new
-
-      # Add more targets:
-      # - name: payment-gateway
-      #   routes:
-      #     ORDER_CREATED: https://pay.example.com/webhooks/orders
-      #     ORDER_CANCELLED: https://pay.example.com/webhooks/cancellations
+          DEFAULT: ${ENGINE_B_INGEST_URL:http://localhost:8082/api/events/ingest}
 
 management:
   endpoints:

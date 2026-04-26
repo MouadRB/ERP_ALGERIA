@@ -1,0 +1,11 @@
+﻿  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Users\cyrex\Documents\ERP\ERP_ALGERIA\engine-b\Modules\CRM\Application\RfmCalculationJob.cs(43,54): error CS0201: Only assignment, call, increment, decrement, await, and new object expressions can be used as a statement [C:\Users\cyrex\Documents\ERP\ERP_ALGERIA\engine-b\engine-b.csproj]
+
+Build FAILED.
+
+C:\Users\cyrex\Documents\ERP\ERP_ALGERIA\engine-b\Modules\CRM\Application\RfmCalculationJob.cs(43,54): error CS0201: Only assignment, call, increment, decrement, await, and new object expressions can be used as a statement [C:\Users\cyrex\Documents\ERP\ERP_ALGERIA\engine-b\engine-b.csproj]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:06.93

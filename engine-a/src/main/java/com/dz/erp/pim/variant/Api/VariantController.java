@@ -3,6 +3,7 @@ package com.dz.erp.pim.variant.Api;
 import com.dz.erp.pim.variant.application.VariantService;
 import com.dz.erp.pim.variant.application.dto.*;
 import com.dz.erp.shared.api.ApiResult;
+import com.dz.erp.shared.security.Roles;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,26 +20,28 @@ public class VariantController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<VariantResponse> create(@PathVariable String productId, @Valid @RequestBody CreateVariantCommand cmd) {
         return ApiResult.ok(svc.create(productId, cmd), "variant.created");
     }
 
     @PutMapping("/{variantId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','PRODUCT_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<VariantResponse> update(@PathVariable String productId, @PathVariable String variantId, @Valid @RequestBody UpdateVariantCommand cmd) {
         return ApiResult.ok(svc.update(variantId, cmd), "variant.updated");
     }
 
     @DeleteMapping("/{variantId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN','INVENTORY_MANAGER')")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "')")
     public ApiResult<Void> delete(@PathVariable String productId, @PathVariable String variantId) {
         svc.delete(productId, variantId);
         return ApiResult.ok(null, "variant.deleted");
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('" + Roles.SUPER_ADMIN + "','" + Roles.PRODUCT_MANAGER + "','"
+            + Roles.INVENTORY_MANAGER + "','" + Roles.FINANCE_MANAGER + "','"
+            + Roles.REPORTING_ANALYST + "')")
     public ApiResult<List<VariantResponse>> list(@PathVariable String productId) {
         return ApiResult.ok(svc.listByProduct(productId));
     }
