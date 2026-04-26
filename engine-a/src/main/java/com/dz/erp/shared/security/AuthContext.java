@@ -13,4 +13,9 @@ public final class AuthContext {
     }
     public static String currentUserId()   { return currentUser().userId(); }
     public static String currentTenantId() { return TenantContext.getTenantId(); }
+    public static String getJwt() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getCredentials() instanceof String jwt) return jwt;
+        throw new IllegalStateException("No JWT token available");
+    }
 }

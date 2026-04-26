@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Generates JWT tokens for testing.
  *
- * Run with: mvn exec:java -Dexec.mainClass="com.dz.erp.shared.security.JwtTokenGenerator"
+ * Run with: mvn exec:java -Dexec.mainClass=" com.dz.erp.shared.security.JwtTokenGenerator"
  * Or just run the main method from your IDE.
  *
  * The tokens match exactly what JwtAuthenticationFilter expects:
@@ -76,26 +76,26 @@ public class JwtTokenGenerator {
         System.out.println(financeManager);
         System.out.println();
 
-        // ── User 5: Logistics Manager (creates/activates wilayas) ──
-        var logisticsManager = generate(
+        // ── User 5: Logistics Agent (per RBAC v2.0 — read Inventory/WMS/CRM, update Orders) ──
+        var logisticsAgent = generate(
                 "user-21",
                 "default",
                 "Yacine",
-                List.of("LOGISTICS_MANAGER")
+                List.of("LOGISTICS_AGENT")
         );
-        System.out.println("LOGISTICS_MANAGER (user-21 / Yacine):");
-        System.out.println(logisticsManager);
+        System.out.println("LOGISTICS_AGENT (user-21 / Yacine):");
+        System.out.println(logisticsAgent);
         System.out.println();
 
-        // ── User 6: Warehouse Manager (creates/activates bins) ──
-        var warehouseManager = generate(
+        // ── User 6: Warehouse Operator (per RBAC v2.0 — CRUD on WMS, update Inventory) ──
+        var warehouseOperator = generate(
                 "user-90",
                 "default",
                 "Nadia",
-                List.of("WAREHOUSE_MANAGER")
+                List.of("WAREHOUSE_OPERATOR")
         );
-        System.out.println("WAREHOUSE_MANAGER (user-90 / Nadia):");
-        System.out.println(warehouseManager);
+        System.out.println("WAREHOUSE_OPERATOR (user-90 / Nadia):");
+        System.out.println(warehouseOperator);
         System.out.println();
 
         // ── User 7: Super Admin (can do everything) ──
@@ -151,16 +151,16 @@ public class JwtTokenGenerator {
         System.out.println("  -d '{\"taxRuleCode\":\"TAX-ELEC-19\",\"categoryCode\":\"ELECTRONICS\",\"taxRate\":19.00,\"description\":\"TVA 19%\",\"effectiveFrom\":\"2026-01-01\"}'");
         System.out.println();
 
-        System.out.println("# 5. Create a Wilaya (as Logistics Manager):");
+        System.out.println("# 5. Create a Wilaya (as Logistics Agent):");
         System.out.println("curl -X POST http://localhost:8081/api/mdm/v1/wilayas \\");
-        System.out.println("  -H \"Authorization: Bearer " + logisticsManager + "\" \\");
+        System.out.println("  -H \"Authorization: Bearer " + logisticsAgent + "\" \\");
         System.out.println("  -H \"Content-Type: application/json\" \\");
         System.out.println("  -d '{\"wilayaCode\":\"16\",\"name\":\"Alger\",\"nameAr\":\"الجزائر\",\"zone\":\"CENTRE\",\"deliveryCostDzd\":400,\"estimatedDays\":\"1-2\",\"deliverable\":true}'");
         System.out.println();
 
-        System.out.println("# 6. Create a Bin (as Warehouse Manager):");
+        System.out.println("# 6. Create a Bin (as Warehouse Operator):");
         System.out.println("curl -X POST http://localhost:8081/api/mdm/v1/bins \\");
-        System.out.println("  -H \"Authorization: Bearer " + warehouseManager + "\" \\");
+        System.out.println("  -H \"Authorization: Bearer " + warehouseOperator + "\" \\");
         System.out.println("  -H \"Content-Type: application/json\" \\");
         System.out.println("  -d '{\"binCode\":\"A-01-01\",\"zone\":\"A\",\"rack\":\"01\",\"shelf\":\"01\",\"maxCapacity\":50,\"binType\":\"STANDARD\"}'");
         System.out.println();

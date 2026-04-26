@@ -111,7 +111,8 @@ public class ProductService {
         product = repo.save(product);
         eventPort.publish("PRODUCT_UPDATED", product.getProductId(),
                 new ProductDomainEvent.Updated(UUID.randomUUID().toString(), "PRODUCT_UPDATED", 1,
-                        tid, "Product", product.getProductId(), Instant.now(), product.getProductId(), uid));
+                        tid, "Product", product.getProductId(), Instant.now(), product.getProductId(),
+                        product.getSkuCode(), null, null, uid));
         return mapper.toResponse(product);
     }
 
@@ -146,6 +147,7 @@ public class ProductService {
                         Instant.now(),
                         savedProduct.getSkuCode(),
                         savedProduct.getNameFr(),
+                        savedProduct.getCategoryCode(),
                         uid
                 )
         );
