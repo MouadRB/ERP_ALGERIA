@@ -15,6 +15,8 @@ export const useApproveBC = () => {
     onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ['procurement', 'bcs'] });
       queryClient.invalidateQueries({ queryKey: ['procurement', 'bc', id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['rapports'] });
     },
   });
 };

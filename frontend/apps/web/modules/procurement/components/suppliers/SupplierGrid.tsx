@@ -1,11 +1,28 @@
-import { Card, CardContent, Typography } from "@mui/material";
+import { Grid } from "@mui/material";
+import SupplierCard from "./SupplierCard";
 
-export default function SupplierGrid() {
+type Supplier = {
+  id: string;
+  name: string;
+  wilayaCode: string;
+  phone: string;
+  email: string | null;
+  totalBCs: number;
+};
+
+type SupplierGridProps = {
+  suppliers: Supplier[];
+  onCreateBC?: (supplier: Supplier) => void;
+};
+
+export default function SupplierGrid({ suppliers, onCreateBC }: SupplierGridProps) {
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Typography variant="body2">SupplierGrid</Typography>
-      </CardContent>
-    </Card>
+    <Grid container spacing={2}>
+      {suppliers.map((supplier) => (
+        <Grid item xs={12} md={6} xl={4} key={supplier.id}>
+          <SupplierCard supplier={supplier} onCreateBC={onCreateBC} />
+        </Grid>
+      ))}
+    </Grid>
   );
 }
