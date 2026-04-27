@@ -31,6 +31,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        hbm2ddl:
+          create_namespaces: true
         jdbc:
           time_zone: Africa/Algiers
 

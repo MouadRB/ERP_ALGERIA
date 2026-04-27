@@ -15,11 +15,29 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U erp_admin -d erp_db"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  db-init:
+    image: postgres:16-alpine
+    container_name: erp-db-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: local_dev_password
+    volumes:
+      - ./scripts/init-db:/init:ro
+    entrypoint: >
+      sh -c "for f in /init/*.sql; do
+               echo \"Applying $$f\";
+               psql -h postgres -U erp_admin -d erp_db -v ON_ERROR_STOP=1 -f \"$$f\";
+             done"
+    restart: "no"
 
   redis:
     image: redis:7-alpine
@@ -67,37 +85,42 @@ services:
 
   mdm-service:
     build:
-      context: ../../mdm-service
+      context: ../mdm-service
       dockerfile: Dockerfile
     container_name: erp-mdm-service
     ports:
-      - "8081:8080"
+      - "8081:8081"
     environment:
+      - SERVER_PORT=8081
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
       - SPRING_DATASOURCE_USERNAME=erp_admin
       - SPRING_DATASOURCE_PASSWORD=local_dev_password
     depends_on:
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
 
   engine-a:
     build:
-      context: ../../engine-a
+      context: .
       dockerfile: Dockerfile
     container_name: erp-engine-a
     ports:
-      - "8082:8080"
+      - "8082:8081"
     environment:
+      - SERVER_PORT=8081
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
       - SPRING_DATASOURCE_USERNAME=erp_admin
       - SPRING_DATASOURCE_PASSWORD=local_dev_password
-      - MDM_SERVICE_URL=http://mdm-service:8080
-      - ENGINE_B_URL=http://engine-b:8080
+      - MDM_SERVICE_URL=http://mdm-service:8081
       - REDIS_HOST=redis
       - OPENSEARCH_URIS=http://opensearch:9200
     depends_on:
       postgres:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
       mdm-service:
         condition: service_started
 
@@ -110,8 +133,8 @@ services:
       - "8083:8080"
     environment:
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=erp_db;Username=erp_admin;Password=local_dev_password;
-      - MdmService__BaseUrl=http://mdm-service:8080
-      - EngineA__BaseUrl=http://engine-a:8080
+      - MdmService__BaseUrl=http://mdm-service:8081
+      - EngineA__BaseUrl=http://engine-a:8081
       - Redis__Configuration=redis:6379
     depends_on:
       postgres:
