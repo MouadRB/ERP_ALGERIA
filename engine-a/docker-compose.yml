@@ -2,7 +2,6 @@ version: '3.8'
 
 services:
 
-  # BACKING INFRASTRUCTURE
 
   postgres:
     image: postgres:16-alpine
