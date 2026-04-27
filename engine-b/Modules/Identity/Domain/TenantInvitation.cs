@@ -26,4 +26,3 @@ public class TenantInvitation
     public DateTime? AcceptedAt { get; set; }
     public Guid? InvitedByUserId { get; set; }
 }
-
