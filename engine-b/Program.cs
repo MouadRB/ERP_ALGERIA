@@ -117,6 +117,10 @@ builder.Services.AddScoped<engine_b.Modules.Finance.Application.RevenueRecogniti
 builder.Services.AddScoped<engine_b.Modules.Finance.Application.DeferredRevenueService>();
 builder.Services.AddScoped<engine_b.Modules.Finance.Application.PeriodLockService>();
 
+// ─── Rapport Module Services ────────────────────────────────────────────────
+builder.Services.AddScoped<engine_b.Modules.Rapport.Application.RapportService>();
+builder.Services.AddScoped<engine_b.Modules.Rapport.Infrastructure.RapportCsvExporter>();
+
 // ─── Outbox (Transactional Outbox Pattern) ──────────────────────────────────
 builder.Services.Configure<engine_b.Common.Outbox.OutboxSettings>(
     builder.Configuration.GetSection("Outbox"));
