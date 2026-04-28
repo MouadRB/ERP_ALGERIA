@@ -8,5 +8,6 @@ CREATE SCHEMA IF NOT EXISTS pim_schema       AUTHORIZATION erp_admin;
 CREATE SCHEMA IF NOT EXISTS catalog_schema   AUTHORIZATION erp_admin;
 CREATE SCHEMA IF NOT EXISTS inventory_schema AUTHORIZATION erp_admin;
 CREATE SCHEMA IF NOT EXISTS oms_schema       AUTHORIZATION erp_admin;
-CREATE SCHEMA IF NOT EXISTS shared_schema    AUTHORIZATION erp_admin;
+CREATE SCHEMA IF NOT EXISTS shared
+    _schema    AUTHORIZATION erp_admin;
 
