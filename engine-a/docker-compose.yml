@@ -66,7 +66,7 @@ services:
 
   mdm-service:
     build:
-      context: ../../mdm-service
+      context: ../mdm-service
       dockerfile: Dockerfile
     container_name: erp-mdm-service
     ports:
@@ -81,7 +81,7 @@ services:
 
   engine-a:
     build:
-      context: ../../engine-a
+      context: .
       dockerfile: Dockerfile
     container_name: erp-engine-a
     ports:
@@ -100,38 +100,9 @@ services:
       mdm-service:
         condition: service_started
 
-  engine-b:
-    build:
-      context: ../../engine-b
-      dockerfile: Dockerfile
-    container_name: erp-engine-b
-    ports:
-      - "8083:8080"
-    environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=erp_db;Username=erp_admin;Password=local_dev_password;
-      - MdmService__BaseUrl=http://mdm-service:8080
-      - EngineA__BaseUrl=http://engine-a:8080
-      - Redis__Configuration=redis:6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      mdm-service:
-        condition: service_started
 
-  frontend:
-    build:
-      context: ../../frontend
-      dockerfile: Dockerfile
-    container_name: erp-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - REACT_APP_ENGINE_A_URL=http://localhost:8082
-      - REACT_APP_ENGINE_B_URL=http://localhost:8083
-      - REACT_APP_KEYCLOAK_URL=http://localhost:8080
-    depends_on:
-      - engine-a
-      - engine-b
+
+
 
 volumes:
   pgdata:
