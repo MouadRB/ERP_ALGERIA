@@ -74,6 +74,12 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<DataSeeder>();
 
+// ─── Email Service ───────────────────────────────────────────────────────────
+builder.Services.Configure<engine_b.Common.Email.SmtpSettings>(
+    builder.Configuration.GetSection("Smtp"));
+builder.Services.AddScoped<engine_b.Common.Email.IEmailService,
+    engine_b.Common.Email.SmtpEmailService>();
+
 // ─── CRM Module Services ────────────────────────────────────────────────────
 builder.Services.AddScoped<CustomerRepository>();
 builder.Services.AddScoped<SupportTicketRepository>();
