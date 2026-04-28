@@ -1,4 +1,4 @@
-#!/bin/bash
+a#!/bin/bash
 # Cross-module API health check.
 #
 # For every known inter-module dependency, hit the endpoint / trigger the flow
