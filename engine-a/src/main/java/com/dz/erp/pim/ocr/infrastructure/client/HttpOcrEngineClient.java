@@ -3,7 +3,6 @@ package com.dz.erp.pim.ocr.infrastructure.client;
 import com.dz.erp.pim.ocr.domain.port.OcrEngineClient;
 import com.dz.erp.pim.ocr.infrastructure.client.dto.OcrEngineExtractionDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,11 +19,17 @@ import java.util.List;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class HttpOcrEngineClient implements OcrEngineClient {
 
-    private final @Qualifier("ocrRestClient") RestClient client;
+    private final RestClient client;
     private final ObjectMapper objectMapper;
+
+    public HttpOcrEngineClient(@Qualifier("ocrRestClient") RestClient client,
+                               ObjectMapper objectMapper) {
+        this.client = client;
+        this.objectMapper = objectMapper;
+    }
+
 
     @Value("${app.ocr.extract-path:/extract-delivery-note}")
     private String extractPath;
