@@ -1,12 +1,19 @@
 server:
   port: 8082
 
+
 spring:
   application:
     name: erp
   threads:
     virtual:
       enabled: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 12MB
 
   datasource:
     url: jdbc:postgresql://localhost:5432/erp_db
@@ -50,6 +57,16 @@ app:
 
   oms:
     base-url: ${OMS_BASE_URL:http://localhost:8082/api}
+
+  # ── PIM OCR ingest pipeline (Stage 12.2) ──
+  # Talks to the OCR-main FastAPI service (default port 8085 to avoid clashing with
+  # engine-a on 8081 / mdm-service on 8081 / engine-b on 8080). The Python service
+  # uses 8080 by default — override via OCR_BASE_URL or run `uvicorn main:app --port 8085`.
+  ocr:
+    base-url: ${OCR_BASE_URL:http://localhost:8085}
+    extract-path: ${OCR_EXTRACT_PATH:/extract-delivery-note}
+    connect-timeout-ms: ${OCR_CONNECT_TIMEOUT_MS:3000}
+    read-timeout-ms: ${OCR_READ_TIMEOUT_MS:60000}
 
   outbox:
     poll-interval-ms: 1000

@@ -135,6 +135,16 @@ public enum ErrorCode {
     OMS_RETURN_WINDOW_EXPIRED("oms.return.window.expired", HttpStatus.UNPROCESSABLE_ENTITY),
     OMS_RETURN_NOT_FOUND("oms.return.not.found", HttpStatus.NOT_FOUND),
 
+    // ── PIM: OCR Import ──
+    OCR_JOB_NOT_FOUND("ocr.job.not.found", HttpStatus.NOT_FOUND),
+    OCR_JOB_INVALID_STATE("ocr.job.invalid.state", HttpStatus.UNPROCESSABLE_ENTITY),
+    OCR_LINE_NOT_FOUND("ocr.line.not.found", HttpStatus.NOT_FOUND),
+    OCR_FILE_EMPTY("ocr.file.empty", HttpStatus.BAD_REQUEST),
+    OCR_FILE_TOO_LARGE("ocr.file.too.large", HttpStatus.PAYLOAD_TOO_LARGE),
+    OCR_FILE_UNSUPPORTED_TYPE("ocr.file.unsupported.type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+    OCR_FILE_READ_ERROR("ocr.file.read.error", HttpStatus.BAD_REQUEST),
+    OCR_ENGINE_UNAVAILABLE("ocr.engine.unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+
     // ── Generic ──
     INTERNAL_ERROR("error.internal", HttpStatus.INTERNAL_SERVER_ERROR),
     UNAUTHORIZED("error.unauthorized", HttpStatus.UNAUTHORIZED),

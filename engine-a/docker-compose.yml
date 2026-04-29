@@ -2,7 +2,6 @@ version: '3.8'
 
 services:
 
-  # BACKING INFRASTRUCTURE
 
   postgres:
     image: postgres:16-alpine
@@ -15,6 +14,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U erp_admin -d erp_db"]
       interval: 5s
@@ -67,7 +67,7 @@ services:
 
   mdm-service:
     build:
-      context: ../../mdm-service
+      context: ../mdm-service
       dockerfile: Dockerfile
     container_name: erp-mdm-service
     ports:
@@ -82,11 +82,11 @@ services:
 
   engine-a:
     build:
-      context: ../../engine-a
+      context: .
       dockerfile: Dockerfile
     container_name: erp-engine-a
     ports:
-      - "8082:8080"
+      - "8082:8081"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
       - SPRING_DATASOURCE_USERNAME=erp_admin
@@ -101,38 +101,9 @@ services:
       mdm-service:
         condition: service_started
 
-  engine-b:
-    build:
-      context: ../../engine-b
-      dockerfile: Dockerfile
-    container_name: erp-engine-b
-    ports:
-      - "8083:8080"
-    environment:
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=erp_db;Username=erp_admin;Password=local_dev_password;
-      - MdmService__BaseUrl=http://mdm-service:8080
-      - EngineA__BaseUrl=http://engine-a:8080
-      - Redis__Configuration=redis:6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      mdm-service:
-        condition: service_started
 
-  frontend:
-    build:
-      context: ../../frontend
-      dockerfile: Dockerfile
-    container_name: erp-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - REACT_APP_ENGINE_A_URL=http://localhost:8082
-      - REACT_APP_ENGINE_B_URL=http://localhost:8083
-      - REACT_APP_KEYCLOAK_URL=http://localhost:8080
-    depends_on:
-      - engine-a
-      - engine-b
+
+
 
 volumes:
   pgdata:
