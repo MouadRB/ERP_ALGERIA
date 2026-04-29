@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Avatar,
   Badge,
   Box,
+  Button,
   IconButton,
   InputAdornment,
   Paper,
@@ -16,42 +17,33 @@ import NotificationsNoneRounded from "@mui/icons-material/NotificationsNoneRound
 import KeyboardArrowDownRounded from "@mui/icons-material/KeyboardArrowDownRounded";
 import DarkModeRounded from "@mui/icons-material/DarkModeRounded";
 import LightModeRounded from "@mui/icons-material/LightModeRounded";
+import LogoutRounded from "@mui/icons-material/LogoutRounded";
 import Tooltip from "@mui/material/Tooltip";
+import { useParams, useRouter } from "next/navigation";
 import { useColorMode } from "@/providers/ThemeRegistry";
-
-type UserInfo = {
-  name: string;
-  roleLabel: string;
-};
+import { useSession } from "@/providers/SessionProvider";
 
 export default function Topbar() {
   const { mode, toggleMode } = useColorMode();
-  const [user, setUser] = useState<UserInfo>({
-    name: "SuperAdmin",
-    roleLabel: "Administrateur"
-  });
+  const router = useRouter();
+  const params = useParams();
+  const locale = typeof params?.locale === "string" ? params.locale : "fr";
+  const { session, signOut } = useSession();
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = localStorage.getItem("ferza.mock.user");
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as { name?: string; label?: string };
-      setUser({
-        name: parsed?.name ?? "SuperAdmin",
-        roleLabel: parsed?.label ?? "Administrateur"
-      });
-    } catch {
-      // ignore parsing errors
-    }
-  }, []);
+  const userName = session?.nameFr?.trim() || session?.email?.trim() || "Utilisateur";
+  const userRoleLabel = session?.roleLabel || "Role non attribue";
 
   const initials = useMemo(() => {
-    const parts = user.name.split(" ").filter(Boolean);
+    const parts = userName.split(" ").filter(Boolean);
     if (parts.length === 0) return "SA";
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  }, [user.name]);
+  }, [userName]);
+
+  const handleLogout = () => {
+    signOut();
+    router.replace(`/${locale}/login`);
+  };
 
   return (
     <Box
@@ -120,14 +112,30 @@ export default function Topbar() {
         </Badge>
       </IconButton>
 
+      <Tooltip title="Se deconnecter">
+        <Button
+          onClick={handleLogout}
+          startIcon={<LogoutRounded />}
+          variant="text"
+          sx={{
+            textTransform: "none",
+            color: "text.secondary",
+            minWidth: "auto",
+            px: 1,
+          }}
+        >
+          Deconnexion
+        </Button>
+      </Tooltip>
+
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Avatar sx={{ bgcolor: "primary.main", width: 36, height: 36 }}>{initials}</Avatar>
         <Box>
           <Typography variant="body2" fontWeight={600} color="text.primary">
-            {user.name}
+            {userName}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            {user.roleLabel}
+            {userRoleLabel}
           </Typography>
         </Box>
         <KeyboardArrowDownRounded sx={{ color: "text.secondary" }} />

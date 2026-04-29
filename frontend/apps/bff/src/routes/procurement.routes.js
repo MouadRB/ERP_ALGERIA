@@ -27,8 +27,14 @@ const receiveSchema = z.object({
 const createSchema = z.object({
   supplierName: z.string().min(2, 'Fournisseur requis.'),
   supplierId: z.string().optional(),
+  priority: z.enum(['urgent', 'high', 'normal', 'low']).optional(),
+  warehouse: z.string().optional(),
+  notes: z.string().optional(),
   wilayaCode: z.string().optional(),
   expectedDeliveryDate: z.string().optional(),
+  budgetAvailable: z.number().optional(),
+  transportCost: z.number().optional(),
+  customsCost: z.number().optional(),
   items: z
     .array(
       z.object({
@@ -51,7 +57,7 @@ const createSchema = z.object({
  */
 const fetchBCMiddleware = async (req, _res, next) => {
   try {
-    const bc = await procurementService.getBCById(req.params.id);
+    const bc = await procurementService.getBCById(req.params.id, req.headers.authorization);
     if (!bc) return next(new AppError('NOT_FOUND', 'Bon de commande introuvable.', 404));
     req.bc = bc;
     next();
@@ -66,7 +72,7 @@ router.get(
   validateQuery(paginationSchema.extend({ status: z.string().optional() })),
   async (req, res, next) => {
     try {
-      const result = await procurementService.getBCs(req.validatedQuery);
+      const result = await procurementService.getBCs(req.validatedQuery, req.headers.authorization);
       res.json(result);
     } catch (err) {
       next(err);
@@ -80,7 +86,7 @@ router.post(
   validate(createSchema),
   async (req, res, next) => {
     try {
-      const bc = await procurementService.createBC(req.validated, req.user.id);
+      const bc = await procurementService.createBC(req.validated, req.user.id, req.headers.authorization);
       res.status(201).json({ data: bc });
     } catch (err) {
       next(err);
@@ -91,9 +97,9 @@ router.post(
 router.get(
   '/suppliers',
   requireRole('PROCUREMENT_MANAGER', 'FINANCE_DIRECTOR', 'SUPERADMIN', 'ANALYST'),
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
-      const suppliers = await procurementService.getSuppliers();
+      const suppliers = await procurementService.getSuppliers(req.headers.authorization);
       res.json({ data: suppliers });
     } catch (err) {
       next(err);
@@ -104,9 +110,9 @@ router.get(
 router.get(
   '/alerts',
   requireRole('PROCUREMENT_MANAGER', 'FINANCE_DIRECTOR', 'SUPERADMIN', 'ANALYST'),
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
-      const alerts = await procurementService.getAlerts();
+      const alerts = await procurementService.getAlerts(req.headers.authorization);
       res.json({ data: alerts });
     } catch (err) {
       next(err);
@@ -119,7 +125,7 @@ router.get(
   requireRole('PROCUREMENT_MANAGER', 'FINANCE_DIRECTOR', 'SUPERADMIN', 'ANALYST'),
   async (req, res, next) => {
     try {
-      const bc = await procurementService.getBCById(req.params.id);
+      const bc = await procurementService.getBCById(req.params.id, req.headers.authorization);
       if (!bc) return next(new AppError('NOT_FOUND', 'Bon de commande introuvable.', 404));
       res.json({ data: bc });
     } catch (err) {
@@ -134,7 +140,7 @@ router.patch(
   validate(receiveSchema),
   async (req, res, next) => {
     try {
-      const bc = await procurementService.receiveBC(req.params.id, req.validated.items, req.user.id);
+      const bc = await procurementService.receiveBC(req.params.id, req.validated.items, req.user.id, req.headers.authorization);
       if (!bc) return next(new AppError('NOT_FOUND', 'Bon de commande introuvable.', 404));
       res.json({ data: bc });
     } catch (err) {
@@ -151,7 +157,7 @@ router.patch(
   sodCheck,
   async (req, res, next) => {
     try {
-      const bc = await procurementService.approveBC(req.params.id, req.user.id);
+      const bc = await procurementService.approveBC(req.params.id, req.user.id, req.headers.authorization);
       res.json({ data: bc });
     } catch (err) {
       next(err);
@@ -165,7 +171,7 @@ router.patch(
   validate(rejectSchema),
   async (req, res, next) => {
     try {
-      const bc = await procurementService.rejectBC(req.params.id, req.user.id, req.validated.reason);
+      const bc = await procurementService.rejectBC(req.params.id, req.user.id, req.validated.reason, req.headers.authorization);
       if (!bc) return next(new AppError('NOT_FOUND', 'Bon de commande introuvable.', 404));
       res.json({ data: bc });
     } catch (err) {

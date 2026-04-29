@@ -41,6 +41,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     // ─── Inbound (cross-engine event ingest) ───
     public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
 
+    // ─── Identity (tenant invitations) ───
+    public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -73,6 +76,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<Guid>>().ToTable("user_logins");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityRoleClaim<Guid>>().ToTable("role_claims");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserToken<Guid>>().ToTable("user_tokens");
+
+        builder.Entity<TenantInvitation>(e =>
+        {
+            e.ToTable("tenant_invitations");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.TenantId).HasMaxLength(100);
+            e.Property(x => x.Email).HasMaxLength(256);
+            e.Property(x => x.TokenHash).HasMaxLength(128);
+            e.HasIndex(x => new { x.TenantId, x.Email });
+            e.HasIndex(x => x.ExpiresAt);
+        });
 
         // ── CRM ──
         builder.Entity<Customer>(e =>
@@ -224,7 +238,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         SeedOrders(builder);
         SeedCustomersAndTickets(builder);
         SeedInteractions(builder);
-        SeedProcurement(builder);
     }
 
     private static void SeedOrders(ModelBuilder builder)
@@ -397,70 +410,4 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         );
     }
 
-    private static void SeedProcurement(ModelBuilder builder)
-    {
-        var now = DateTime.UtcNow;
-        var s1 = Guid.Parse("f1000000-0000-0000-0000-000000000001");
-        var s2 = Guid.Parse("f1000000-0000-0000-0000-000000000002");
-        var s3 = Guid.Parse("f1000000-0000-0000-0000-000000000003");
-
-        builder.Entity<Supplier>().HasData(
-            new Supplier { Id = s1, Name = "Apple Distribution", Country = "France", City = "Paris", ContactName = "Jean-Pierre Martin", Email = "jp@apple-dist.fr", Phone = "+33 1 00 00 00 00", LeadTimeDays = 5, ReliabilityScore = 67, OnTimeRate = 76, AverageCostIndex = 100 },
-            new Supplier { Id = s2, Name = "Nike MENA", Country = "UAE", City = "Dubai", ContactName = "M. Karim Hassan", Email = "karim@nike-mena.ae", Phone = "+971 50 000 00 00", LeadTimeDays = 7, ReliabilityScore = 94, OnTimeRate = 92, AverageCostIndex = 98 },
-            new Supplier { Id = s3, Name = "Samsung Electronics", Country = "Korea", City = "Seoul", ContactName = "A. Mehdi Khan", Email = "mehdi@samsung.co.kr", Phone = "+82 2 0000 0000", LeadTimeDays = 6, ReliabilityScore = 78, OnTimeRate = 83, AverageCostIndex = 101 }
-        );
-
-        var po1 = Guid.Parse("f2000000-0000-0000-0000-000000000001");
-        var po2 = Guid.Parse("f2000000-0000-0000-0000-000000000002");
-
-        builder.Entity<PurchaseOrder>().HasData(
-            new PurchaseOrder
-            {
-                Id = po1, Reference = "BC-897", SupplierId = s1, Status = PurchaseOrderStatus.PendingApproval, Priority = PurchaseOrderPriority.Urgent,
-                CreatedBy = "Procurement Manager", Warehouse = "Alger WH-01", Subtotal = 900000, TransportCost = 0, CustomsCost = 0,
-                TotalAmount = 900000, BudgetAvailable = 750000, CreatedAt = now.AddDays(-2), EtaDate = now.AddDays(5)
-            },
-            new PurchaseOrder
-            {
-                Id = po2, Reference = "BC-892", SupplierId = s2, Status = PurchaseOrderStatus.Approved, Priority = PurchaseOrderPriority.High,
-                CreatedBy = "Procurement Manager", ApprovedBy = "SuperAdmin", Warehouse = "Alger WH-01", Subtotal = 264000, TransportCost = 0, CustomsCost = 0,
-                TotalAmount = 264000, BudgetAvailable = 420000, CreatedAt = now.AddDays(-4), EtaDate = now.AddDays(3), ApprovedAt = now.AddDays(-3)
-            }
-        );
-
-        builder.Entity<PurchaseOrderLine>().HasData(
-            new PurchaseOrderLine { Id = Guid.Parse("f3000000-0000-0000-0000-000000000001"), PurchaseOrderId = po1, Sku = "SKU-851", ProductName = "Apple AirPods Pro 2", Quantity = 50, UnitPrice = 18000, Subtotal = 900000, ReceivedQuantity = 0 },
-            new PurchaseOrderLine { Id = Guid.Parse("f3000000-0000-0000-0000-000000000002"), PurchaseOrderId = po2, Sku = "SKU-812", ProductName = "Nike Air Max 90", Quantity = 62, UnitPrice = 4258.06m, Subtotal = 264000, ReceivedQuantity = 0 }
-        );
-
-        builder.Entity<ProcurementStockAlert>().HasData(
-            new ProcurementStockAlert { Id = Guid.Parse("f4000000-0000-0000-0000-000000000001"), ProductName = "Apple AirPods Pro 2ème Génération", Sku = "SKU-851", AvailableUnits = 0, ReorderThreshold = 25, SuggestedOrderQty = 50, SupplierName = "Apple Distribution", Severity = AlertSeverity.Critical, IsResolved = false, DetectedAt = now.AddHours(-4) },
-            new ProcurementStockAlert { Id = Guid.Parse("f4000000-0000-0000-0000-000000000002"), ProductName = "Nike Air Max 90", Sku = "SKU-818", AvailableUnits = 5, ReorderThreshold = 10, SuggestedOrderQty = 12, SupplierName = "Nike MENA", Severity = AlertSeverity.Warning, IsResolved = false, DetectedAt = now.AddHours(-8) }
-        );
-
-        builder.Entity<ProcurementReceipt>().HasData(
-            new ProcurementReceipt { Id = Guid.Parse("f5000000-0000-0000-0000-000000000001"), PurchaseOrderId = po2, ReceiptNumber = "REC-892-1", UnitsReceived = 62, TotalReceivedValue = 264000, ReceivedAt = now.AddDays(-1), ReceivedBy = "Inventory Manager" }
-        );
-
-        builder.Entity<PurchaseOrderAuditEvent>().HasData(
-            new PurchaseOrderAuditEvent
-            {
-                Id = Guid.Parse("f6000000-0000-0000-0000-000000000001"),
-                PurchaseOrderId = po1,
-                EventType = "created",
-                Message = "BC-897 created and submitted for approval.",
-                Actor = "Procurement Manager",
-                CreatedAt = now.AddDays(-2)
-            },
-            new PurchaseOrderAuditEvent
-            {
-                Id = Guid.Parse("f6000000-0000-0000-0000-000000000002"),
-                PurchaseOrderId = po2,
-                EventType = "approved",
-                Message = "BC-892 approved by SuperAdmin.",
-                Actor = "SuperAdmin",
-                CreatedAt = now.AddDays(-3)
-            }
-        );
-    }
 }

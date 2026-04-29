@@ -1,32 +1,71 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Alert,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
   IconButton,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  type SelectChangeEvent,
   Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Typography
 } from "@mui/material";
 import AddRounded from "@mui/icons-material/AddRounded";
-import EditOutlined from "@mui/icons-material/EditOutlined";
-import PowerSettingsNewOutlined from "@mui/icons-material/PowerSettingsNewOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
+import EditOutlined from "@mui/icons-material/EditOutlined";
 import SettingsActionDialog from "../SettingsActionDialog";
+import { BFFError, fetchBFF, postBFF } from "@/lib/fetchBFF";
 import type { UtilisateursRolesForm } from "../../types";
+import type { ApiResponse } from "@ferza/shared";
+
+type TenantUser = {
+  id: string;
+  email: string;
+  fullName: string;
+  roles: string[];
+  createdAt: string;
+};
+
+function getInitials(fullName: string, email: string): string {
+  if (fullName?.trim()) {
+    const parts = fullName.trim().split(" ");
+    return parts.length >= 2
+      ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+      : parts[0].slice(0, 2).toUpperCase();
+  }
+  return email.slice(0, 2).toUpperCase();
+}
+
+const ASSIGNABLE_ROLES = [
+  "ProductManager",
+  "InventoryManager",
+  "FinanceManager",
+  "WarehouseOperator",
+  "ProcurementManager",
+  "CRMAgent",
+  "LogisticsAgent",
+  "ReportingAnalyst",
+];
 
 type UtilisateursRolesProps = {
   formData: UtilisateursRolesForm;
@@ -43,6 +82,29 @@ export default function UtilisateursRoles({
   isSaving,
   onNotify
 }: UtilisateursRolesProps) {
+  const queryClient = useQueryClient();
+  const { data: usersData, isLoading: usersLoading, isError: usersError } = useQuery({
+    queryKey: ["tenants", "users"],
+    queryFn: () => fetchBFF<ApiResponse<TenantUser[]>>("/bff/tenants/users"),
+  });
+  const tenantUsers = usersData?.data ?? [];
+
+  const [inviteDialog, setInviteDialog] = useState<{
+    open: boolean;
+    email: string;
+    roles: string[];
+    isSubmitting: boolean;
+    error: string | null;
+    success: string | null;
+  }>({
+    open: false,
+    email: "",
+    roles: [],
+    isSubmitting: false,
+    error: null,
+    success: null,
+  });
+
   const [userDialog, setUserDialog] = useState<{
     open: boolean;
     index: number | null;
@@ -96,28 +158,25 @@ export default function UtilisateursRoles({
   });
 
   const addUtilisateur = () => {
-    setUserDialog({
-      open: true,
-      index: null,
-      values: {
-        initiales: "NU",
-        nom: "",
-        email: "",
-        role: "Agent",
-        statut: "actif",
-        derniereConnexion: "À l'instant"
-      }
-    });
+    setInviteDialog({ open: true, email: "", roles: [], isSubmitting: false, error: null, success: null });
   };
 
-  const toggleUserStatus = (index: number) => {
-    const updated = [...formData.utilisateurs];
-    const current = updated[index];
-    updated[index] = {
-      ...current,
-      statut: current.statut === "actif" ? "inactif" : "actif"
-    };
-    onFormChange("utilisateurs", updated);
+  const handleInviteSubmit = async () => {
+    const trimmedEmail = inviteDialog.email.trim();
+    if (!trimmedEmail || inviteDialog.roles.length === 0) {
+      setInviteDialog((prev) => ({ ...prev, error: "Email et au moins un rôle sont requis." }));
+      return;
+    }
+    setInviteDialog((prev) => ({ ...prev, isSubmitting: true, error: null, success: null }));
+    try {
+      await postBFF("/bff/tenants/invites", { email: trimmedEmail, roles: inviteDialog.roles });
+      setInviteDialog((prev) => ({ ...prev, isSubmitting: false, success: `Invitation envoyée à ${trimmedEmail}.`, email: "", roles: [] }));
+      onNotify?.(`Invitation envoyée à ${trimmedEmail}`);
+      await queryClient.invalidateQueries({ queryKey: ["tenants", "users"] });
+    } catch (err) {
+      const message = err instanceof BFFError ? err.message : "Erreur lors de l'envoi de l'invitation.";
+      setInviteDialog((prev) => ({ ...prev, isSubmitting: false, error: message }));
+    }
   };
 
   const addRole = () => {
@@ -149,90 +208,73 @@ export default function UtilisateursRoles({
           <Typography variant="subtitle1" fontWeight={600}>
             Utilisateurs actifs
           </Typography>
-          <Table size="small" sx={{ mt: 2 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Utilisateur</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Rôle</TableCell>
-                <TableCell>Statut</TableCell>
-                <TableCell>Dernière connexion</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {formData.utilisateurs.map((user, index) => (
-                <TableRow key={`${user.email}-${index}`}>
-                  <TableCell>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Box
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "50%",
-                          bgcolor:
-                            user.role === "Super Admin"
-                              ? "#2563EB"
-                              : user.role === "Superviseur"
-                              ? "#7C3AED"
-                              : "#16A34A",
-                          color: "#fff",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 700,
-                          fontSize: 12
-                        }}
-                      >
-                        {user.initiales}
-                      </Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        {user.nom}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{user.email}</TableCell>
-                  <TableCell>
-                    <Chip size="small" label={user.role} variant="outlined" />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={user.statut === "actif" ? "🟢" : "🟡"}
-                      variant="outlined"
-                      sx={{
-                        borderColor: user.statut === "actif" ? "#BBF7D0" : "#FED7AA",
-                        bgcolor: user.statut === "actif" ? "#F0FDF4" : "#FFF7ED",
-                        color: user.statut === "actif" ? "#15803D" : "#B45309"
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{user.derniereConnexion}</TableCell>
-                  <TableCell>
-                    {user.role !== "Super Admin" ? (
-                      <Stack direction="row" spacing={1}>
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            setUserDialog({
-                              open: true,
-                              index,
-                              values: { ...user }
-                            })
-                          }
-                        >
-                          <EditOutlined fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => toggleUserStatus(index)}>
-                          <PowerSettingsNewOutlined fontSize="small" sx={{ color: "#DC2626" }} />
-                        </IconButton>
-                      </Stack>
-                    ) : null}
-                  </TableCell>
+          {usersLoading ? (
+            <Box display="flex" justifyContent="center" py={3}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : usersError ? (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              Impossible de charger les utilisateurs.
+            </Alert>
+          ) : (
+            <Table size="small" sx={{ mt: 2 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Utilisateur</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Rôles</TableCell>
+                  <TableCell>Membre depuis</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {tenantUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            bgcolor: user.roles.includes("SuperAdmin") ? "#2563EB" : "#16A34A",
+                            color: "#fff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontWeight: 700,
+                            fontSize: 12
+                          }}
+                        >
+                          {getInitials(user.fullName, user.email)}
+                        </Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {user.fullName || user.email}
+                        </Typography>
+                      </Stack>
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary" }}>{user.email}</TableCell>
+                    <TableCell>
+                      <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                        {user.roles.map((role) => (
+                          <Chip key={role} size="small" label={role} variant="outlined" />
+                        ))}
+                      </Stack>
+                    </TableCell>
+                    <TableCell sx={{ color: "text.secondary" }}>
+                      {new Date(user.createdAt).toLocaleDateString("fr-DZ")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {tenantUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ color: "text.secondary", py: 3 }}>
+                      Aucun utilisateur trouvé.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          )}
 
           <Button
             variant="contained"
@@ -347,6 +389,87 @@ export default function UtilisateursRoles({
           {isSaving ? "Enregistrement..." : "Enregistrer les modifications"}
         </Button>
       </Box>
+
+      {/* Real invite dialog — calls POST /bff/tenants/invites */}
+      <Dialog
+        open={inviteDialog.open}
+        onClose={() => !inviteDialog.isSubmitting && setInviteDialog((prev) => ({ ...prev, open: false }))}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Inviter un utilisateur</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2.5}>
+            <Typography variant="body2" color="text.secondary">
+              Un email avec le jeton d&apos;invitation sera envoyé au collaborateur.
+            </Typography>
+
+            {inviteDialog.error && <Alert severity="error">{inviteDialog.error}</Alert>}
+            {inviteDialog.success && <Alert severity="success">{inviteDialog.success}</Alert>}
+
+            <TextField
+              fullWidth
+              label="Adresse email"
+              type="email"
+              value={inviteDialog.email}
+              onChange={(e) => setInviteDialog((prev) => ({ ...prev, email: e.target.value, error: null }))}
+              disabled={inviteDialog.isSubmitting}
+            />
+
+            <Box>
+              <InputLabel shrink sx={{ mb: 0.5, fontWeight: 600 }}>
+                Rôles assignés
+              </InputLabel>
+              <Select
+                multiple
+                fullWidth
+                value={inviteDialog.roles}
+                onChange={(e: SelectChangeEvent<string[]>) => {
+                  const val = e.target.value;
+                  setInviteDialog((prev) => ({
+                    ...prev,
+                    roles: typeof val === "string" ? val.split(",") : val,
+                    error: null,
+                  }));
+                }}
+                input={<OutlinedInput />}
+                renderValue={(selected) => (
+                  <Stack direction="row" flexWrap="wrap" gap={0.5}>
+                    {(selected as string[]).map((role) => (
+                      <Chip key={role} label={role} size="small" />
+                    ))}
+                  </Stack>
+                )}
+                disabled={inviteDialog.isSubmitting}
+              >
+                {ASSIGNABLE_ROLES.map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setInviteDialog((prev) => ({ ...prev, open: false }))}
+            disabled={inviteDialog.isSubmitting}
+          >
+            {inviteDialog.success ? "Fermer" : "Annuler"}
+          </Button>
+          {!inviteDialog.success && (
+            <Button
+              variant="contained"
+              onClick={handleInviteSubmit}
+              disabled={inviteDialog.isSubmitting}
+              sx={{ bgcolor: "#2563EB", "&:hover": { bgcolor: "#1D4ED8" } }}
+            >
+              {inviteDialog.isSubmitting ? "Envoi..." : "Envoyer l'invitation"}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
 
       <SettingsActionDialog
         open={userDialog.open}

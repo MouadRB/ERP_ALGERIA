@@ -59,6 +59,10 @@ export default function OcrImportModal({ open, onClose }: Props) {
 
   const handleFile = async (file?: File) => {
     if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.jpg')) {
+      alert('Seuls les fichiers .jpg sont acceptés.');
+      return;
+    }
     setFileName(file.name);
     setProgress(20);
     setStep('review');
@@ -109,7 +113,7 @@ export default function OcrImportModal({ open, onClose }: Props) {
         <input
           ref={inputRef}
           type="file"
-          accept=".pdf,.png,.jpg,.jpeg"
+          accept=".jpg"
           hidden
           onChange={(event) => handleFile(event.target.files?.[0])}
         />
@@ -128,10 +132,10 @@ export default function OcrImportModal({ open, onClose }: Props) {
           >
             <CloudUploadIcon sx={{ fontSize: 42, color: 'primary.main', mb: 1.5 }} />
             <Typography variant="subtitle1" fontWeight={700}>
-              Glisser un PDF fournisseur ou cliquer pour choisir
+              Glisser une image JPG ou cliquer pour choisir
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-              Les produits extraits seront crees en statut OCR Import.
+              Format accepté : <strong>.jpg</strong> uniquement. Les produits extraits seront créés en statut OCR Import.
             </Typography>
           </Box>
         )}

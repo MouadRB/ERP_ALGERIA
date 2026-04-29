@@ -12,5 +12,7 @@ router.use('/rapports', require('./rapports.routes'));
 router.use('/dashboard', require('./dashboard.routes'));
 router.use('/notifications', require('./notifications.routes'));
 router.use('/parametres', require('./parametres.routes'));
+router.use('/tenants/invites', require('./invites.routes'));
+router.use('/tenants/users', require('./tenants.users.routes'));
 
 module.exports = router;
