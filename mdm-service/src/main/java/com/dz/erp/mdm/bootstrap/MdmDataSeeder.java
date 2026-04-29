@@ -45,7 +45,9 @@ public class MdmDataSeeder implements CommandLineRunner {
 
     static final String TENANT = "demo-tenant";
     static final String CREATOR = "system-seeder";
-    static final String APPROVER = "qa-approver";
+    static final String APPROVER = "qa-approver";  
+    
+    
 
     private final WilayaSpringDataRepository wilayaRepo;
     private final SupplierSpringDataRepository supplierRepo;

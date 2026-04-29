@@ -10,7 +10,7 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 @Entity
-@Table(name = "outbox_events")
+@Table(name = "outbox_events" , schema = "pim_schema")
 @Getter
 @Setter
 @NoArgsConstructor
