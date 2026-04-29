@@ -41,6 +41,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     // ─── Inbound (cross-engine event ingest) ───
     public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
 
+    // ─── Identity (tenant invitations) ───
+    public DbSet<TenantInvitation> TenantInvitations => Set<TenantInvitation>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -73,6 +76,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<Guid>>().ToTable("user_logins");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityRoleClaim<Guid>>().ToTable("role_claims");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserToken<Guid>>().ToTable("user_tokens");
+
+        builder.Entity<TenantInvitation>(e =>
+        {
+            e.ToTable("tenant_invitations");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.TenantId).HasMaxLength(100);
+            e.Property(x => x.Email).HasMaxLength(256);
+            e.Property(x => x.TokenHash).HasMaxLength(128);
+            e.HasIndex(x => new { x.TenantId, x.Email });
+            e.HasIndex(x => x.ExpiresAt);
+        });
 
         // ── CRM ──
         builder.Entity<Customer>(e =>

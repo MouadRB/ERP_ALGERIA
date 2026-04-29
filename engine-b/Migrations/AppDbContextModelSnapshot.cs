@@ -286,11 +286,11 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000001"),
                             City = "Alger",
-                            CreatedAt = new DateTime(2025, 10, 28, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            CreatedAt = new DateTime(2025, 10, 29, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Email = "amina@example.com",
                             FullName = "Amina Benali",
                             IsBlacklisted = false,
-                            LastOrderDate = new DateTime(2026, 4, 24, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            LastOrderDate = new DateTime(2026, 4, 25, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Phone = "+213 0550 111 001",
                             ReturnRate = 5m,
                             RiskLevel = 0,
@@ -304,11 +304,11 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000002"),
                             City = "Oran",
-                            CreatedAt = new DateTime(2025, 12, 27, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            CreatedAt = new DateTime(2025, 12, 28, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Email = "karim@example.com",
                             FullName = "Karim Hadj",
                             IsBlacklisted = false,
-                            LastOrderDate = new DateTime(2026, 4, 16, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            LastOrderDate = new DateTime(2026, 4, 17, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Phone = "+213 0661 222 002",
                             ReturnRate = 18m,
                             RiskLevel = 1,
@@ -322,10 +322,10 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000003"),
                             City = "Constantine",
-                            CreatedAt = new DateTime(2026, 4, 16, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            CreatedAt = new DateTime(2026, 4, 17, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             FullName = "Fatima Zerhouni",
                             IsBlacklisted = false,
-                            LastOrderDate = new DateTime(2026, 4, 18, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            LastOrderDate = new DateTime(2026, 4, 19, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Phone = "+213 0770 333 003",
                             ReturnRate = 0m,
                             RiskLevel = 0,
@@ -339,14 +339,14 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000004"),
                             BlacklistReason = "Taux de retour élevé",
-                            BlacklistedAt = new DateTime(2026, 4, 11, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            BlacklistedAt = new DateTime(2026, 4, 12, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             BlacklistedBy = "SuperAdmin",
                             City = "Sétif",
-                            CreatedAt = new DateTime(2025, 10, 8, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            CreatedAt = new DateTime(2025, 10, 9, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Email = "youcef@example.com",
                             FullName = "Youcef Mebarki",
                             IsBlacklisted = true,
-                            LastOrderDate = new DateTime(2026, 3, 12, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            LastOrderDate = new DateTime(2026, 3, 13, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Phone = "+213 0555 444 004",
                             ReturnRate = 30m,
                             RiskLevel = 2,
@@ -360,10 +360,10 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000005"),
                             City = "Blida",
-                            CreatedAt = new DateTime(2025, 6, 30, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            CreatedAt = new DateTime(2025, 7, 1, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             FullName = "Nadia Boudiaf",
                             IsBlacklisted = false,
-                            LastOrderDate = new DateTime(2026, 1, 16, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            LastOrderDate = new DateTime(2026, 1, 17, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Phone = "+213 0660 555 005",
                             ReturnRate = 8m,
                             RiskLevel = 0,
@@ -411,7 +411,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("e1000000-0000-0000-0000-000000000001"),
                             Content = "Client VIP — a appelé pour confirmer sa commande #10040. Livraison OK.",
-                            CreatedAt = new DateTime(2026, 4, 24, 15, 18, 17, 51, DateTimeKind.Utc).AddTicks(1267),
+                            CreatedAt = new DateTime(2026, 4, 25, 23, 27, 46, 973, DateTimeKind.Utc).AddTicks(7454),
                             CreatedBy = "CRM Agent",
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000001"),
                             Type = 0
@@ -420,7 +420,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("e1000000-0000-0000-0000-000000000002"),
                             Content = "Message WhatsApp envoyé au client pour suivi du ticket #TKT-0881.",
-                            CreatedAt = new DateTime(2026, 4, 23, 15, 18, 17, 51, DateTimeKind.Utc).AddTicks(1267),
+                            CreatedAt = new DateTime(2026, 4, 24, 23, 27, 46, 973, DateTimeKind.Utc).AddTicks(7454),
                             CreatedBy = "CRM Agent",
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000002"),
                             Type = 1
@@ -429,7 +429,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("e1000000-0000-0000-0000-000000000003"),
                             Content = "Premier contact client — bien reçu la commande, très satisfaite.",
-                            CreatedAt = new DateTime(2026, 4, 18, 15, 18, 17, 51, DateTimeKind.Utc).AddTicks(1267),
+                            CreatedAt = new DateTime(2026, 4, 19, 23, 27, 46, 973, DateTimeKind.Utc).AddTicks(7454),
                             CreatedBy = "SuperAdmin",
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000003"),
                             Type = 3
@@ -497,10 +497,10 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("d1000000-0000-0000-0000-000000000001"),
                             AssignedAgentName = "CRM Agent",
-                            CreatedAt = new DateTime(2026, 4, 23, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            CreatedAt = new DateTime(2026, 4, 24, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000002"),
                             Description = "",
-                            LastActionAt = new DateTime(2026, 4, 24, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            LastActionAt = new DateTime(2026, 4, 25, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Priority = 1,
                             RelatedOrderId = "#10043",
                             Status = 0,
@@ -512,10 +512,10 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("d1000000-0000-0000-0000-000000000002"),
                             AssignedAgentName = "Non assigné",
-                            CreatedAt = new DateTime(2026, 4, 19, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            CreatedAt = new DateTime(2026, 4, 20, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000004"),
                             Description = "",
-                            LastActionAt = new DateTime(2026, 4, 20, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            LastActionAt = new DateTime(2026, 4, 21, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Priority = 2,
                             RelatedOrderId = "#10039",
                             Status = 3,
@@ -527,13 +527,13 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("d1000000-0000-0000-0000-000000000003"),
                             AssignedAgentName = "SuperAdmin",
-                            CreatedAt = new DateTime(2026, 4, 11, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            CreatedAt = new DateTime(2026, 4, 12, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000001"),
                             Description = "",
-                            LastActionAt = new DateTime(2026, 4, 14, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            LastActionAt = new DateTime(2026, 4, 15, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Priority = 3,
                             RelatedOrderId = "#10010",
-                            ResolvedAt = new DateTime(2026, 4, 14, 15, 18, 17, 47, DateTimeKind.Utc).AddTicks(6419),
+                            ResolvedAt = new DateTime(2026, 4, 15, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
                             Status = 5,
                             Subject = "Question sur la garantie",
                             TicketNumber = "#TKT-0883",
@@ -608,7 +608,7 @@ namespace engine_b.Migrations
                             ClientName = "Nouveau cliente",
                             ClientOrderCount = 0,
                             ClientPhone = "+213 0550 123 456",
-                            CreatedAt = new DateTime(2026, 4, 26, 13, 31, 17, 41, DateTimeKind.Utc).AddTicks(7805),
+                            CreatedAt = new DateTime(2026, 4, 27, 21, 40, 46, 958, DateTimeKind.Utc).AddTicks(4770),
                             IsNewClient = true,
                             OrderNumber = "#10042",
                             Risk = 0,
@@ -622,7 +622,7 @@ namespace engine_b.Migrations
                             ClientName = "Client régulier",
                             ClientOrderCount = 2,
                             ClientPhone = "+213 0661 987 654",
-                            CreatedAt = new DateTime(2026, 4, 26, 14, 55, 17, 41, DateTimeKind.Utc).AddTicks(7805),
+                            CreatedAt = new DateTime(2026, 4, 27, 23, 4, 46, 958, DateTimeKind.Utc).AddTicks(4770),
                             IsNewClient = false,
                             OrderNumber = "#10043",
                             Risk = 1,
@@ -636,7 +636,7 @@ namespace engine_b.Migrations
                             ClientName = "Connu, 1 absence",
                             ClientOrderCount = 1,
                             ClientPhone = "+213 0770 456 789",
-                            CreatedAt = new DateTime(2026, 4, 26, 15, 6, 17, 41, DateTimeKind.Utc).AddTicks(7805),
+                            CreatedAt = new DateTime(2026, 4, 27, 23, 15, 46, 958, DateTimeKind.Utc).AddTicks(4770),
                             IsNewClient = false,
                             OrderNumber = "#10044",
                             Risk = 2,
@@ -650,8 +650,8 @@ namespace engine_b.Migrations
                             ClientName = "VIP client",
                             ClientOrderCount = 15,
                             ClientPhone = "+213 0555 111 222",
-                            ConfirmedAt = new DateTime(2026, 4, 26, 13, 18, 17, 41, DateTimeKind.Utc).AddTicks(7805),
-                            CreatedAt = new DateTime(2026, 4, 26, 12, 18, 17, 41, DateTimeKind.Utc).AddTicks(7805),
+                            ConfirmedAt = new DateTime(2026, 4, 27, 21, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
+                            CreatedAt = new DateTime(2026, 4, 27, 20, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
                             IsNewClient = false,
                             OrderNumber = "#10040",
                             Risk = 0,
@@ -665,13 +665,13 @@ namespace engine_b.Migrations
                             ClientName = "Client Oran",
                             ClientOrderCount = 5,
                             ClientPhone = "+213 0660 333 444",
-                            ConfirmedAt = new DateTime(2026, 4, 26, 8, 18, 17, 41, DateTimeKind.Utc).AddTicks(7805),
-                            CreatedAt = new DateTime(2026, 4, 26, 7, 18, 17, 41, DateTimeKind.Utc).AddTicks(7805),
-                            DeliveredAt = new DateTime(2026, 4, 26, 14, 18, 17, 41, DateTimeKind.Utc).AddTicks(7805),
+                            ConfirmedAt = new DateTime(2026, 4, 27, 16, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
+                            CreatedAt = new DateTime(2026, 4, 27, 15, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
+                            DeliveredAt = new DateTime(2026, 4, 27, 22, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
                             IsNewClient = false,
                             OrderNumber = "#10038",
                             Risk = 0,
-                            ShippedAt = new DateTime(2026, 4, 26, 10, 18, 17, 41, DateTimeKind.Utc).AddTicks(7805),
+                            ShippedAt = new DateTime(2026, 4, 27, 18, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
                             Status = 4,
                             Wilaya = 31
                         });
@@ -1022,6 +1022,52 @@ namespace engine_b.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("engine_b.Modules.Identity.Domain.TenantInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("InvitedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RolesCsv")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("TenantId", "Email");
+
+                    b.ToTable("tenant_invitations", (string)null);
+                });
+
             modelBuilder.Entity("engine_b.Modules.Procurement.Domain.ProcurementReceipt", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1060,7 +1106,7 @@ namespace engine_b.Migrations
                             Id = new Guid("f5000000-0000-0000-0000-000000000001"),
                             PurchaseOrderId = new Guid("f2000000-0000-0000-0000-000000000002"),
                             ReceiptNumber = "REC-892-1",
-                            ReceivedAt = new DateTime(2026, 4, 25, 15, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            ReceivedAt = new DateTime(2026, 4, 26, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             ReceivedBy = "Inventory Manager",
                             TotalReceivedValue = 264000m,
                             UnitsReceived = 62
@@ -1116,7 +1162,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("f4000000-0000-0000-0000-000000000001"),
                             AvailableUnits = 0,
-                            DetectedAt = new DateTime(2026, 4, 26, 11, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            DetectedAt = new DateTime(2026, 4, 27, 19, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             IsResolved = false,
                             ProductName = "Apple AirPods Pro 2ème Génération",
                             ReorderThreshold = 25,
@@ -1129,7 +1175,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("f4000000-0000-0000-0000-000000000002"),
                             AvailableUnits = 5,
-                            DetectedAt = new DateTime(2026, 4, 26, 7, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            DetectedAt = new DateTime(2026, 4, 27, 15, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             IsResolved = false,
                             ProductName = "Nike Air Max 90",
                             ReorderThreshold = 10,
@@ -1227,11 +1273,11 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("f2000000-0000-0000-0000-000000000001"),
                             BudgetAvailable = 750000m,
-                            CreatedAt = new DateTime(2026, 4, 24, 15, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            CreatedAt = new DateTime(2026, 4, 25, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             CreatedBy = "Procurement Manager",
                             Currency = "DZD",
                             CustomsCost = 0m,
-                            EtaDate = new DateTime(2026, 5, 1, 15, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            EtaDate = new DateTime(2026, 5, 2, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             Priority = 1,
                             Reference = "BC-897",
                             SodRule = "PM cannot self-approve",
@@ -1245,14 +1291,14 @@ namespace engine_b.Migrations
                         new
                         {
                             Id = new Guid("f2000000-0000-0000-0000-000000000002"),
-                            ApprovedAt = new DateTime(2026, 4, 23, 15, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            ApprovedAt = new DateTime(2026, 4, 24, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             ApprovedBy = "SuperAdmin",
                             BudgetAvailable = 420000m,
-                            CreatedAt = new DateTime(2026, 4, 22, 15, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            CreatedAt = new DateTime(2026, 4, 23, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             CreatedBy = "Procurement Manager",
                             Currency = "DZD",
                             CustomsCost = 0m,
-                            EtaDate = new DateTime(2026, 4, 29, 15, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            EtaDate = new DateTime(2026, 4, 30, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             Priority = 2,
                             Reference = "BC-892",
                             SodRule = "PM cannot self-approve",
@@ -1302,7 +1348,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("f6000000-0000-0000-0000-000000000001"),
                             Actor = "Procurement Manager",
-                            CreatedAt = new DateTime(2026, 4, 24, 15, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            CreatedAt = new DateTime(2026, 4, 25, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             EventType = "created",
                             Message = "BC-897 created and submitted for approval.",
                             PurchaseOrderId = new Guid("f2000000-0000-0000-0000-000000000001")
@@ -1311,7 +1357,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("f6000000-0000-0000-0000-000000000002"),
                             Actor = "SuperAdmin",
-                            CreatedAt = new DateTime(2026, 4, 23, 15, 18, 17, 53, DateTimeKind.Utc).AddTicks(3409),
+                            CreatedAt = new DateTime(2026, 4, 24, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
                             EventType = "approved",
                             Message = "BC-892 approved by SuperAdmin.",
                             PurchaseOrderId = new Guid("f2000000-0000-0000-0000-000000000002")
@@ -1437,7 +1483,7 @@ namespace engine_b.Migrations
                             City = "Paris",
                             ContactName = "Jean-Pierre Martin",
                             Country = "France",
-                            CreatedAt = new DateTime(2026, 4, 26, 15, 18, 17, 53, DateTimeKind.Utc).AddTicks(5308),
+                            CreatedAt = new DateTime(2026, 4, 27, 23, 27, 46, 980, DateTimeKind.Utc).AddTicks(3467),
                             Email = "jp@apple-dist.fr",
                             LeadTimeDays = 5,
                             Name = "Apple Distribution",
@@ -1452,7 +1498,7 @@ namespace engine_b.Migrations
                             City = "Dubai",
                             ContactName = "M. Karim Hassan",
                             Country = "UAE",
-                            CreatedAt = new DateTime(2026, 4, 26, 15, 18, 17, 54, DateTimeKind.Utc).AddTicks(2131),
+                            CreatedAt = new DateTime(2026, 4, 27, 23, 27, 46, 981, DateTimeKind.Utc).AddTicks(9060),
                             Email = "karim@nike-mena.ae",
                             LeadTimeDays = 7,
                             Name = "Nike MENA",
@@ -1467,7 +1513,7 @@ namespace engine_b.Migrations
                             City = "Seoul",
                             ContactName = "A. Mehdi Khan",
                             Country = "Korea",
-                            CreatedAt = new DateTime(2026, 4, 26, 15, 18, 17, 54, DateTimeKind.Utc).AddTicks(2137),
+                            CreatedAt = new DateTime(2026, 4, 27, 23, 27, 46, 981, DateTimeKind.Utc).AddTicks(9081),
                             Email = "mehdi@samsung.co.kr",
                             LeadTimeDays = 6,
                             Name = "Samsung Electronics",

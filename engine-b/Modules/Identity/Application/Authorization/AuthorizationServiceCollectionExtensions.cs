@@ -57,6 +57,18 @@ public static class AuthorizationServiceCollectionExtensions
                 AppRoleNames.FinanceManager
             )));
 
+            // --- Rapport Module Policies ---
+            options.AddPolicy("RapportRead", policy => policy.RequireRole(Both(
+                AppRoleNames.SuperAdmin,
+                AppRoleNames.ReportingAnalyst,
+                AppRoleNames.FinanceManager,
+                AppRoleNames.ProcurementManager
+            )));
+            options.AddPolicy("RapportWrite", policy => policy.RequireRole(Both(
+                AppRoleNames.SuperAdmin,
+                AppRoleNames.ReportingAnalyst
+            )));
+
             // --- MDM Module Policies ---
             options.AddPolicy("MdmRead", policy => policy.RequireRole(Both(
                 AppRoleNames.SuperAdmin,

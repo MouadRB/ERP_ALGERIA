@@ -17,4 +17,17 @@ router.get(
   },
 );
 
+router.put(
+  '/',
+  requireRole('SUPERADMIN'),
+  async (req, res, next) => {
+    try {
+      const data = await parametresService.updateSettings(req.body ?? {});
+      res.json({ data });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 module.exports = router;
