@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "tax_rules")
+@Table(name = "tax_rules" , schema = "mdm_schema")
 @Getter
 @Setter
 @NoArgsConstructor
