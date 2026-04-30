@@ -1,8 +1,10 @@
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import ThemeRegistry from '@/providers/ThemeRegistry';
 import QueryProvider from '@/providers/QueryProvider';
 import I18nProvider from '@/providers/I18nProvider';
 import SessionProvider from '@/providers/SessionProvider';
+import { getSessionFromToken } from '@/lib/session';
 
 export default async function RootLayout({
   children,
@@ -29,6 +31,9 @@ export default async function RootLayout({
     notFound();
   }
 
+  const sessionCookie = cookies().get('ferza_session')?.value;
+  const initialSession = getSessionFromToken(sessionCookie, locale);
+
   return (
     <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <head>
@@ -40,7 +45,7 @@ export default async function RootLayout({
       <body>
         <ThemeRegistry>
           <QueryProvider>
-            <SessionProvider>
+            <SessionProvider initialSession={initialSession} locale={locale}>
               <I18nProvider locale={locale} messages={messages}>
                 {children}
               </I18nProvider>

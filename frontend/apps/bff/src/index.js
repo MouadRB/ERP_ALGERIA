@@ -51,6 +51,7 @@ app.get('/health', (_req, res) => {
     status: 'ok',
     env: env.nodeEnv,
     useMock: env.useMock,
+    authUseMock: env.authUseMock,
     timestamp: new Date().toISOString(),
   });
 });
@@ -77,5 +78,7 @@ app.listen(env.port, () => {
   // eslint-disable-next-line no-console
   console.log(`\n  🚀  BFF listening on http://localhost:${env.port}`);
   // eslint-disable-next-line no-console
-  console.log(`  📦  Mode: ${env.useMock ? 'MOCK' : 'REAL'} | Env: ${env.nodeEnv}\n`);
+  console.log(
+    `  📦  DataMode: ${env.useMock ? 'MOCK' : 'REAL'} | AuthMode: ${env.authUseMock ? 'MOCK' : 'REAL'} | Env: ${env.nodeEnv}\n`,
+  );
 });

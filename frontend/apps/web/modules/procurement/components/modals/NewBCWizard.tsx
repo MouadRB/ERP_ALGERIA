@@ -164,7 +164,11 @@ export default function NewBCWizard({
     const payload: NewBCPayload = {
       supplierName: supplier,
       items: mappedItems,
-      wilayaCode: "16"
+      wilayaCode: "16",
+      // @ts-expect-error extended fields forwarded to BFF for engine-b mapping
+      priority,
+      warehouse,
+      notes: notes.trim() || undefined,
     };
 
     const result = await onSubmit(payload);

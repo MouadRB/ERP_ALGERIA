@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>engine_b</RootNamespace>
+    <!-- Nested test project + stray build output must not be globbed as part of this web app (CS0579 / CS0246 in CI). -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);engine-b.Tests/**;artifacts/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,15 +19,6 @@
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="engine-b.Tests\**\*.cs" />
-    <Compile Remove="artifacts\**\*.cs" />
-    <EmbeddedResource Remove="engine-b.Tests\**\*" />
-    <EmbeddedResource Remove="artifacts\**\*" />
-    <None Remove="engine-b.Tests\**\*" />
-    <None Remove="artifacts\**\*" />
   </ItemGroup>
 
 </Project>

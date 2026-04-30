@@ -1,3 +1,5 @@
+import { clearStoredAuthSession } from '@/lib/session';
+
 // ─── Error class ─────────────────────────────────────────────────────────────
 
 export interface BFFErrorPayload {
@@ -52,6 +54,15 @@ interface FetchBFFOptions<B = unknown> {
   params?: Record<string, ParamValue>;
 }
 
+const getStoredBearerToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+
+  return (
+    window.localStorage.getItem('ferza.auth.token') ??
+    window.sessionStorage.getItem('ferza.auth.token')
+  );
+};
+
 // ─── Core function ────────────────────────────────────────────────────────────
 
 export const fetchBFF = async <T>(
@@ -59,11 +70,16 @@ export const fetchBFF = async <T>(
   options: FetchBFFOptions = {},
 ): Promise<T> => {
   const { method = 'GET', body, params } = options;
+  const token = getStoredBearerToken();
 
   const response = await fetch(buildURL(path, params), {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     cache:   'no-store',
+    credentials: 'include',
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
 
@@ -77,6 +93,11 @@ export const fetchBFF = async <T>(
         response.status,
       );
     }
+
+    if (response.status === 401 && typeof window !== 'undefined' && !path.startsWith('/bff/auth')) {
+      clearStoredAuthSession();
+    }
+
     throw new BFFError(payload.error, response.status);
   }
 

@@ -94,7 +94,7 @@ function stopProcessTree(child) {
 async function main() {
   const requestedWebPort = parsePort(process.env.WEB_PORT, 3000);
   const requestedBffPort = parsePort(process.env.BFF_PORT, 4000);
-  const useMock = process.env.NEXT_PUBLIC_USE_MOCK ?? process.env.USE_MOCK ?? "true";
+  const useMock = process.env.NEXT_PUBLIC_USE_MOCK ?? process.env.USE_MOCK ?? "false";
 
   const webPort = await findAvailablePort(requestedWebPort);
   const bffPort = await findAvailablePort(requestedBffPort);

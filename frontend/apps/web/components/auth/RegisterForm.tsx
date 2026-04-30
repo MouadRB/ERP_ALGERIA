@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -15,24 +15,26 @@ import {
   TextField,
   Typography
 } from "@mui/material";
+import PersonRounded from "@mui/icons-material/PersonRounded";
 import EmailRounded from "@mui/icons-material/EmailRounded";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import BusinessRounded from "@mui/icons-material/BusinessRounded";
+import VpnKeyRounded from "@mui/icons-material/VpnKeyRounded";
 import VisibilityOffRounded from "@mui/icons-material/VisibilityOffRounded";
 import VisibilityRounded from "@mui/icons-material/VisibilityRounded";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { BFFError, postBFF } from "@/lib/fetchBFF";
 import { useSession } from "@/providers/SessionProvider";
 
-type LoginResponse = {
+type RegisterResponse = {
   data: {
     token: string;
     expiry: string;
   };
 };
 
-type LoginFormProps = {
+type RegisterFormProps = {
   locale: string;
 };
 
@@ -40,51 +42,73 @@ const GOOGLE_AUTH_URL =
   (typeof window !== "undefined" ? process.env.NEXT_PUBLIC_ENGINE_B_URL : null) ??
   "http://localhost:5220";
 
-export default function LoginForm({ locale }: LoginFormProps) {
+const PASSWORD_HINTS = [
+  { id: "length", label: "8 caracteres minimum", test: (value: string) => value.length >= 8 },
+  { id: "uppercase", label: "1 majuscule", test: (value: string) => /[A-Z]/.test(value) },
+  { id: "digit", label: "1 chiffre", test: (value: string) => /\d/.test(value) },
+  { id: "symbol", label: "1 caractere special", test: (value: string) => /[^A-Za-z0-9]/.test(value) },
+];
+
+export default function RegisterForm({ locale }: RegisterFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { signIn } = useSession();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [tenantId, setTenantId] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [tenantId, setTenantId] = useState("");
+  const [inviteToken, setInviteToken] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
+    fullName?: string;
     email?: string;
-    password?: string;
     tenantId?: string;
+    password?: string;
+    confirmPassword?: string;
+    acceptTerms?: string;
   }>({});
 
-  useEffect(() => {
-    const googleError = searchParams.get("google_error");
-    if (googleError) {
-      setError(decodeURIComponent(googleError));
-    }
-  }, [searchParams]);
+  const passwordChecks = useMemo(
+    () => PASSWORD_HINTS.map((rule) => ({ ...rule, passed: rule.test(password) })),
+    [password],
+  );
 
-  const handleChange =
-    (field: "email" | "password" | "tenantId") =>
+  const updateField =
+    (field: "fullName" | "email" | "tenantId" | "inviteToken" | "password" | "confirmPassword") =>
     (event: ChangeEvent<HTMLInputElement>) => {
       const value = event.target.value;
 
+      if (field === "fullName") setFullName(value);
       if (field === "email") setEmail(value);
-      if (field === "password") setPassword(value);
       if (field === "tenantId") setTenantId(value);
+      if (field === "inviteToken") setInviteToken(value);
+      if (field === "password") setPassword(value);
+      if (field === "confirmPassword") setConfirmPassword(value);
 
       setError(null);
+      setSuccess(null);
       setFieldErrors((current) => ({ ...current, [field]: undefined }));
     };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
     const trimmedTenantId = tenantId.trim();
-    const nextErrors: { email?: string; password?: string; tenantId?: string } = {};
+    const trimmedInviteToken = inviteToken.trim();
+    const nextErrors: typeof fieldErrors = {};
+
+    if (!trimmedName) {
+      nextErrors.fullName = "Nom complet requis.";
+    }
 
     if (!trimmedEmail) {
       nextErrors.email = "Adresse email requise.";
@@ -92,12 +116,24 @@ export default function LoginForm({ locale }: LoginFormProps) {
       nextErrors.email = "Adresse email invalide.";
     }
 
-    if (!password) {
-      nextErrors.password = "Mot de passe requis.";
-    }
-
     if (!trimmedTenantId) {
       nextErrors.tenantId = "Identifiant entreprise requis.";
+    }
+
+    if (!password) {
+      nextErrors.password = "Mot de passe requis.";
+    } else if (!passwordChecks.every((rule) => rule.passed)) {
+      nextErrors.password = "Le mot de passe ne respecte pas les regles backend.";
+    }
+
+    if (!confirmPassword) {
+      nextErrors.confirmPassword = "Confirmation requise.";
+    } else if (confirmPassword !== password) {
+      nextErrors.confirmPassword = "Les mots de passe ne correspondent pas.";
+    }
+
+    if (!acceptTerms) {
+      nextErrors.acceptTerms = "Vous devez accepter les conditions.";
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -106,38 +142,39 @@ export default function LoginForm({ locale }: LoginFormProps) {
     }
 
     setError(null);
+    setSuccess(null);
     setFieldErrors({});
     setIsSubmitting(true);
 
     try {
-      const response = await postBFF<LoginResponse, { email: string; password: string; tenantId: string }>(
-        "/bff/auth/login",
-        {
-          email: trimmedEmail,
-          password,
-          tenantId: trimmedTenantId,
-        },
-      );
+      const response = await postBFF<
+        RegisterResponse,
+        { fullName: string; email: string; password: string; tenantId: string; inviteToken?: string }
+      >("/bff/auth/register", {
+        fullName: trimmedName,
+        email: trimmedEmail,
+        password,
+        tenantId: trimmedTenantId,
+        ...(trimmedInviteToken ? { inviteToken: trimmedInviteToken } : {}),
+      });
 
       const nextSession = signIn({
         token: response.data.token,
         expiry: response.data.expiry,
-        rememberMe,
+        rememberMe: true,
       });
 
       if (!nextSession?.role) {
-        setError("Compte authentifie, mais aucun role ERP compatible n'est attribue. Contactez un administrateur.");
+        setSuccess(
+          "Compte cree avec succes. Le backend attribue actuellement un role non compatible avec l'ERP web. Demandez a un administrateur de vous assigner un role avant la connexion.",
+        );
         return;
       }
 
       router.push(`/${locale}/dashboard`);
     } catch (err) {
       if (err instanceof BFFError) {
-        if (err.status === 401) {
-          setError("Email ou mot de passe invalide.");
-        } else {
-          setError(err.message);
-        }
+        setError(err.message);
       } else {
         setError("Service d'authentification indisponible.");
       }
@@ -150,23 +187,48 @@ export default function LoginForm({ locale }: LoginFormProps) {
     <Stack component="form" spacing={3} onSubmit={handleSubmit} sx={{ p: { xs: 3, md: 4 } }}>
       <Stack spacing={0.8}>
         <Typography variant="h4" fontWeight={800}>
-          Connexion
+          Creer un compte
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Accedez a votre espace FERZA
+          Enregistrez-vous puis faites attribuer un role ERP si necessaire.
         </Typography>
       </Stack>
 
       {error && <Alert severity="error">{error}</Alert>}
+      {success && <Alert severity="success">{success}</Alert>}
 
       <Stack spacing={2.5}>
+        <TextField
+          fullWidth
+          label="Nom complet"
+          placeholder="Jean Dupont"
+          value={fullName}
+          onChange={updateField("fullName")}
+          error={Boolean(fieldErrors.fullName)}
+          helperText={fieldErrors.fullName}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PersonRounded sx={{ color: "#6B57C2" }} />
+              </InputAdornment>
+            )
+          }}
+          sx={{
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#D8CFFF"
+            },
+            "& .Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#6B57C2",
+            }
+          }}
+        />
+
         <TextField
           fullWidth
           label="Adresse email"
           placeholder="vous@exemple.dz"
           value={email}
-          onChange={handleChange("email")}
-          type="email"
+          onChange={updateField("email")}
           error={Boolean(fieldErrors.email)}
           helperText={fieldErrors.email}
           InputProps={{
@@ -191,9 +253,9 @@ export default function LoginForm({ locale }: LoginFormProps) {
           label="Identifiant entreprise"
           placeholder="ferza-dz"
           value={tenantId}
-          onChange={handleChange("tenantId")}
+          onChange={updateField("tenantId")}
           error={Boolean(fieldErrors.tenantId)}
-          helperText={fieldErrors.tenantId}
+          helperText={fieldErrors.tenantId ?? "Identifiant unique de votre entreprise (ex: ferza-dz)"}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -217,7 +279,7 @@ export default function LoginForm({ locale }: LoginFormProps) {
           placeholder="********"
           type={showPassword ? "text" : "password"}
           value={password}
-          onChange={handleChange("password")}
+          onChange={updateField("password")}
           error={Boolean(fieldErrors.password)}
           helperText={fieldErrors.password}
           InputProps={{
@@ -252,37 +314,100 @@ export default function LoginForm({ locale }: LoginFormProps) {
           }}
         />
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          spacing={1}
-        >
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={rememberMe}
-                onChange={(event) => setRememberMe(event.target.checked)}
-              />
+        <TextField
+          fullWidth
+          label="Confirmer le mot de passe"
+          placeholder="********"
+          type={showConfirmPassword ? "text" : "password"}
+          value={confirmPassword}
+          onChange={updateField("confirmPassword")}
+          error={Boolean(fieldErrors.confirmPassword)}
+          helperText={fieldErrors.confirmPassword}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockOutlined sx={{ color: "#6B57C2" }} />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() => setShowConfirmPassword((previous) => !previous)}
+                  edge="end"
+                  aria-label="Afficher la confirmation du mot de passe"
+                >
+                  {showConfirmPassword ? (
+                    <VisibilityOffRounded sx={{ color: "#6B57C2" }} />
+                  ) : (
+                    <VisibilityRounded sx={{ color: "#6B57C2" }} />
+                  )}
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+          sx={{
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#D8CFFF"
+            },
+            "& .Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#6B57C2",
             }
-            label="Se souvenir de moi"
-          />
-          <Button
-            type="button"
-            disabled
-            sx={{
-              color: "#6B57C2",
-              fontSize: 14,
-              fontWeight: 600,
-              opacity: 0.7,
-              textTransform: "none",
-              padding: 0,
-              minWidth: "auto",
-            }}
-          >
-            Reinitialisation indisponible
-          </Button>
+          }}
+        />
+
+        <Stack spacing={1} sx={{ px: 0.25 }}>
+          {passwordChecks.map((rule) => (
+            <Typography
+              key={rule.id}
+              variant="caption"
+              sx={{ color: rule.passed ? "success.main" : "text.secondary" }}
+            >
+              - {rule.label}
+            </Typography>
+          ))}
         </Stack>
+
+        <TextField
+          fullWidth
+          label="Jeton d'invitation (optionnel)"
+          placeholder="Collé ici si vous avez recu un jeton"
+          value={inviteToken}
+          onChange={updateField("inviteToken")}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <VpnKeyRounded sx={{ color: "#6B57C2" }} />
+              </InputAdornment>
+            )
+          }}
+          sx={{
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#D8CFFF"
+            },
+            "& .Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#6B57C2",
+            }
+          }}
+        />
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={acceptTerms}
+              onChange={(event) => {
+                setAcceptTerms(event.target.checked);
+                setFieldErrors((current) => ({ ...current, acceptTerms: undefined }));
+              }}
+            />
+          }
+          label="J'accepte les conditions d'utilisation FERZA."
+        />
+
+        {fieldErrors.acceptTerms && (
+          <Typography variant="caption" color="error">
+            {fieldErrors.acceptTerms}
+          </Typography>
+        )}
 
         <Button
           type="submit"
@@ -301,13 +426,13 @@ export default function LoginForm({ locale }: LoginFormProps) {
             }
           }}
         >
-          {isSubmitting ? "Connexion en cours..." : "Se connecter"}
+          {isSubmitting ? "Creation en cours..." : "Creer un compte"}
         </Button>
 
         <Stack direction="row" alignItems="center" spacing={2}>
           <Divider sx={{ flex: 1 }} />
           <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
-            ou continuer avec
+            ou s&apos;inscrire avec
           </Typography>
           <Divider sx={{ flex: 1 }} />
         </Stack>
@@ -323,7 +448,10 @@ export default function LoginForm({ locale }: LoginFormProps) {
               return;
             }
             setIsGoogleLoading(true);
-            window.location.href = `${GOOGLE_AUTH_URL}/api/auth/google?tenantId=${encodeURIComponent(tid)}`;
+            const params = new URLSearchParams({ tenantId: tid });
+            const tok = inviteToken.trim();
+            if (tok) params.set("inviteToken", tok);
+            window.location.href = `${GOOGLE_AUTH_URL}/api/auth/google?${params}`;
           }}
           sx={{
             borderRadius: 999,
@@ -368,22 +496,17 @@ export default function LoginForm({ locale }: LoginFormProps) {
         </Button>
 
         <Typography variant="body2" color="text.secondary" textAlign="center">
-          Vous n&apos;avez pas de compte ?{" "}
+          Vous avez deja un compte ?{" "}
           <MuiLink
             component={Link}
-            href={`/${locale}/signup`}
+            href={`/${locale}/login`}
             underline="hover"
             sx={{ color: "#4C3A8F", fontWeight: 700 }}
           >
-            Creez-en un
+            Connectez-vous
           </MuiLink>
         </Typography>
       </Stack>
-
-      <Alert severity="info" sx={{ bgcolor: "rgba(90, 70, 166, 0.06)" }}>
-        L&apos;acces depend du role attribue par le backend. Les comptes sans role ERP compatible
-        restent bloques apres authentification.
-      </Alert>
     </Stack>
   );
 }

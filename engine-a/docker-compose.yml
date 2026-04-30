@@ -86,7 +86,7 @@ services:
       dockerfile: Dockerfile
     container_name: erp-engine-a
     ports:
-      - "8082:8081"
+      - "8082:8082"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
       - SPRING_DATASOURCE_USERNAME=erp_admin
