@@ -1,9 +1,0 @@
-C:\Users\cyrex\Documents\ERP\erp dev\ERP_ALGERIA\engine-b\artifacts\testobj\Debug\net10.0\engine-b.csproj.AssemblyReference.cache
-C:\Users\cyrex\Documents\ERP\erp dev\ERP_ALGERIA\engine-b\artifacts\testobj\Debug\net10.0\rpswa.dswa.cache.json
-C:\Users\cyrex\Documents\ERP\erp dev\ERP_ALGERIA\engine-b\artifacts\testobj\Debug\net10.0\engine-b.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\cyrex\Documents\ERP\erp dev\ERP_ALGERIA\engine-b\artifacts\testobj\Debug\net10.0\engine-b.AssemblyInfoInputs.cache
-C:\Users\cyrex\Documents\ERP\erp dev\ERP_ALGERIA\engine-b\artifacts\testobj\Debug\net10.0\engine-b.AssemblyInfo.cs
-C:\Users\cyrex\Documents\ERP\erp dev\ERP_ALGERIA\engine-b\artifacts\testobj\Debug\net10.0\engine-b.csproj.CoreCompileInputs.cache
-C:\Users\cyrex\Documents\ERP\erp dev\ERP_ALGERIA\engine-b\artifacts\testobj\Debug\net10.0\engine-b.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\cyrex\Documents\ERP\erp dev\ERP_ALGERIA\engine-b\artifacts\testobj\Debug\net10.0\engine-b.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\cyrex\Documents\ERP\erp dev\ERP_ALGERIA\engine-b\artifacts\testobj\Debug\net10.0\engine-b.sourcelink.json

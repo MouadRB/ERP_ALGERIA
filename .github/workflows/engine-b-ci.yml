@@ -23,15 +23,15 @@ jobs:
 
       - name: Restore dependencies
         working-directory: engine-b
-        run: dotnet restore engine-b.csproj
+        run: dotnet restore engine-b.Tests/engine-b.Tests.csproj
 
       - name: Build
         working-directory: engine-b
-        run: dotnet build engine-b.csproj --no-restore --configuration Release
+        run: dotnet build engine-b.Tests/engine-b.Tests.csproj --no-restore --configuration Release
 
       - name: Run tests
         working-directory: engine-b
-        run: dotnet test engine-b.csproj --no-build --configuration Release --verbosity normal --results-directory ./test-results
+        run: dotnet test engine-b.Tests/engine-b.Tests.csproj --no-build --configuration Release --verbosity normal --results-directory ./test-results
 
       - name: Upload test results
         if: always()

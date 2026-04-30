@@ -3,9 +3,11 @@ target/
 *.jar
 *.class
 
-# C#Engine B)
+# C# (Engine B)
 [Bb]in/
 [Oo]bj/
+engine-b/artifacts/
+engine-b/engine-b.Tests/artifacts/
 *.user
 *.suo
 

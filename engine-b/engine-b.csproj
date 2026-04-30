@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>engine_b</RootNamespace>
+    <!-- Nested test project + stray build output must not be globbed as part of this web app (CS0579 / CS0246 in CI). -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);engine-b.Tests/**;artifacts/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
