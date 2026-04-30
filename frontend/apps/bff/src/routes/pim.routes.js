@@ -6,6 +6,7 @@ const { paginationSchema } = require('../schemas/pagination.schema');
 const pimService = require('../services/pim.service');
 const { AppError } = require('../errors/AppError');
 const env = require('../config/env');
+const { requestEngineA } = require('../lib/backend-client');
 
 const router = express.Router();
 
@@ -45,16 +46,13 @@ const productPayloadSchema = z.object({
   attributes: z.array(z.any()).optional(),
 }).passthrough();
 
-// Lightweight search endpoint for OMS order creation
+// Lightweight search endpoint for OMS order creation and procurement BC wizard
 router.get(
   '/products',
-  requireRole('OMS_OPERATOR', 'SUPERADMIN', 'ANALYST'),
+  requireRole('OMS_OPERATOR', 'PROCUREMENT_MANAGER', 'SUPERADMIN', 'ANALYST'),
   async (req, res, next) => {
     try {
       if (env.useMock) {
-        // Use canonical PIM source (pim.mock.js) — same array used by PIM routes,
-        // cross-module helpers, and catalogue validation. This keeps order-creation,
-        // inventory reservation, and catalogue validation joined on the same SKUs.
         const products = require('../mocks/pim.mock').products;
         const q = (req.query.search ?? '').toString().toLowerCase();
         const filtered = q
@@ -76,12 +74,25 @@ router.get(
         return res.json({ data: shaped, meta: { total: filtered.length } });
       }
 
-      const params = new URLSearchParams();
-      if (req.query.search) params.set('search', req.query.search.toString());
-      const response = await fetch(`${env.engineAUrl}/pim/products?${params.toString()}`);
-      if (!response.ok) throw new Error(`Engine A error: ${response.status}`);
-      const json = await response.json();
-      res.json(json);
+      const result = await requestEngineA(req.user, '/pim/v1/products', {
+        query: {
+          search: req.query.search || undefined,
+          page: 0,
+          size: 20,
+        },
+      });
+
+      const items = (result?.data ?? []).map((p) => ({
+        id: p.productId,
+        sku: p.skuCode,
+        nameFr: p.nameFr ?? '',
+        nameAr: p.nameAr ?? '',
+        priceTTC: 0,
+        tvaRate: 'standard',
+        imageUrl: null,
+      }));
+
+      return res.json({ data: items, meta: { total: result?.pagination?.totalElements ?? items.length } });
     } catch (err) {
       next(err);
     }
@@ -112,7 +123,7 @@ router.patch(
   async (req, res, next) => {
     try {
       const { ids, status } = req.validated;
-      const updated = await pimService.bulkChangeStatus(ids, status);
+      const updated = await pimService.bulkChangeStatus(req.user, ids, status);
       res.json({ data: updated, meta: { count: updated.length } });
     } catch (err) {
       next(err);
@@ -131,7 +142,7 @@ router.patch(
   async (req, res, next) => {
     try {
       const { ids, tvaRate } = req.validated;
-      const updated = await pimService.bulkChangeTva(ids, tvaRate);
+      const updated = await pimService.bulkChangeTva(req.user, ids, tvaRate);
       res.json({ data: updated, meta: { count: updated.length } });
     } catch (err) {
       next(err);
@@ -146,7 +157,7 @@ router.patch(
   async (req, res, next) => {
     try {
       const { ids, supplierName } = req.validated;
-      const updated = await pimService.bulkChangeSupplier(ids, supplierName);
+      const updated = await pimService.bulkChangeSupplier(req.user, ids, supplierName);
       res.json({ data: updated, meta: { count: updated.length } });
     } catch (err) {
       next(err);
@@ -166,7 +177,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { ids = [], columns = [] } = req.validated;
-      const result = await pimService.bulkExport(ids, columns);
+      const result = await pimService.bulkExport(req.user, ids, columns);
       res.json({ data: result });
     } catch (err) {
       next(err);
@@ -186,7 +197,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { ids, date, qty } = req.validated;
-      const result = await pimService.bulkPlanReappro(ids, { date, qty });
+      const result = await pimService.bulkPlanReappro(req.user, ids, { date, qty });
       res.json({ data: result });
     } catch (err) {
       next(err);
@@ -200,7 +211,7 @@ router.post(
   validate(variantSchema),
   async (req, res, next) => {
     try {
-      const product = await pimService.addVariant(req.params.id, req.validated);
+      const product = await pimService.addVariant(req.user, req.params.id, req.validated);
       if (!product) return next(new AppError('NOT_FOUND', 'Produit introuvable.', 404));
       res.status(201).json({ data: product });
     } catch (err) {
@@ -219,7 +230,7 @@ router.patch(
   ),
   async (req, res, next) => {
     try {
-      const product = await pimService.updateRestrictions(req.params.id, req.validated);
+      const product = await pimService.updateRestrictions(req.user, req.params.id, req.validated);
       if (!product) return next(new AppError('NOT_FOUND', 'Produit introuvable.', 404));
       res.json({ data: product });
     } catch (err) {
@@ -242,7 +253,7 @@ router.get(
   ),
   async (req, res, next) => {
     try {
-      const result = await pimService.getProducts(req.validatedQuery);
+      const result = await pimService.getProducts(req.user, req.validatedQuery);
       res.json(result);
     } catch (err) {
       next(err);
@@ -255,7 +266,7 @@ router.get(
   requireRole('PRODUCT_MANAGER', 'CATALOGUE_MANAGER', 'SUPERADMIN', 'ANALYST'),
   async (req, res, next) => {
     try {
-      const product = await pimService.getProductById(req.params.id);
+      const product = await pimService.getProductById(req.user, req.params.id);
       if (!product) return next(new AppError('NOT_FOUND', 'Produit introuvable.', 404));
       res.json({ data: product });
     } catch (err) {
@@ -270,7 +281,7 @@ router.post(
   validate(productPayloadSchema),
   async (req, res, next) => {
     try {
-      const product = await pimService.createProduct(req.validated);
+      const product = await pimService.createProduct(req.user, req.validated);
       res.status(201).json({ data: product });
     } catch (err) {
       next(err);
@@ -288,7 +299,7 @@ router.post(
   ),
   async (req, res, next) => {
     try {
-      const data = await pimService.importOCRProducts(req.validated);
+      const data = await pimService.importOCRProducts(req.user, req.validated);
       res.status(201).json({ data, meta: { total: data.length } });
     } catch (err) {
       next(err);
@@ -302,7 +313,7 @@ router.patch(
   validate(productPayloadSchema),
   async (req, res, next) => {
     try {
-      const product = await pimService.updateProduct(req.params.id, req.validated);
+      const product = await pimService.updateProduct(req.user, req.params.id, req.validated);
       if (!product) return next(new AppError('NOT_FOUND', 'Produit introuvable.', 404));
       res.json({ data: product });
     } catch (err) {
@@ -317,7 +328,7 @@ router.put(
   validate(productPayloadSchema),
   async (req, res, next) => {
     try {
-      const product = await pimService.updateProduct(req.params.id, req.validated);
+      const product = await pimService.updateProduct(req.user, req.params.id, req.validated);
       if (!product) return next(new AppError('NOT_FOUND', 'Produit introuvable.', 404));
       res.json({ data: product });
     } catch (err) {
@@ -331,7 +342,7 @@ router.delete(
   requireRole('PRODUCT_MANAGER', 'SUPERADMIN'),
   async (req, res, next) => {
     try {
-      const product = await pimService.archiveProduct(req.params.id);
+      const product = await pimService.archiveProduct(req.user, req.params.id);
       if (!product) return next(new AppError('NOT_FOUND', 'Produit introuvable.', 404));
       res.json({ data: product });
     } catch (err) {

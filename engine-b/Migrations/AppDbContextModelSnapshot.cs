@@ -286,11 +286,11 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000001"),
                             City = "Alger",
-                            CreatedAt = new DateTime(2025, 10, 29, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            CreatedAt = new DateTime(2025, 10, 31, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Email = "amina@example.com",
                             FullName = "Amina Benali",
                             IsBlacklisted = false,
-                            LastOrderDate = new DateTime(2026, 4, 25, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            LastOrderDate = new DateTime(2026, 4, 27, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Phone = "+213 0550 111 001",
                             ReturnRate = 5m,
                             RiskLevel = 0,
@@ -304,11 +304,11 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000002"),
                             City = "Oran",
-                            CreatedAt = new DateTime(2025, 12, 28, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            CreatedAt = new DateTime(2025, 12, 30, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Email = "karim@example.com",
                             FullName = "Karim Hadj",
                             IsBlacklisted = false,
-                            LastOrderDate = new DateTime(2026, 4, 17, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            LastOrderDate = new DateTime(2026, 4, 19, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Phone = "+213 0661 222 002",
                             ReturnRate = 18m,
                             RiskLevel = 1,
@@ -322,10 +322,10 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000003"),
                             City = "Constantine",
-                            CreatedAt = new DateTime(2026, 4, 17, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            CreatedAt = new DateTime(2026, 4, 19, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             FullName = "Fatima Zerhouni",
                             IsBlacklisted = false,
-                            LastOrderDate = new DateTime(2026, 4, 19, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            LastOrderDate = new DateTime(2026, 4, 21, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Phone = "+213 0770 333 003",
                             ReturnRate = 0m,
                             RiskLevel = 0,
@@ -339,14 +339,14 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000004"),
                             BlacklistReason = "Taux de retour élevé",
-                            BlacklistedAt = new DateTime(2026, 4, 12, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            BlacklistedAt = new DateTime(2026, 4, 14, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             BlacklistedBy = "SuperAdmin",
                             City = "Sétif",
-                            CreatedAt = new DateTime(2025, 10, 9, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            CreatedAt = new DateTime(2025, 10, 11, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Email = "youcef@example.com",
                             FullName = "Youcef Mebarki",
                             IsBlacklisted = true,
-                            LastOrderDate = new DateTime(2026, 3, 13, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            LastOrderDate = new DateTime(2026, 3, 15, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Phone = "+213 0555 444 004",
                             ReturnRate = 30m,
                             RiskLevel = 2,
@@ -360,10 +360,10 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("c1000000-0000-0000-0000-000000000005"),
                             City = "Blida",
-                            CreatedAt = new DateTime(2025, 7, 1, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            CreatedAt = new DateTime(2025, 7, 3, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             FullName = "Nadia Boudiaf",
                             IsBlacklisted = false,
-                            LastOrderDate = new DateTime(2026, 1, 17, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            LastOrderDate = new DateTime(2026, 1, 19, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Phone = "+213 0660 555 005",
                             ReturnRate = 8m,
                             RiskLevel = 0,
@@ -411,7 +411,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("e1000000-0000-0000-0000-000000000001"),
                             Content = "Client VIP — a appelé pour confirmer sa commande #10040. Livraison OK.",
-                            CreatedAt = new DateTime(2026, 4, 25, 23, 27, 46, 973, DateTimeKind.Utc).AddTicks(7454),
+                            CreatedAt = new DateTime(2026, 4, 27, 16, 40, 37, 989, DateTimeKind.Utc).AddTicks(5023),
                             CreatedBy = "CRM Agent",
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000001"),
                             Type = 0
@@ -420,7 +420,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("e1000000-0000-0000-0000-000000000002"),
                             Content = "Message WhatsApp envoyé au client pour suivi du ticket #TKT-0881.",
-                            CreatedAt = new DateTime(2026, 4, 24, 23, 27, 46, 973, DateTimeKind.Utc).AddTicks(7454),
+                            CreatedAt = new DateTime(2026, 4, 26, 16, 40, 37, 989, DateTimeKind.Utc).AddTicks(5023),
                             CreatedBy = "CRM Agent",
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000002"),
                             Type = 1
@@ -429,7 +429,7 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("e1000000-0000-0000-0000-000000000003"),
                             Content = "Premier contact client — bien reçu la commande, très satisfaite.",
-                            CreatedAt = new DateTime(2026, 4, 19, 23, 27, 46, 973, DateTimeKind.Utc).AddTicks(7454),
+                            CreatedAt = new DateTime(2026, 4, 21, 16, 40, 37, 989, DateTimeKind.Utc).AddTicks(5023),
                             CreatedBy = "SuperAdmin",
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000003"),
                             Type = 3
@@ -497,10 +497,10 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("d1000000-0000-0000-0000-000000000001"),
                             AssignedAgentName = "CRM Agent",
-                            CreatedAt = new DateTime(2026, 4, 24, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            CreatedAt = new DateTime(2026, 4, 26, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000002"),
                             Description = "",
-                            LastActionAt = new DateTime(2026, 4, 25, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            LastActionAt = new DateTime(2026, 4, 27, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Priority = 1,
                             RelatedOrderId = "#10043",
                             Status = 0,
@@ -512,10 +512,10 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("d1000000-0000-0000-0000-000000000002"),
                             AssignedAgentName = "Non assigné",
-                            CreatedAt = new DateTime(2026, 4, 20, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            CreatedAt = new DateTime(2026, 4, 22, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000004"),
                             Description = "",
-                            LastActionAt = new DateTime(2026, 4, 21, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            LastActionAt = new DateTime(2026, 4, 23, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Priority = 2,
                             RelatedOrderId = "#10039",
                             Status = 3,
@@ -527,13 +527,13 @@ namespace engine_b.Migrations
                         {
                             Id = new Guid("d1000000-0000-0000-0000-000000000003"),
                             AssignedAgentName = "SuperAdmin",
-                            CreatedAt = new DateTime(2026, 4, 12, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            CreatedAt = new DateTime(2026, 4, 14, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             CustomerId = new Guid("c1000000-0000-0000-0000-000000000001"),
                             Description = "",
-                            LastActionAt = new DateTime(2026, 4, 15, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            LastActionAt = new DateTime(2026, 4, 17, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Priority = 3,
                             RelatedOrderId = "#10010",
-                            ResolvedAt = new DateTime(2026, 4, 15, 23, 27, 46, 967, DateTimeKind.Utc).AddTicks(4225),
+                            ResolvedAt = new DateTime(2026, 4, 17, 16, 40, 37, 986, DateTimeKind.Utc).AddTicks(7570),
                             Status = 5,
                             Subject = "Question sur la garantie",
                             TicketNumber = "#TKT-0883",
@@ -608,7 +608,7 @@ namespace engine_b.Migrations
                             ClientName = "Nouveau cliente",
                             ClientOrderCount = 0,
                             ClientPhone = "+213 0550 123 456",
-                            CreatedAt = new DateTime(2026, 4, 27, 21, 40, 46, 958, DateTimeKind.Utc).AddTicks(4770),
+                            CreatedAt = new DateTime(2026, 4, 29, 14, 53, 37, 983, DateTimeKind.Utc).AddTicks(5970),
                             IsNewClient = true,
                             OrderNumber = "#10042",
                             Risk = 0,
@@ -622,7 +622,7 @@ namespace engine_b.Migrations
                             ClientName = "Client régulier",
                             ClientOrderCount = 2,
                             ClientPhone = "+213 0661 987 654",
-                            CreatedAt = new DateTime(2026, 4, 27, 23, 4, 46, 958, DateTimeKind.Utc).AddTicks(4770),
+                            CreatedAt = new DateTime(2026, 4, 29, 16, 17, 37, 983, DateTimeKind.Utc).AddTicks(5970),
                             IsNewClient = false,
                             OrderNumber = "#10043",
                             Risk = 1,
@@ -636,7 +636,7 @@ namespace engine_b.Migrations
                             ClientName = "Connu, 1 absence",
                             ClientOrderCount = 1,
                             ClientPhone = "+213 0770 456 789",
-                            CreatedAt = new DateTime(2026, 4, 27, 23, 15, 46, 958, DateTimeKind.Utc).AddTicks(4770),
+                            CreatedAt = new DateTime(2026, 4, 29, 16, 28, 37, 983, DateTimeKind.Utc).AddTicks(5970),
                             IsNewClient = false,
                             OrderNumber = "#10044",
                             Risk = 2,
@@ -650,8 +650,8 @@ namespace engine_b.Migrations
                             ClientName = "VIP client",
                             ClientOrderCount = 15,
                             ClientPhone = "+213 0555 111 222",
-                            ConfirmedAt = new DateTime(2026, 4, 27, 21, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
-                            CreatedAt = new DateTime(2026, 4, 27, 20, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
+                            ConfirmedAt = new DateTime(2026, 4, 29, 14, 40, 37, 983, DateTimeKind.Utc).AddTicks(5970),
+                            CreatedAt = new DateTime(2026, 4, 29, 13, 40, 37, 983, DateTimeKind.Utc).AddTicks(5970),
                             IsNewClient = false,
                             OrderNumber = "#10040",
                             Risk = 0,
@@ -665,13 +665,13 @@ namespace engine_b.Migrations
                             ClientName = "Client Oran",
                             ClientOrderCount = 5,
                             ClientPhone = "+213 0660 333 444",
-                            ConfirmedAt = new DateTime(2026, 4, 27, 16, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
-                            CreatedAt = new DateTime(2026, 4, 27, 15, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
-                            DeliveredAt = new DateTime(2026, 4, 27, 22, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
+                            ConfirmedAt = new DateTime(2026, 4, 29, 9, 40, 37, 983, DateTimeKind.Utc).AddTicks(5970),
+                            CreatedAt = new DateTime(2026, 4, 29, 8, 40, 37, 983, DateTimeKind.Utc).AddTicks(5970),
+                            DeliveredAt = new DateTime(2026, 4, 29, 15, 40, 37, 983, DateTimeKind.Utc).AddTicks(5970),
                             IsNewClient = false,
                             OrderNumber = "#10038",
                             Risk = 0,
-                            ShippedAt = new DateTime(2026, 4, 27, 18, 27, 46, 958, DateTimeKind.Utc).AddTicks(4770),
+                            ShippedAt = new DateTime(2026, 4, 29, 11, 40, 37, 983, DateTimeKind.Utc).AddTicks(5970),
                             Status = 4,
                             Wilaya = 31
                         });
@@ -1099,18 +1099,6 @@ namespace engine_b.Migrations
                     b.HasIndex("PurchaseOrderId");
 
                     b.ToTable("proc_receipts", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("f5000000-0000-0000-0000-000000000001"),
-                            PurchaseOrderId = new Guid("f2000000-0000-0000-0000-000000000002"),
-                            ReceiptNumber = "REC-892-1",
-                            ReceivedAt = new DateTime(2026, 4, 26, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            ReceivedBy = "Inventory Manager",
-                            TotalReceivedValue = 264000m,
-                            UnitsReceived = 62
-                        });
                 });
 
             modelBuilder.Entity("engine_b.Modules.Procurement.Domain.ProcurementStockAlert", b =>
@@ -1156,34 +1144,6 @@ namespace engine_b.Migrations
                     b.HasIndex("Severity");
 
                     b.ToTable("proc_stock_alerts", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("f4000000-0000-0000-0000-000000000001"),
-                            AvailableUnits = 0,
-                            DetectedAt = new DateTime(2026, 4, 27, 19, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            IsResolved = false,
-                            ProductName = "Apple AirPods Pro 2ème Génération",
-                            ReorderThreshold = 25,
-                            Severity = 2,
-                            Sku = "SKU-851",
-                            SuggestedOrderQty = 50,
-                            SupplierName = "Apple Distribution"
-                        },
-                        new
-                        {
-                            Id = new Guid("f4000000-0000-0000-0000-000000000002"),
-                            AvailableUnits = 5,
-                            DetectedAt = new DateTime(2026, 4, 27, 15, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            IsResolved = false,
-                            ProductName = "Nike Air Max 90",
-                            ReorderThreshold = 10,
-                            Severity = 1,
-                            Sku = "SKU-818",
-                            SuggestedOrderQty = 12,
-                            SupplierName = "Nike MENA"
-                        });
                 });
 
             modelBuilder.Entity("engine_b.Modules.Procurement.Domain.PurchaseOrder", b =>
@@ -1267,48 +1227,6 @@ namespace engine_b.Migrations
                     b.HasIndex("SupplierId");
 
                     b.ToTable("proc_purchase_orders", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("f2000000-0000-0000-0000-000000000001"),
-                            BudgetAvailable = 750000m,
-                            CreatedAt = new DateTime(2026, 4, 25, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            CreatedBy = "Procurement Manager",
-                            Currency = "DZD",
-                            CustomsCost = 0m,
-                            EtaDate = new DateTime(2026, 5, 2, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            Priority = 1,
-                            Reference = "BC-897",
-                            SodRule = "PM cannot self-approve",
-                            Status = 1,
-                            Subtotal = 900000m,
-                            SupplierId = new Guid("f1000000-0000-0000-0000-000000000001"),
-                            TotalAmount = 900000m,
-                            TransportCost = 0m,
-                            Warehouse = "Alger WH-01"
-                        },
-                        new
-                        {
-                            Id = new Guid("f2000000-0000-0000-0000-000000000002"),
-                            ApprovedAt = new DateTime(2026, 4, 24, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            ApprovedBy = "SuperAdmin",
-                            BudgetAvailable = 420000m,
-                            CreatedAt = new DateTime(2026, 4, 23, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            CreatedBy = "Procurement Manager",
-                            Currency = "DZD",
-                            CustomsCost = 0m,
-                            EtaDate = new DateTime(2026, 4, 30, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            Priority = 2,
-                            Reference = "BC-892",
-                            SodRule = "PM cannot self-approve",
-                            Status = 2,
-                            Subtotal = 264000m,
-                            SupplierId = new Guid("f1000000-0000-0000-0000-000000000002"),
-                            TotalAmount = 264000m,
-                            TransportCost = 0m,
-                            Warehouse = "Alger WH-01"
-                        });
                 });
 
             modelBuilder.Entity("engine_b.Modules.Procurement.Domain.PurchaseOrderAuditEvent", b =>
@@ -1342,26 +1260,6 @@ namespace engine_b.Migrations
                     b.HasIndex("PurchaseOrderId");
 
                     b.ToTable("proc_purchase_order_audit_events", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("f6000000-0000-0000-0000-000000000001"),
-                            Actor = "Procurement Manager",
-                            CreatedAt = new DateTime(2026, 4, 25, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            EventType = "created",
-                            Message = "BC-897 created and submitted for approval.",
-                            PurchaseOrderId = new Guid("f2000000-0000-0000-0000-000000000001")
-                        },
-                        new
-                        {
-                            Id = new Guid("f6000000-0000-0000-0000-000000000002"),
-                            Actor = "SuperAdmin",
-                            CreatedAt = new DateTime(2026, 4, 24, 23, 27, 46, 979, DateTimeKind.Utc).AddTicks(9134),
-                            EventType = "approved",
-                            Message = "BC-892 approved by SuperAdmin.",
-                            PurchaseOrderId = new Guid("f2000000-0000-0000-0000-000000000002")
-                        });
                 });
 
             modelBuilder.Entity("engine_b.Modules.Procurement.Domain.PurchaseOrderLine", b =>
@@ -1398,30 +1296,6 @@ namespace engine_b.Migrations
                     b.HasIndex("PurchaseOrderId");
 
                     b.ToTable("proc_purchase_order_lines", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("f3000000-0000-0000-0000-000000000001"),
-                            ProductName = "Apple AirPods Pro 2",
-                            PurchaseOrderId = new Guid("f2000000-0000-0000-0000-000000000001"),
-                            Quantity = 50,
-                            ReceivedQuantity = 0,
-                            Sku = "SKU-851",
-                            Subtotal = 900000m,
-                            UnitPrice = 18000m
-                        },
-                        new
-                        {
-                            Id = new Guid("f3000000-0000-0000-0000-000000000002"),
-                            ProductName = "Nike Air Max 90",
-                            PurchaseOrderId = new Guid("f2000000-0000-0000-0000-000000000002"),
-                            Quantity = 62,
-                            ReceivedQuantity = 0,
-                            Sku = "SKU-812",
-                            Subtotal = 264000m,
-                            UnitPrice = 4258.06m
-                        });
                 });
 
             modelBuilder.Entity("engine_b.Modules.Procurement.Domain.Supplier", b =>
@@ -1474,53 +1348,6 @@ namespace engine_b.Migrations
                     b.HasIndex("Name");
 
                     b.ToTable("proc_suppliers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("f1000000-0000-0000-0000-000000000001"),
-                            AverageCostIndex = 100m,
-                            City = "Paris",
-                            ContactName = "Jean-Pierre Martin",
-                            Country = "France",
-                            CreatedAt = new DateTime(2026, 4, 27, 23, 27, 46, 980, DateTimeKind.Utc).AddTicks(3467),
-                            Email = "jp@apple-dist.fr",
-                            LeadTimeDays = 5,
-                            Name = "Apple Distribution",
-                            OnTimeRate = 76m,
-                            Phone = "+33 1 00 00 00 00",
-                            ReliabilityScore = 67m
-                        },
-                        new
-                        {
-                            Id = new Guid("f1000000-0000-0000-0000-000000000002"),
-                            AverageCostIndex = 98m,
-                            City = "Dubai",
-                            ContactName = "M. Karim Hassan",
-                            Country = "UAE",
-                            CreatedAt = new DateTime(2026, 4, 27, 23, 27, 46, 981, DateTimeKind.Utc).AddTicks(9060),
-                            Email = "karim@nike-mena.ae",
-                            LeadTimeDays = 7,
-                            Name = "Nike MENA",
-                            OnTimeRate = 92m,
-                            Phone = "+971 50 000 00 00",
-                            ReliabilityScore = 94m
-                        },
-                        new
-                        {
-                            Id = new Guid("f1000000-0000-0000-0000-000000000003"),
-                            AverageCostIndex = 101m,
-                            City = "Seoul",
-                            ContactName = "A. Mehdi Khan",
-                            Country = "Korea",
-                            CreatedAt = new DateTime(2026, 4, 27, 23, 27, 46, 981, DateTimeKind.Utc).AddTicks(9081),
-                            Email = "mehdi@samsung.co.kr",
-                            LeadTimeDays = 6,
-                            Name = "Samsung Electronics",
-                            OnTimeRate = 83m,
-                            Phone = "+82 2 0000 0000",
-                            ReliabilityScore = 78m
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

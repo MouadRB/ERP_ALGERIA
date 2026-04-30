@@ -25,7 +25,7 @@ router.get(
   ),
   async (req, res, next) => {
     try {
-      const result = await catalogueService.getCatalogue(req.validatedQuery);
+      const result = await catalogueService.getCatalogue(req.user, req.validatedQuery);
       res.json(result);
     } catch (err) {
       next(err);
@@ -36,9 +36,9 @@ router.get(
 router.get(
   '/stats',
   requireRole('CATALOGUE_MANAGER', 'PRODUCT_MANAGER', 'SUPERADMIN', 'ANALYST'),
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
-      const stats = await catalogueService.getCatalogueStats();
+      const stats = await catalogueService.getCatalogueStats(req.user);
       res.json({ data: stats });
     } catch (err) {
       next(err);
@@ -49,9 +49,9 @@ router.get(
 router.get(
   '/analytics',
   requireRole('CATALOGUE_MANAGER', 'PRODUCT_MANAGER', 'SUPERADMIN', 'ANALYST'),
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
-      const analytics = await catalogueService.getCatalogueAnalytics();
+      const analytics = await catalogueService.getCatalogueAnalytics(req.user);
       res.json({ data: analytics });
     } catch (err) {
       next(err);
@@ -62,9 +62,9 @@ router.get(
 router.get(
   '/channels',
   requireRole('CATALOGUE_MANAGER', 'PRODUCT_MANAGER', 'SUPERADMIN', 'ANALYST'),
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
-      const channels = await catalogueService.getCatalogueChannels();
+      const channels = await catalogueService.getCatalogueChannels(req.user);
       res.json({ data: channels });
     } catch (err) {
       next(err);
@@ -75,9 +75,9 @@ router.get(
 router.get(
   '/opensearch/status',
   requireRole('CATALOGUE_MANAGER', 'PRODUCT_MANAGER', 'SUPERADMIN', 'ANALYST'),
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
-      const status = await catalogueService.getOpenSearchStatus();
+      const status = await catalogueService.getOpenSearchStatus(req.user);
       res.json({ data: status });
     } catch (err) {
       next(err);
@@ -88,9 +88,9 @@ router.get(
 router.post(
   '/opensearch/reindex',
   requireRole('CATALOGUE_MANAGER', 'SUPERADMIN'),
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
-      const status = await catalogueService.reindexOpenSearch();
+      const status = await catalogueService.reindexOpenSearch(req.user);
       res.json({ data: status });
     } catch (err) {
       next(err);
@@ -101,9 +101,9 @@ router.post(
 router.get(
   '/categories',
   requireRole('CATALOGUE_MANAGER', 'PRODUCT_MANAGER', 'SUPERADMIN', 'ANALYST'),
-  async (_req, res, next) => {
+  async (req, res, next) => {
     try {
-      const cats = await catalogueService.getCategories();
+      const cats = await catalogueService.getCategories(req.user);
       res.json({ data: cats });
     } catch (err) {
       next(err);
@@ -124,7 +124,7 @@ router.post(
   ),
   async (req, res, next) => {
     try {
-      const cat = await catalogueService.createCategory(req.validated);
+      const cat = await catalogueService.createCategory(req.user, req.validated);
       res.status(201).json({ data: cat });
     } catch (err) {
       next(err);
@@ -145,7 +145,7 @@ router.patch(
   ),
   async (req, res, next) => {
     try {
-      const cat = await catalogueService.updateCategory(req.params.catId, req.validated);
+      const cat = await catalogueService.updateCategory(req.user, req.params.catId, req.validated);
       if (!cat) return next(new AppError('NOT_FOUND', 'Categorie introuvable.', 404));
       res.json({ data: cat });
     } catch (err) {
@@ -159,7 +159,7 @@ router.delete(
   requireRole('CATALOGUE_MANAGER', 'SUPERADMIN'),
   async (req, res, next) => {
     try {
-      const removed = await catalogueService.deleteCategory(req.params.catId);
+      const removed = await catalogueService.deleteCategory(req.user, req.params.catId);
       if (!removed) return next(new AppError('NOT_FOUND', 'Categorie introuvable.', 404));
       res.json({ data: { id: removed.id } });
     } catch (err) {
@@ -173,7 +173,7 @@ router.get(
   requireRole('CATALOGUE_MANAGER', 'PRODUCT_MANAGER', 'SUPERADMIN', 'ANALYST'),
   async (req, res, next) => {
     try {
-      const entry = await catalogueService.getCatalogueItem(req.params.id);
+      const entry = await catalogueService.getCatalogueItem(req.user, req.params.id);
       if (!entry) return next(new AppError('NOT_FOUND', 'Entree catalogue introuvable.', 404));
       res.json({ data: entry });
     } catch (err) {
@@ -187,7 +187,7 @@ router.get(
   requireRole('CATALOGUE_MANAGER', 'PRODUCT_MANAGER', 'SUPERADMIN', 'ANALYST'),
   async (req, res, next) => {
     try {
-      const history = await catalogueService.getCatalogueHistory(req.params.id);
+      const history = await catalogueService.getCatalogueHistory(req.user, req.params.id);
       if (history === null) return next(new AppError('NOT_FOUND', 'Entree catalogue introuvable.', 404));
       res.json({ data: history });
     } catch (err) {
@@ -212,7 +212,7 @@ router.put(
   ),
   async (req, res, next) => {
     try {
-      const entry = await catalogueService.updateCatalogueEntry(req.params.id, req.validated);
+      const entry = await catalogueService.updateCatalogueEntry(req.user, req.params.id, req.validated);
       if (!entry) return next(new AppError('NOT_FOUND', 'Entree catalogue introuvable.', 404));
       res.json({ data: entry });
     } catch (err) {
@@ -226,7 +226,7 @@ router.delete(
   requireRole('CATALOGUE_MANAGER', 'SUPERADMIN'),
   async (req, res, next) => {
     try {
-      const removed = await catalogueService.deleteCatalogueEntry(req.params.id);
+      const removed = await catalogueService.deleteCatalogueEntry(req.user, req.params.id);
       if (!removed) return next(new AppError('NOT_FOUND', 'Entree catalogue introuvable.', 404));
       res.json({ data: { id: removed.id } });
     } catch (err) {
@@ -251,7 +251,7 @@ router.post(
   ),
   async (req, res, next) => {
     try {
-      const entry = await catalogueService.createCatalogueEntry(req.validated);
+      const entry = await catalogueService.createCatalogueEntry(req.user, req.validated);
       res.status(201).json({ data: entry });
     } catch (err) {
       next(err);
@@ -264,7 +264,7 @@ router.patch(
   requireRole('CATALOGUE_MANAGER', 'SUPERADMIN'),
   async (req, res, next) => {
     try {
-      const entry = await catalogueService.publishEntry(req.params.id);
+      const entry = await catalogueService.publishEntry(req.user, req.params.id);
       if (!entry) return next(new AppError('NOT_FOUND', 'Entree catalogue introuvable.', 404));
       res.json({ data: entry });
     } catch (err) {
@@ -278,7 +278,7 @@ router.patch(
   requireRole('CATALOGUE_MANAGER', 'SUPERADMIN'),
   async (req, res, next) => {
     try {
-      const entry = await catalogueService.unpublishEntry(req.params.id);
+      const entry = await catalogueService.unpublishEntry(req.user, req.params.id);
       if (!entry) return next(new AppError('NOT_FOUND', 'Entree catalogue introuvable.', 404));
       res.json({ data: entry });
     } catch (err) {
@@ -292,7 +292,7 @@ router.patch(
   requireRole('CATALOGUE_MANAGER', 'SUPERADMIN'),
   async (req, res, next) => {
     try {
-      const entry = await catalogueService.maskEntry(req.params.id);
+      const entry = await catalogueService.maskEntry(req.user, req.params.id);
       if (!entry) return next(new AppError('NOT_FOUND', 'Entree catalogue introuvable.', 404));
       res.json({ data: entry });
     } catch (err) {
@@ -313,6 +313,7 @@ router.patch(
   async (req, res, next) => {
     try {
       const entry = await catalogueService.scheduleEntry(
+        req.user,
         req.params.id,
         req.validated.scheduledAt,
         req.validated.type,
@@ -336,6 +337,7 @@ router.patch(
   async (req, res, next) => {
     try {
       const entry = await catalogueService.toggleChannelStatus(
+        req.user,
         req.params.id,
         req.params.channelId,
         req.validated.enabled,

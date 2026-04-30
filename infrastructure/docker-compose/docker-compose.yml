@@ -73,6 +73,7 @@ services:
     ports:
       - "8081:8080"
     environment:
+      - SERVER_PORT=8080
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
       - SPRING_DATASOURCE_USERNAME=erp_admin
       - SPRING_DATASOURCE_PASSWORD=local_dev_password
@@ -88,13 +89,17 @@ services:
     ports:
       - "8082:8080"
     environment:
+      - SERVER_PORT=8080
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
       - SPRING_DATASOURCE_USERNAME=erp_admin
       - SPRING_DATASOURCE_PASSWORD=local_dev_password
-      - MDM_SERVICE_URL=http://mdm-service:8080
+      - MDM_BASE_URL=http://mdm-service:8080
+      - OMS_MDM_BASE_URL=http://mdm-service:8080
+      - PIM_BASE_URL=http://localhost:8080
       - ENGINE_B_URL=http://engine-b:8080
       - REDIS_HOST=redis
       - OPENSEARCH_URIS=http://opensearch:9200
+      - OCR_BASE_URL=http://host.docker.internal:8085
     depends_on:
       postgres:
         condition: service_healthy
@@ -121,15 +126,13 @@ services:
 
   frontend:
     build:
-      context: ../../frontend
+      context: ../../frontend/apps/bff/
       dockerfile: Dockerfile
     container_name: erp-frontend
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_ENGINE_A_URL=http://localhost:8082
-      - REACT_APP_ENGINE_B_URL=http://localhost:8083
-      - REACT_APP_KEYCLOAK_URL=http://localhost:8080
+      - NEXT_PUBLIC_BFF_URL=http://localhost:4000
     depends_on:
       - engine-a
       - engine-b
