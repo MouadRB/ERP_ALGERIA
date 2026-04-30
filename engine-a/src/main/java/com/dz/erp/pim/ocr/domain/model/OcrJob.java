@@ -5,7 +5,10 @@ import com.dz.erp.shared.exception.ErrorCode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,9 +31,19 @@ public class OcrJob {
     private Instant completedAt;
     private List<OcrJobLine> lines;
 
+    private String bonNumero;
+    private LocalDate documentDate;
+    private LocalTime documentTime;
+    private String clientName;
+    private Integer nbrColis;
+    private Integer nbrCondi;
+    private BigDecimal totalMontant;
+    private String rawText;
+
     public static OcrJob create(String tenantId, String fileName, String mimeType, long sizeBytes, String createdBy) {
         return new OcrJob(UUID.randomUUID().toString(), tenantId, fileName, mimeType, sizeBytes,
-                OcrJobStatus.PROCESSING, 5, null, null, createdBy, Instant.now(), null, new ArrayList<>());
+                OcrJobStatus.PROCESSING, 5, null, null, createdBy, Instant.now(), null, new ArrayList<>(),
+                null, null, null, null, null, null, null, null);
     }
 
     public void markProgress(int percent) {
@@ -45,6 +58,19 @@ public class OcrJob {
         this.lines = extractedLines != null ? extractedLines : new ArrayList<>();
         this.status = OcrJobStatus.EXTRACTED;
         this.progressPercent = 100;
+    }
+
+    public void applyDocumentMeta(String bonNumero, LocalDate documentDate, LocalTime documentTime,
+                                  String clientName, Integer nbrColis, Integer nbrCondi,
+                                  BigDecimal totalMontant, String rawText) {
+        this.bonNumero = bonNumero;
+        this.documentDate = documentDate;
+        this.documentTime = documentTime;
+        this.clientName = clientName;
+        this.nbrColis = nbrColis;
+        this.nbrCondi = nbrCondi;
+        this.totalMontant = totalMontant;
+        this.rawText = rawText;
     }
 
     public void markFailed(String message) {
