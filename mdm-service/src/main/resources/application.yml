@@ -10,6 +10,7 @@ spring:
       enabled: true
 
 
+
   datasource:
     url: jdbc:postgresql://localhost:5432/erp_db
     username: ${DB_USERNAME:erp_admin}

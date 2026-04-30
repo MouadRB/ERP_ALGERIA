@@ -6,7 +6,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "ocr_jobs", schema = "pim_schema",
@@ -42,4 +45,17 @@ public class OcrJobJpaEntity {
     @Column(nullable = false)
     private Instant createdAt;
     private Instant completedAt;
+
+    @Column(length = 50)
+    private String bonNumero;
+    private LocalDate documentDate;
+    private LocalTime documentTime;
+    @Column(length = 200)
+    private String clientName;
+    private Integer nbrColis;
+    private Integer nbrCondi;
+    @Column(precision = 19, scale = 4)
+    private BigDecimal totalMontant;
+    @Column(columnDefinition = "TEXT")
+    private String rawText;
 }

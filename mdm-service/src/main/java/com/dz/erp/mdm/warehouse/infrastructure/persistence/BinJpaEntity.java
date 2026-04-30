@@ -10,7 +10,7 @@ import lombok.Setter;
 import java.time.Instant;
 
 @Entity
-@Table(name = "bins")
+@Table(name = "bins"  , schema = "mdm_schema")
 @Getter
 @Setter
 @NoArgsConstructor
