@@ -1,76 +1,135 @@
-const env = require('../config/env');
-const ticketsMock = require('../mocks/crm-tickets.mock');
+// ─────────────────────────────────────────────────────────────────────────────
+// CRM Tickets service — orchestrator on top of Engine-B.
+//
+// Engine-B is the source of truth for the ticket lifecycle (Open → InProgress
+// → WaitingClient → Escalated → Resolved → Closed). The BFF translates the
+// frontend's French labels into Engine-B's English enum, forwards the action
+// (escalate / close / assign) and projects the response back. There are NO
+// mock branches here.
+// ─────────────────────────────────────────────────────────────────────────────
 
-const getTickets = async (params = {}) => {
-  if (env.useMock) {
-    const { page = 1, pageSize = 20, customerId, status, category, priority } = params;
+const engineB = require('./engine-b.client');
+const t       = require('../transformers/crm.transformer');
+const { AppError } = require('../errors/AppError');
 
-    let results = [...ticketsMock];
+const BASE = '/api/crm';
 
-    if (customerId)  results = results.filter((t) => t.customerId === customerId);
-    if (status)      results = results.filter((t) => t.status === status);
-    if (category)    results = results.filter((t) => t.category === category);
-    if (priority)    results = results.filter((t) => t.priority === priority);
+const listTickets = async (query = {}, ctx) => {
+  const fallback = { page: query.page || 1, pageSize: query.pageSize || 20 };
+  const response = await engineB.get(`${BASE}/tickets`, {
+    ctx,
+    query: t.buildTicketListQuery(query),
+  });
+  return t.transformPagedTickets(response, fallback);
+};
 
-    // Most recent first
-    results.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+const getTicketStats = async (ctx) => {
+  const { data } = await engineB.get(`${BASE}/tickets/stats`, { ctx });
+  return data;
+};
 
-    const total = results.length;
-    return { data: results.slice((page - 1) * pageSize, page * pageSize), meta: { total, page, pageSize } };
+const getTicket = async (id, ctx) => {
+  try {
+    const { data } = await engineB.get(
+      `${BASE}/tickets/${encodeURIComponent(id)}`,
+      { ctx },
+    );
+    return t.transformTicket(data);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
   }
-  throw new Error('Tickets service not implemented for real backend');
 };
 
-const getTicketById = async (id) => {
-  if (env.useMock) return ticketsMock.find((t) => t.id === id) || null;
-  throw new Error('Not implemented');
+const createTicket = async (payload, ctx) => {
+  const { data } = await engineB.post(
+    `${BASE}/tickets`,
+    t.buildCreateTicketRequest(payload, ctx?.req?.user),
+    { ctx },
+  );
+  return t.transformTicket(data);
 };
 
-const createTicket = async (body) => {
-  if (env.useMock) {
-    const newTicket = {
-      id: `TKT-${String(ticketsMock.length + 1).padStart(3, '0')}`,
-      customerId: body.customerId,
-      customerPhone: body.customerPhone || '',
-      customerNameFr: body.customerNameFr || '',
-      customerWilayaCode: body.customerWilayaCode || '16',
-      orderId: body.orderId || null,
-      category: body.category,
-      status: 'Ouvert',
-      priority: body.priority || 'Normale',
-      subject: body.subject || body.category,
-      description: body.description || '',
-      agentId: null,
-      agentName: null,
-      escalated: false,
-      lastAction: 'Ticket créé',
-      notes: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    ticketsMock.push(newTicket);
-    return newTicket;
+const updateTicket = async (id, payload, ctx) => {
+  try {
+    const { data } = await engineB.put(
+      `${BASE}/tickets/${encodeURIComponent(id)}`,
+      t.buildUpdateTicketRequest(payload),
+      { ctx },
+    );
+    return t.transformTicket(data);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
   }
-  throw new Error('Not implemented');
 };
 
-const updateTicket = async (id, body) => {
-  if (env.useMock) {
-    const ticket = ticketsMock.find((t) => t.id === id);
-    if (!ticket) return null;
-    if (body.status)    ticket.status    = body.status;
-    if (body.agentId)   ticket.agentId   = body.agentId;
-    if (body.agentName) ticket.agentName = body.agentName;
-    if (body.escalated !== undefined) ticket.escalated = body.escalated;
-    if (body.lastAction) ticket.lastAction = body.lastAction;
-    if (body.note) {
-      if (!ticket.notes) ticket.notes = [];
-      ticket.notes.push({ ...body.note, createdAt: new Date().toISOString() });
-    }
-    ticket.updatedAt = new Date().toISOString();
-    return ticket;
+const deleteTicket = async (id, ctx) => {
+  try {
+    await engineB.del(`${BASE}/tickets/${encodeURIComponent(id)}`, { ctx });
+    return true;
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return false;
+    throw err;
   }
-  throw new Error('Not implemented');
 };
 
-module.exports = { getTickets, getTicketById, createTicket, updateTicket };
+// Engine-B ticket-action endpoints reply with `{ message }` not the ticket.
+// Re-fetch after success so the frontend gets the up-to-date entity.
+const escalateTicket = async (id, _payload, ctx) => {
+  try {
+    await engineB.post(
+      `${BASE}/tickets/${encodeURIComponent(id)}/escalate`,
+      t.buildEscalateTicketRequest(),
+      { ctx },
+    );
+    return await getTicket(id, ctx);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
+  }
+};
+
+const closeTicket = async (id, _payload, ctx) => {
+  try {
+    await engineB.post(
+      `${BASE}/tickets/${encodeURIComponent(id)}/close`,
+      t.buildCloseTicketRequest(),
+      { ctx },
+    );
+    return await getTicket(id, ctx);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
+  }
+};
+
+const assignTicket = async (id, payload, ctx) => {
+  try {
+    await engineB.post(
+      `${BASE}/tickets/${encodeURIComponent(id)}/assign`,
+      t.buildAssignTicketRequest(payload),
+      { ctx },
+    );
+    return await getTicket(id, ctx);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
+  }
+};
+
+module.exports = {
+  // legacy aliases kept for any callers still using the old names
+  getTickets:    listTickets,
+  getTicketById: getTicket,
+  // current API
+  listTickets,
+  getTicketStats,
+  getTicket,
+  createTicket,
+  updateTicket,
+  deleteTicket,
+  escalateTicket,
+  closeTicket,
+  assignTicket,
+};

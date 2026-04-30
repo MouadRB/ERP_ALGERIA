@@ -1,467 +1,598 @@
-const env = require('../config/env');
-const { inventoryItems, movements } = require('../mocks/inventory.mock');
-const omsOrders = require('../mocks/oms-orders.mock');
+// ─────────────────────────────────────────────────────────────────────────────
+// Inventory service — orchestrator on top of Engine-A.
+//
+// Engine-A (Spring Boot) is the SINGLE source of truth for inventory.
+// This module:
+//   • forwards every read/write to Engine-A through engine-a.client
+//   • normalizes Engine-A DTOs via inventory.transformer
+//   • resolves SKU → stockRecordId on demand (the frontend speaks SKUs,
+//     Engine-A endpoints work with ids except for /by-sku/{skuCode})
+//   • caches the dashboard for a short window
+//   • joins PIM-owned fields (name, supplier, prices) through cross-module
+//     helpers — Engine-A does not own those.
+//
+// No business logic lives here: things like FIFO consumption, reservation
+// upgrades and quarantine accounting are computed by Engine-A.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const engineA = require('./engine-a.client');
 const { AppError } = require('../errors/AppError');
+const transformer = require('../transformers/inventory.transformer');
 const { enrichInventoryItemWithPIM } = require('./cross-module.helpers');
 
-const paginate = (rows, page = 1, pageSize = 20) => {
-  const total = rows.length;
-  const start = (page - 1) * pageSize;
-  return {
-    data: rows.slice(start, start + pageSize),
-    meta: { total, page, pageSize },
-  };
-};
+// ── Caches ──────────────────────────────────────────────────────────────────
 
-const SOFT_RESERVATION_STATUSES = new Set(['AwaitingValidation']);
-const HARD_RESERVATION_STATUSES = new Set([
-  'Confirmed',
-  'AwaitingPickup',
-  'HandedToCarrier',
-  'OutForDelivery',
-]);
+const SKU_CACHE_TTL_MS = parseInt(process.env.INVENTORY_SKU_CACHE_TTL_MS ?? '60000', 10);
+const DASHBOARD_CACHE_TTL_MS = parseInt(
+  process.env.INVENTORY_DASHBOARD_CACHE_TTL_MS ?? '45000',
+  10,
+);
 
-// Derive soft/hard reservations for a SKU from the OMS orders mock.
-// OMS is the single source of truth for reservations.
-const getReservationsForSku = (sku) => {
-  const reservations = [];
-  omsOrders.forEach((order) => {
-    const status = order.status;
-    const type = SOFT_RESERVATION_STATUSES.has(status)
-      ? 'soft'
-      : HARD_RESERVATION_STATUSES.has(status)
-        ? 'hard'
-        : null;
-    if (!type) return;
-    (order.items || []).forEach((line) => {
-      if (line.sku !== sku) return;
-      reservations.push({
-        reservationId: `RES-${order.id}-${line.sku}`,
-        orderId: order.reference || order.id,
-        quantity: line.quantity || line.qty || 0,
-        reservedAt: order.createdAt || order.updatedAt || null,
-        type,
-        clientPhone: order.customer?.phone || order.customerPhone || '',
-        city: order.customer?.wilaya || '',
-        statusOms: status,
-        expiresAt: order.autoCancelAt || null,
-        actionLabel: type === 'soft' ? 'Voir commande' : 'Voir WMS',
-      });
-    });
+const skuToIdCache = new Map(); // sku → { id, expiresAt }
+const stockRecordSnapshot = new Map(); // sku → snapshot (for cross-module sync helpers)
+let dashboardCache = null; // { value, expiresAt }
+
+const now = () => Date.now();
+
+const cacheSku = (record) => {
+  if (!record?.sku || !record?.stockRecordId) return;
+  skuToIdCache.set(record.sku, {
+    id: record.stockRecordId,
+    expiresAt: now() + SKU_CACHE_TTL_MS,
   });
-  return reservations;
+  stockRecordSnapshot.set(record.sku, record);
 };
 
-const summarizeReservations = (reservations) => {
-  let soft = 0;
-  let hard = 0;
-  reservations.forEach((entry) => {
-    if (entry.type === 'soft') soft += entry.quantity;
-    else if (entry.type === 'hard') hard += entry.quantity;
-  });
-  return { soft, hard, total: soft + hard };
+const cacheBatch = (records) => {
+  (records || []).forEach(cacheSku);
 };
 
-const enrichItem = (item) => {
-  // SYNC-4: inject PIM-owned fields (nameFr, nameAr, categoryId, etc.)
-  const pimEnriched = enrichInventoryItemWithPIM(item);
+const readSkuFromCache = (sku) => {
+  const hit = skuToIdCache.get(sku);
+  if (!hit) return null;
+  if (hit.expiresAt < now()) {
+    skuToIdCache.delete(sku);
+    return null;
+  }
+  return hit.id;
+};
 
-  const reservations = getReservationsForSku(pimEnriched.sku);
-  const { soft, hard, total: reservedTotal } = summarizeReservations(reservations);
-  const quantityOnHand = pimEnriched.stock ?? 0;
-  const quantityAvailable = Math.max(quantityOnHand - reservedTotal, 0);
-  const itemMovements = movements
-    .filter((movement) => movement.sku === pimEnriched.sku)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+// ── SKU → stockRecordId resolver ────────────────────────────────────────────
+
+const resolveStockRecordId = async (sku, ctx) => {
+  if (!sku) {
+    throw new AppError('VALIDATION_ERROR', 'SKU manquant.', 400, 'sku');
+  }
+  const cached = readSkuFromCache(sku);
+  if (cached) return cached;
+
+  const { data } = await engineA.get(
+    `/inventory/v1/stock-records/by-sku/${encodeURIComponent(sku)}`,
+    { ctx },
+  );
+  const record = transformer.transformStockRecord(data);
+  if (!record?.stockRecordId) {
+    throw new AppError('NOT_FOUND', `SKU introuvable: ${sku}`, 404, 'sku');
+  }
+  cacheSku(record);
+  return record.stockRecordId;
+};
+
+const enrichWithPIM = (record) => {
+  if (!record) return record;
+  const pim = enrichInventoryItemWithPIM(record);
+  return {
+    ...pim,
+    quantityOnHand: record.quantityOnHand,
+    quantityAvailable: record.quantityAvailable,
+    quantityReserved: record.quantityReserved,
+    softReserved: record.softReserved,
+    hardReserved: record.hardReserved,
+    quantityQuarantined: record.quantityQuarantined,
+    reorderPoint: record.reorderPoint,
+    reorderQuantity: record.reorderQuantity,
+    stockStatus: record.stockStatus,
+    costFifo: record.costFifo || pim.costFifo || 0,
+    weightedAverageCost: record.weightedAverageCost,
+    stockValue: record.stockValue,
+    availableValue:
+      (record.quantityAvailable || 0) * (record.costFifo || pim.costFifo || 0),
+    stockRecordId: record.stockRecordId,
+    productId: record.productId || pim.productId,
+    variantId: record.variantId,
+    lastMovementAt: record.lastMovementAt,
+  };
+};
+
+// ── Stock list / detail ─────────────────────────────────────────────────────
+
+const getStock = async (
+  { page = 1, pageSize = 20, search, stockStatus, sort } = {},
+  ctx,
+) => {
+  const query = {
+    page: Math.max(0, page - 1),
+    size: pageSize,
+    search: search || undefined,
+    status: transformer.STATUS_TO_ENGINE[stockStatus] || undefined,
+    sort: sort || undefined,
+  };
+
+  const response = await engineA.get('/inventory/v1/stock-records', { ctx, query });
+  const paged = transformer.transformPagedStockRecords(response, { page, pageSize });
+  cacheBatch(paged.data);
 
   return {
-    ...pimEnriched,
-    quantityOnHand,
-    quantityReserved: reservedTotal,
-    quantityAvailable,
-    softReserved: soft,
-    hardReserved: hard,
-    reservations,
-    stockValue: quantityOnHand * (pimEnriched.costFifo || 0),
-    availableValue: quantityAvailable * (pimEnriched.costFifo || 0),
-    weightedAverageCost: pimEnriched.fifoLayers.length
-      ? Math.round(
-          pimEnriched.fifoLayers.reduce(
-            (sum, layer) => sum + layer.quantityRemaining * layer.unitCostHT,
-            0,
-          ) /
-            Math.max(
-              1,
-              pimEnriched.fifoLayers.reduce((sum, layer) => sum + layer.quantityRemaining, 0),
-            ),
-        )
-      : (pimEnriched.costFifo || 0),
-    movements: itemMovements,
+    data: paged.data.map(enrichWithPIM),
+    meta: paged.meta,
   };
 };
 
-const compareBySort = (left, right, sort) => {
-  if (sort === 'stock-asc') return left.quantityAvailable - right.quantityAvailable;
-  if (sort === 'stock-desc') return right.quantityAvailable - left.quantityAvailable;
-  if (sort === 'value-desc') return right.stockValue - left.stockValue;
-  if (sort === 'turnover') return right.quantityReserved - left.quantityReserved;
-  if (sort === 'updated') {
-    return String(right.lastMovementAt || '').localeCompare(String(left.lastMovementAt || ''));
-  }
-  return String(left.nameFr).localeCompare(String(right.nameFr));
+const getStockBySKU = async (sku, ctx) => {
+  const { data } = await engineA.get(
+    `/inventory/v1/stock-records/by-sku/${encodeURIComponent(sku)}`,
+    { ctx },
+  );
+  const record = transformer.transformStockRecord(data);
+  if (!record) return null;
+  cacheSku(record);
+  return enrichWithPIM(record);
 };
 
-const getStock = async ({
-  page = 1,
-  pageSize = 20,
-  search,
-  stockStatus,
-  categoryId,
-  sort = 'stock-desc',
-} = {}) => {
-  if (!env.useMock) {
-    const res = await fetch(`${env.engineAUrl}/api/inventory?page=${page}&pageSize=${pageSize}`);
-    if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-    const json = await res.json();
-    return { data: json.data ?? json, meta: json.meta };
-  }
+const getStockById = async (id, ctx) => {
+  const { data } = await engineA.get(
+    `/inventory/v1/stock-records/${encodeURIComponent(id)}`,
+    { ctx },
+  );
+  const record = transformer.transformStockRecord(data);
+  if (!record) return null;
+  cacheSku(record);
+  return enrichWithPIM(record);
+};
 
-  let rows = inventoryItems.map(enrichItem);
+// ── Stock evolution ─────────────────────────────────────────────────────────
 
-  if (categoryId) rows = rows.filter((item) => item.categoryId === categoryId);
+const getStockEvolution = async (sku, ctx) => {
+  const id = await resolveStockRecordId(sku, ctx);
+  const { data } = await engineA.get(
+    `/inventory/v1/stock-records/${encodeURIComponent(id)}/evolution`,
+    { ctx },
+  );
+  return transformer.transformEvolution(data);
+};
 
-  if (stockStatus === 'rupture') rows = rows.filter((item) => item.quantityAvailable <= 0);
-  if (stockStatus === 'faible') {
-    rows = rows.filter(
-      (item) => item.quantityAvailable > 0 && item.quantityAvailable <= item.reorderPoint,
+// ── Movements ───────────────────────────────────────────────────────────────
+
+const getMovements = async ({ sku, page = 1, pageSize = 50 } = {}, ctx) => {
+  if (!sku) {
+    const { data, pagination } = await engineA.get(
+      '/inventory/v1/movements/audit-journal',
+      { ctx, query: { page: page - 1, size: pageSize } },
     );
-  }
-  if (stockStatus === 'disponible') {
-    rows = rows.filter((item) => item.quantityAvailable > item.reorderPoint);
-  }
-  if (stockStatus === 'reserve') rows = rows.filter((item) => item.quantityReserved > 0);
-
-  if (search) {
-    const query = search.toLowerCase();
-    rows = rows.filter((item) =>
-      [item.nameFr, item.nameAr, item.sku, item.supplierName, item.barcode, item.mdmRef]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(query)),
-    );
+    const paged = transformer.transformPagedMovements({ data, pagination }, { page, pageSize });
+    return paged.data;
   }
 
-  rows.sort((left, right) => compareBySort(left, right, sort));
-
-  return paginate(rows, page, pageSize);
+  const id = await resolveStockRecordId(sku, ctx);
+  const { data, pagination } = await engineA.get(
+    `/inventory/v1/movements/by-stock-record/${encodeURIComponent(id)}`,
+    { ctx, query: { page: page - 1, size: pageSize } },
+  );
+  const paged = transformer.transformPagedMovements({ data, pagination }, { page, pageSize });
+  return paged.data;
 };
 
-const getStockBySKU = async (sku) => {
-  if (!env.useMock) {
-    const res = await fetch(`${env.engineAUrl}/api/inventory/${sku}`);
-    if (res.status === 404) return null;
-    if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-    return res.json();
-  }
-
-  const item = inventoryItems.find((inventoryItem) => inventoryItem.sku === sku);
-  if (!item) return null;
-  return enrichItem(item);
+const getAuditJournal = async ({ type, page = 1, pageSize = 50 } = {}, ctx) => {
+  const { data, pagination } = await engineA.get(
+    '/inventory/v1/movements/audit-journal',
+    { ctx, query: { type, page: page - 1, size: pageSize } },
+  );
+  return transformer.transformPagedMovements({ data, pagination }, { page, pageSize });
 };
 
-const getAlerts = async () =>
-  inventoryItems
-    .map(enrichItem)
-    .filter(
-      (item) =>
-        item.quantityAvailable <= item.reorderPoint ||
-        item.quantityAvailable <= 0 ||
-        item.quantityQuarantined > 0,
-    )
-    .sort((left, right) => left.quantityAvailable - right.quantityAvailable);
+// ── FIFO ────────────────────────────────────────────────────────────────────
 
-const getMovements = async ({ sku } = {}) => {
-  if (!sku) return [...movements].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  return movements
-    .filter((movement) => movement.sku === sku)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-};
-
-const getFifoLayers = async (sku) => {
-  const item = inventoryItems.find((inventoryItem) => inventoryItem.sku === sku);
-  return item?.fifoLayers ?? [];
-};
-
-const pushMovement = (movement) => {
-  const record = {
-    id: `MOV-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-    ...movement,
+const getFifoLayers = async (sku, ctx) => {
+  const id = await resolveStockRecordId(sku, ctx);
+  const [layersResponse, summaryResponse] = await Promise.all([
+    engineA.get(`/inventory/v1/fifo-layers/by-stock-record/${encodeURIComponent(id)}`, { ctx }),
+    engineA.get(`/inventory/v1/fifo-layers/summary/${encodeURIComponent(id)}`, { ctx }),
+  ]);
+  return {
+    layers: transformer.transformFifoLayers(layersResponse.data),
+    summary: transformer.transformFifoSummary(summaryResponse.data),
   };
-  movements.unshift(record);
-  return record;
 };
 
-// Allowed movement types in MVP: receipt, sale, return, quarantine, physicalInventory.
-// Transfer and generic adjustment are explicitly out of scope.
-const ALLOWED_MOVEMENT_TYPES = new Set([
-  'receipt',
-  'sale',
-  'return',
-  'quarantine',
-  'physicalInventory',
-]);
+// ── Dashboard (cached) ──────────────────────────────────────────────────────
 
-const createMovement = async ({
-  sku,
-  type,
-  quantity,
-  reason,
-  unitCostHT,
-  referenceId,
-}) => {
-  if (!ALLOWED_MOVEMENT_TYPES.has(type)) {
-    throw new AppError('INVALID_TYPE', `Type de mouvement non supporte: ${type}`, 400);
+const getStats = async (ctx) => {
+  if (dashboardCache && dashboardCache.expiresAt > now()) {
+    return dashboardCache.value;
   }
-  const item = inventoryItems.find((inventoryItem) => inventoryItem.sku === sku);
-  if (!item) throw new AppError('NOT_FOUND', 'SKU introuvable.', 404);
+  const { data } = await engineA.get('/inventory/v1/dashboard', { ctx });
+  const value = transformer.transformDashboard(data);
+  dashboardCache = { value, expiresAt: now() + DASHBOARD_CACHE_TTL_MS };
+  return value;
+};
 
-  const enrichedBefore = enrichItem(item);
-  const amount = Math.abs(Number(quantity) || 0);
-  if (amount <= 0) {
-    throw new AppError('INVALID_QUANTITY', 'La quantite doit etre superieure a zero.', 400);
+const invalidateDashboard = () => {
+  dashboardCache = null;
+};
+
+// ── Alerts ──────────────────────────────────────────────────────────────────
+
+const getAlerts = async (ctx) => {
+  const { data } = await engineA.get('/inventory/v1/alerts', { ctx });
+  return transformer.transformAlertList(data);
+};
+
+const getReorderSuggestions = async (ctx) => {
+  const { data } = await engineA.get('/inventory/v1/alerts/reorder-suggestions', { ctx });
+  return transformer.transformAlertList(data);
+};
+
+const resolveAlert = async (alertId, ctx) => {
+  const { data } = await engineA.patch(
+    `/inventory/v1/alerts/${encodeURIComponent(alertId)}/resolve`,
+    {},
+    { ctx },
+  );
+  invalidateDashboard();
+  return transformer.transformAlert(data);
+};
+
+// ── Threshold ───────────────────────────────────────────────────────────────
+
+const updateThreshold = async (sku, { reorderThreshold, reorderQuantity }, ctx) => {
+  const id = await resolveStockRecordId(sku, ctx);
+  const { data } = await engineA.patch(
+    `/inventory/v1/stock-records/${encodeURIComponent(id)}/threshold`,
+    { reorderThreshold, reorderQuantity },
+    { ctx },
+  );
+  invalidateDashboard();
+  const record = transformer.transformStockRecord(data);
+  cacheSku(record);
+  return enrichWithPIM(record);
+};
+
+// ── Movement creation ───────────────────────────────────────────────────────
+//
+// The frontend speaks of business movement types. Engine-A exposes specialized
+// endpoints. We map intent → endpoint here. No business logic is duplicated:
+// Engine-A still performs FIFO accounting, threshold re-evaluation, etc.
+//
+//   receipt           → POST /stock-records/{id}/receive
+//   adjustment*       → POST /stock-records/{id}/adjust  (sign on quantityChange)
+//   sale / return /   → POST /stock-records/{id}/adjust  with explicit reason
+//   physicalInventory   (Engine-A has no first-class endpoint for these MVP types)
+//   quarantine        → POST /stock-records/{id}/adjust  with reason=QUARANTINE
+//   bulk              → POST /movements/bulk
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ADJUSTMENT_REASONS = {
+  sale: 'SALE',
+  return: 'RETURN',
+  quarantine: 'QUARANTINE',
+  physicalInventory: 'PHYSICAL_INVENTORY',
+  adjustment: 'ADJUSTMENT',
+};
+
+const createMovement = async (
+  { sku, type, quantity, reason, unitCostHT, referenceId, purchaseOrderRef, supplierCode } = {},
+  ctx,
+) => {
+  if (!sku) throw new AppError('VALIDATION_ERROR', 'SKU manquant.', 400, 'sku');
+  const numericQty = Number(quantity);
+  if (!Number.isFinite(numericQty) || numericQty === 0) {
+    throw new AppError('INVALID_QUANTITY', 'La quantité doit être différente de zéro.', 400, 'quantity');
   }
 
-  const unitCost = Number(unitCostHT ?? enrichedBefore.costFifo ?? 0);
+  const id = await resolveStockRecordId(sku, ctx);
+  let response;
 
-  if (type === 'sale') {
-    if (amount > enrichedBefore.quantityAvailable) {
-      throw new AppError(
-        'INSUFFICIENT_STOCK',
-        `Opération annulée : la quantité de sortie (${amount} unités) dépasse le stock disponible (${enrichedBefore.quantityAvailable} unités).`,
-        400,
+  switch (type) {
+    case 'receipt': {
+      const cost = Number(unitCostHT);
+      if (!Number.isFinite(cost) || cost <= 0) {
+        throw new AppError(
+          'VALIDATION_ERROR',
+          'Le coût unitaire est requis pour une réception.',
+          400,
+          'unitCostHT',
+        );
+      }
+      response = await engineA.post(
+        `/inventory/v1/stock-records/${encodeURIComponent(id)}/receive`,
+        {
+          stockRecordId: id,
+          purchaseOrderRef: purchaseOrderRef || referenceId || `BFF-${Date.now()}`,
+          supplierCode: supplierCode || null,
+          quantity: Math.abs(numericQty),
+          unitCost: cost,
+        },
+        { ctx },
       );
+      break;
     }
-    item.stock = Math.max((item.stock ?? 0) - amount, 0);
-    pushMovement({
-      sku,
-      type: 'sale',
-      quantity: -amount,
-      unitCostHT: unitCost,
-      referenceId: referenceId || reason || 'Sortie',
-      performedBy: 'Inventory Manager',
-      description: reason || 'Sortie de stock',
-    });
-  } else if (type === 'receipt') {
-    item.stock = (item.stock ?? 0) + amount;
-    item.fifoLayers.unshift({
-      layerId: `FIFO-${Date.now()}`,
-      receivedAt: new Date().toISOString(),
-      quantityInitial: amount,
-      quantityRemaining: amount,
-      unitCostHT: unitCost,
-    });
-    pushMovement({
-      sku,
-      type: 'receipt',
-      quantity: amount,
-      unitCostHT: unitCost,
-      referenceId: referenceId || reason || 'Reception',
-      performedBy: 'Inventory Manager',
-      description: reason || 'Reception de stock',
-    });
-  } else if (type === 'return') {
-    item.stock = (item.stock ?? 0) + amount;
-    item.quantityQuarantined = (item.quantityQuarantined ?? 0) + amount;
-    if (!item.returns) item.returns = [];
-    item.returns.unshift({
-      returnId: `RET-${item.sku}-${Date.now()}`,
-      orderId: referenceId || reason || 'Retour',
-      quantity: amount,
-      quality: reason || 'Retour client',
-      status: 'Quarantaine',
-      clientPhone: '',
-      returnedAt: new Date().toISOString(),
-      reason: reason || 'Retour client',
-      inspectionStatus: 'pending',
-      productState: 'En attente inspection',
-    });
-    pushMovement({
-      sku,
-      type: 'return',
-      quantity: amount,
-      unitCostHT: unitCost,
-      referenceId: referenceId || reason || 'Retour',
-      performedBy: 'Logistics Agent',
-      description: reason || 'Retour client — mis en quarantaine',
-    });
-  } else if (type === 'quarantine') {
-    if (amount > enrichedBefore.quantityAvailable) {
-      throw new AppError(
-        'INSUFFICIENT_STOCK',
-        `Quantite a mettre en quarantaine superieure au stock disponible (stock actuel : ${enrichedBefore.quantityAvailable} unites).`,
-        400,
+    case 'sale':
+    case 'return':
+    case 'quarantine':
+    case 'physicalInventory':
+    case 'adjustment': {
+      const sign = type === 'sale' || type === 'quarantine' ? -1 : 1;
+      const quantityChange =
+        type === 'adjustment' ? Math.trunc(numericQty) : sign * Math.abs(Math.trunc(numericQty));
+      response = await engineA.post(
+        `/inventory/v1/stock-records/${encodeURIComponent(id)}/adjust`,
+        {
+          quantityChange,
+          reason: reason || ADJUSTMENT_REASONS[type],
+        },
+        { ctx },
       );
+      break;
     }
-    item.stock = Math.max((item.stock ?? 0) - amount, 0);
-    item.quantityQuarantined = (item.quantityQuarantined ?? 0) + amount;
-    pushMovement({
+    default:
+      throw new AppError(
+        'INVALID_TYPE',
+        `Type de mouvement non supporté: ${type}`,
+        400,
+        'type',
+      );
+  }
+
+  invalidateDashboard();
+  const record = transformer.transformStockRecord(response.data);
+  cacheSku(record);
+  return enrichWithPIM(record);
+};
+
+const quarantineStock = async ({ sku, quantity, reason }, ctx) =>
+  createMovement(
+    {
       sku,
       type: 'quarantine',
-      quantity: amount,
-      unitCostHT: unitCost,
-      referenceId: referenceId || reason || 'Quarantaine',
-      performedBy: 'Inventory Manager',
-      description: reason || 'Mise en quarantaine',
-    });
-  } else if (type === 'physicalInventory') {
-    // Absolute count: align stock to the counted quantity.
-    const counted = Number(quantity);
-    if (counted < 0 || Number.isNaN(counted)) {
-      throw new AppError('INVALID_QUANTITY', 'Quantite comptee invalide.', 400);
-    }
-    const delta = counted - (item.stock ?? 0);
-    item.stock = counted;
-    pushMovement({
-      sku,
-      type: 'physicalInventory',
-      quantity: delta,
-      unitCostHT: unitCost,
-      referenceId: referenceId || 'Inventaire physique',
-      performedBy: 'Inventory Manager',
-      description: reason || 'Inventaire physique',
-    });
-  }
-
-  item.lastMovementAt = new Date().toISOString();
-  return enrichItem(item);
-};
-
-const quarantineStock = async ({ sku, quantity, reason }) =>
-  createMovement({ sku, type: 'quarantine', quantity, reason });
-
-const processReturn = async ({ sku, returnId, decision }) => {
-  const item = inventoryItems.find((inventoryItem) => inventoryItem.sku === sku);
-  if (!item) return null;
-
-  const returnItem = item.returns.find((entry) => entry.returnId === returnId);
-  if (!returnItem) return null;
-
-  const quantity = Math.max(returnItem.quantity, 1);
-
-  // SYNC-4: resolve costFifo from PIM since it's no longer on the raw item
-  const pimEnrichedItem = enrichInventoryItemWithPIM(item);
-  const itemCostFifo = pimEnrichedItem.costFifo || 0;
-
-  if (decision === 'approve') {
-    // Stock already incremented on declaration — no stock change needed.
-    // Only exit quarantine and log the approval.
-    item.quantityQuarantined = Math.max((item.quantityQuarantined ?? 0) - quantity, 0);
-    pushMovement({
-      sku,
-      type: 'return_approved',
-      quantity: 0,
-      unitCostHT: itemCostFifo,
-      referenceId: returnItem.orderId,
-      performedBy: 'Inventory Manager',
-      description: `Retour approuve — stock maintenu ${returnItem.orderId}`,
-    });
-  } else {
-    // Rejected: reverse the stock increment from declaration.
-    item.stock = Math.max((item.stock ?? 0) - quantity, 0);
-    item.quantityQuarantined = Math.max((item.quantityQuarantined ?? 0) - quantity, 0);
-    pushMovement({
-      sku,
-      type: 'return_rejected',
-      quantity: -quantity,
-      unitCostHT: itemCostFifo,
-      referenceId: returnItem.orderId,
-      performedBy: 'Inventory Manager',
-      description: `Retour rejete — stock decremente ${returnItem.orderId}`,
-    });
-  }
-
-  item.returns = item.returns.filter((entry) => entry.returnId !== returnId);
-  item.lastMovementAt = new Date().toISOString();
-  return enrichItem(item);
-};
-
-// Pure KPI computation over the whole inventory snapshot + movements + OMS.
-// Shape consumed by InventoryMetricsRow.
-const computeInventoryStats = (products, movementsList) => {
-  const enriched = products.map(enrichItem);
-  const stockValue = enriched.reduce((sum, item) => sum + item.stockValue, 0);
-  const units = enriched.reduce((sum, item) => sum + item.quantityOnHand, 0);
-  const ruptures = enriched.filter((item) => item.quantityAvailable <= 0).length;
-  const lowStock = enriched.filter(
-    (item) => item.quantityAvailable > 0 && item.quantityAvailable <= item.reorderPoint,
-  ).length;
-
-  const today = new Date().toISOString().slice(0, 10);
-  const todayMovements = movementsList.filter((movement) =>
-    String(movement.createdAt || '').startsWith(today),
+      quantity: Math.abs(Number(quantity)),
+      reason: reason || 'QUARANTINE',
+    },
+    ctx,
   );
-  const incoming = todayMovements
-    .filter((movement) => movement.quantity > 0)
-    .reduce((sum, movement) => sum + movement.quantity, 0);
-  const outgoing = todayMovements
-    .filter((movement) => movement.quantity < 0)
-    .reduce((sum, movement) => sum + Math.abs(movement.quantity), 0);
 
-  return {
-    stockValue,
-    units,
-    ruptures,
-    lowStock,
-    movementsToday: todayMovements.length,
-    movementsTodaySplit: { incoming, outgoing },
-  };
+const bulkMovement = async (
+  { stockRecordIds, movementType, quantity, purchaseOrderRef, supplierCode, unitCost, reason } = {},
+  ctx,
+) => {
+  await engineA.post(
+    '/inventory/v1/movements/bulk',
+    {
+      stockRecordIds,
+      movementType,
+      quantity,
+      purchaseOrderRef: purchaseOrderRef || null,
+      supplierCode: supplierCode || null,
+      unitCost: unitCost ?? null,
+      reason: reason || null,
+    },
+    { ctx },
+  );
+  invalidateDashboard();
+  return { ok: true };
 };
 
-const getStats = async () => computeInventoryStats(inventoryItems, movements);
+// ── Reservations (OMS sync) ─────────────────────────────────────────────────
+//
+// Reservations are the synchronization channel between OMS and Inventory.
+// OMS calls these BFF endpoints during order lifecycle transitions; Engine-A
+// then performs the soft/hard accounting against FIFO stock.
 
-// Cross-module stock lookup: used by pim.service and catalogue.service to
-// enrich product responses at BFF join time. Returns a plain summary — soft
-// and hard reservations are derived from OMS orders. If the product is not
-// tracked in Inventory, returns null so the caller can render a "not tracked"
-// state rather than fabricate zeros.
+const createSoftReservation = async ({ sku, orderId, clientRef, quantity, omsStatus }, ctx) => {
+  const { data } = await engineA.post(
+    '/inventory/v1/reservations/soft',
+    { skuCode: sku, orderId, clientRef: clientRef || null, quantity, omsStatus: omsStatus || null },
+    { ctx },
+  );
+  invalidateDashboard();
+  return transformer.transformReservation(data);
+};
+
+const upgradeReservation = async (reservationId, ctx) => {
+  const { data } = await engineA.patch(
+    `/inventory/v1/reservations/${encodeURIComponent(reservationId)}/upgrade`,
+    {},
+    { ctx },
+  );
+  invalidateDashboard();
+  return transformer.transformReservation(data);
+};
+
+const releaseReservation = async (reservationId, ctx) => {
+  await engineA.patch(
+    `/inventory/v1/reservations/${encodeURIComponent(reservationId)}/release`,
+    {},
+    { ctx },
+  );
+  invalidateDashboard();
+  return { ok: true };
+};
+
+const shipOrder = async (orderId, ctx) => {
+  await engineA.post(
+    `/inventory/v1/reservations/ship/${encodeURIComponent(orderId)}`,
+    {},
+    { ctx },
+  );
+  invalidateDashboard();
+  return { ok: true };
+};
+
+const getReservationsByOrder = async (orderId, ctx) => {
+  const { data } = await engineA.get(
+    `/inventory/v1/reservations/by-order/${encodeURIComponent(orderId)}`,
+    { ctx },
+  );
+  return transformer.transformReservationList(data);
+};
+
+const getReservationsByStockRecord = async (id, ctx) => {
+  const { data } = await engineA.get(
+    `/inventory/v1/reservations/by-stock-record/${encodeURIComponent(id)}`,
+    { ctx },
+  );
+  return transformer.transformReservationList(data);
+};
+
+const getReservationsBySku = async (sku, ctx) => {
+  const id = await resolveStockRecordId(sku, ctx);
+  return getReservationsByStockRecord(id, ctx);
+};
+
+// ── Returns ─────────────────────────────────────────────────────────────────
+
+const createReturn = async (
+  { sku, orderId, customerRef, returnReason, productCondition, quantity },
+  ctx,
+) => {
+  const { data } = await engineA.post(
+    '/inventory/v1/returns',
+    {
+      skuCode: sku,
+      orderId,
+      customerRef: customerRef || null,
+      returnReason,
+      productCondition,
+      quantity,
+    },
+    { ctx },
+  );
+  invalidateDashboard();
+  return transformer.transformReturn(data);
+};
+
+const approveReturn = async (returnId, ctx) => {
+  const { data } = await engineA.patch(
+    `/inventory/v1/returns/${encodeURIComponent(returnId)}/approve`,
+    {},
+    { ctx },
+  );
+  invalidateDashboard();
+  return transformer.transformReturn(data);
+};
+
+const rejectReturn = async (returnId, { rejectionReason, disposition } = {}, ctx) => {
+  const { data } = await engineA.patch(
+    `/inventory/v1/returns/${encodeURIComponent(returnId)}/reject`,
+    {
+      decision: 'REJECTED',
+      rejectionReason: rejectionReason || null,
+      disposition: disposition || null,
+    },
+    { ctx },
+  );
+  invalidateDashboard();
+  return transformer.transformReturn(data);
+};
+
+const listReturns = async ({ status, page = 1, pageSize = 20 } = {}, ctx) => {
+  const engineStatus =
+    transformer.INSPECTION_STATUS_TO_ENGINE[status] || (status ? status.toUpperCase() : undefined);
+  const response = await engineA.get('/inventory/v1/returns', {
+    ctx,
+    query: { status: engineStatus, page: page - 1, size: pageSize },
+  });
+  return transformer.transformPagedReturns(response, { page, pageSize });
+};
+
+const getReturnById = async (returnId, ctx) => {
+  const { data } = await engineA.get(
+    `/inventory/v1/returns/${encodeURIComponent(returnId)}`,
+    { ctx },
+  );
+  return transformer.transformReturn(data);
+};
+
+// Frontend convenience: a single endpoint that maps "approve" / "reject" decisions.
+const processReturn = async ({ returnId, decision, rejectionReason, disposition } = {}, ctx) => {
+  if (decision === 'approve') return approveReturn(returnId, ctx);
+  if (decision === 'reject') return rejectReturn(returnId, { rejectionReason, disposition }, ctx);
+  throw new AppError('INVALID_DECISION', `Décision inconnue: ${decision}`, 400, 'decision');
+};
+
+// ── Cross-module helpers (sync) ─────────────────────────────────────────────
+//
+// PIM, catalogue and rapports adapters call this synchronously inside `.map()`
+// chains. They do not have a request context. We serve them from the snapshot
+// that the most recent Engine-A read has populated. If the snapshot is empty
+// (e.g. first request to a fresh BFF), callers handle null gracefully.
 const getStockForProduct = ({ sku, productId } = {}) => {
-  const item = inventoryItems.find(
-    (entry) =>
-      (sku && entry.sku === sku) || (productId && entry.productId === productId),
-  );
-  if (!item) return null;
-
-  const enriched = enrichItem(item);
-  return {
-    sku: item.sku,
-    productId: item.productId,
-    quantityOnHand: enriched.quantityOnHand,
-    quantityAvailable: enriched.quantityAvailable,
-    quantityReserved: enriched.quantityReserved,
-    softReserved: enriched.softReserved,
-    hardReserved: enriched.hardReserved,
-    quantityQuarantined: item.quantityQuarantined ?? 0,
-    reorderPoint: item.reorderPoint,
-    stockStatus:
-      enriched.quantityAvailable <= 0
-        ? 'rupture'
-        : enriched.quantityAvailable <= item.reorderPoint
-          ? 'faible'
-          : 'disponible',
-    lastMovementAt: item.lastMovementAt ?? null,
-  };
+  if (sku && stockRecordSnapshot.has(sku)) return stockRecordSnapshot.get(sku);
+  if (productId) {
+    for (const record of stockRecordSnapshot.values()) {
+      if (record.productId === productId) return record;
+    }
+  }
+  return null;
 };
+
+const getStockForProductAsync = async ({ sku, productId } = {}, ctx) => {
+  if (sku) {
+    try {
+      return await getStockBySKU(sku, ctx);
+    } catch (err) {
+      if (err instanceof AppError && err.status === 404) return null;
+      throw err;
+    }
+  }
+  if (productId && stockRecordSnapshot.size > 0) {
+    for (const record of stockRecordSnapshot.values()) {
+      if (record.productId === productId) return record;
+    }
+  }
+  return null;
+};
+
+// ── Public API ──────────────────────────────────────────────────────────────
 
 module.exports = {
-  computeInventoryStats,
-  createMovement,
-  getAlerts,
-  getFifoLayers,
-  getMovements,
-  getStats,
+  // resolution
+  resolveStockRecordId,
+  // stock
   getStock,
   getStockBySKU,
-  getStockForProduct,
-  processReturn,
+  getStockById,
+  getStockEvolution,
+  updateThreshold,
+  // movements
+  getMovements,
+  getAuditJournal,
+  createMovement,
   quarantineStock,
+  bulkMovement,
+  // fifo
+  getFifoLayers,
+  // dashboard / alerts
+  getStats,
+  getAlerts,
+  getReorderSuggestions,
+  resolveAlert,
+  invalidateDashboard,
+  // reservations
+  createSoftReservation,
+  upgradeReservation,
+  releaseReservation,
+  shipOrder,
+  getReservationsByOrder,
+  getReservationsByStockRecord,
+  getReservationsBySku,
+  // returns
+  createReturn,
+  approveReturn,
+  rejectReturn,
+  listReturns,
+  getReturnById,
+  processReturn,
+  // cross-module
+  getStockForProduct,
+  getStockForProductAsync,
 };

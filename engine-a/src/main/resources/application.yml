@@ -1,13 +1,15 @@
 server:
   port: 8082
 
-
 spring:
   application:
     name: erp
   threads:
     virtual:
       enabled: true
+  sql:
+    init:
+      mode: always
 
   servlet:
     multipart:
@@ -23,13 +25,12 @@ spring:
       maximum-pool-size: 20
       minimum-idle: 5
 
-
-    data:
-      redis:
-        host: ${REDIS_HOST:localhost}
-        port: ${REDIS_PORT:6379}
-        password: ${REDIS_PASSWORD:}
-        timeout: 2000ms
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
 
 
   jpa:
@@ -52,6 +53,10 @@ app:
     jwt:
       secret: ${JWT_SECRET:changeme-in-production-use-256-bit-minimum-key-here-please}
       expiration-ms: 900000
+    keycloak:
+      issuer: ${KEYCLOAK_ISSUER:http://localhost:8180/realms/ferza}
+      jwks-uri: ${KEYCLOAK_JWKS_URI:http://localhost:8180/realms/ferza/protocol/openid-connect/certs}
+      client-id: ${KEYCLOAK_CLIENT_ID:ferza-bff}
 
   mdm:
     base-url: ${MDM_BASE_URL:http://localhost:8080}

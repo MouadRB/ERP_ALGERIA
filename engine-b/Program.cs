@@ -36,8 +36,19 @@ builder.Services
     .AddDefaultTokenProviders();
 
 // ─── JWT + Google Authentication ──────────────────────────────────────────────
+// HS256 with the shared secret (ERP_JWT_SECRET) so tokens minted by engine-a,
+// mdm-service, or the BFF service-account flow are accepted here. Multi-issuer
+// / multi-audience validation honors the AcceptedIssuers/AcceptedAudiences
+// config and unblocks cross-engine traffic.
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
+var sharedSecret = Environment.GetEnvironmentVariable("ERP_JWT_SECRET")
+                   ?? jwtSettings["Key"]!;
+var key = Encoding.UTF8.GetBytes(sharedSecret);
+
+var acceptedIssuers   = jwtSettings.GetSection("AcceptedIssuers").Get<string[]>()
+                        ?? new[] { jwtSettings["Issuer"]! };
+var acceptedAudiences = jwtSettings.GetSection("AcceptedAudiences").Get<string[]>()
+                        ?? new[] { jwtSettings["Audience"]! };
 
 builder.Services
     .AddAuthentication(options =>
@@ -53,10 +64,10 @@ builder.Services
             ValidateAudience         = true,
             ValidateLifetime         = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer              = jwtSettings["Issuer"],
-            ValidAudience            = jwtSettings["Audience"],
+            ValidIssuers             = acceptedIssuers,
+            ValidAudiences           = acceptedAudiences,
             IssuerSigningKey         = new SymmetricSecurityKey(key),
-            ClockSkew                = TimeSpan.Zero,
+            ClockSkew                = TimeSpan.FromSeconds(30),
         };
     })
     .AddGoogle(options =>
@@ -68,6 +79,13 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddRbcaPolicies();
+
+// Tokens issued by engine-a / mdm carry roles only under the custom "roles"
+// claim (UPPER_SNAKE_CASE). RolesClaimsTransformer copies them onto
+// ClaimTypes.Role so [Authorize(Policy=...)] / RequireRole match.
+builder.Services.AddTransient<
+    Microsoft.AspNetCore.Authentication.IClaimsTransformation,
+    engine_b.Common.Multitenancy.RolesClaimsTransformer>();
 
 // ─── Identity Application Services ───────────────────────────────────────────
 builder.Services.AddScoped<TokenService>();
@@ -146,9 +164,15 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Seed Roles
+// Apply EF Core migrations on startup, then seed roles. The seeder calls
+// RoleManager which requires the Identity schema to exist; without
+// MigrateAsync the first boot against an empty database hits a Postgres
+// 42P01 ("relation \"roles\" does not exist") and the process exits.
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+
     try
     {
         var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();

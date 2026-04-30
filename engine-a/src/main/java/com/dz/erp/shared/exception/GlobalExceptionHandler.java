@@ -69,6 +69,15 @@ public class GlobalExceptionHandler {
                 .body(ApiResult.error(resolve("error.unauthorized")));
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiResult<Void>> handleIllegalState(IllegalStateException ex) {
+        // Domain state-machine guards (e.g. invalid OMS transition) throw IllegalStateException.
+        // Surface them as a functional conflict instead of a generic 500.
+        log.warn("Invalid state transition: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResult.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResult<Void>> handleUnexpected(Exception ex) {
         log.error("Unexpected error", ex);
