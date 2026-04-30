@@ -16,6 +16,16 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="engine-b.Tests\**\*.cs" />
+    <Compile Remove="artifacts\**\*.cs" />
+    <EmbeddedResource Remove="engine-b.Tests\**\*" />
+    <EmbeddedResource Remove="artifacts\**\*" />
+    <None Remove="engine-b.Tests\**\*" />
+    <None Remove="artifacts\**\*" />
   </ItemGroup>
 
 </Project>

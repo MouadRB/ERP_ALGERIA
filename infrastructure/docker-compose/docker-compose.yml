@@ -95,6 +95,7 @@ services:
       - ENGINE_B_URL=http://engine-b:8080
       - REDIS_HOST=redis
       - OPENSEARCH_URIS=http://opensearch:9200
+      - OCR_BASE_URL=http://host.docker.internal:8085
     depends_on:
       postgres:
         condition: service_healthy
@@ -121,7 +122,7 @@ services:
 
   frontend:
     build:
-      context: ../../frontend
+      context: ../../frontend/apps/bff/
       dockerfile: Dockerfile
     container_name: erp-frontend
     ports:

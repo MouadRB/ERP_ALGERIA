@@ -8,9 +8,11 @@ const STATUS_PIPELINE = {
   Draft:             'brouillon',
   PendingApproval:   'enAttente',
   Approved:          'approuve',
+  SentToSupplier:    'enCours',
   InTransit:         'enCours',
   PartiallyReceived: 'enCours',
-  Received:          'recu',
+  FullyReceived:     'recu',
+  Invoiced:          'recu',
 };
 
 function daysBetween(a, b) { return Math.max(0, Math.round((new Date(b) - new Date(a)) / 86400000)); }
@@ -47,7 +49,11 @@ async function getProcurementOverview(/* period */) {
     if (!supMap[o.supplierName]) supMap[o.supplierName] = { name: o.supplierName, bcCount: 0, onTime: 0, delays: [] };
     const s = supMap[o.supplierName];
     s.bcCount += 1;
-    if (o.expectedDeliveryDate && o.updatedAt && (o.status === 'Received' || o.status === 'PartiallyReceived')) {
+    if (
+      o.expectedDeliveryDate &&
+      o.updatedAt &&
+      ['PartiallyReceived', 'FullyReceived', 'Invoiced'].includes(o.status)
+    ) {
       const delai = daysBetween(o.createdAt, o.updatedAt);
       s.delays.push(delai);
       if (new Date(o.updatedAt) <= new Date(o.expectedDeliveryDate)) s.onTime += 1;
@@ -64,7 +70,7 @@ async function getProcurementOverview(/* period */) {
 
   // ── Recent receptions ──
   const receptionRecente = orders
-    .filter((o) => o.status === 'Received' || o.status === 'PartiallyReceived')
+    .filter((o) => ['PartiallyReceived', 'FullyReceived', 'Invoiced'].includes(o.status))
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
     .slice(0, 5)
     .map((o) => ({
@@ -83,7 +89,7 @@ async function getProcurementOverview(/* period */) {
   const alerts = [];
   const lateBCs = orders.filter((o) =>
     o.expectedDeliveryDate &&
-    ['Approved', 'InTransit', 'PartiallyReceived'].includes(o.status) &&
+    ['Approved', 'SentToSupplier', 'InTransit', 'PartiallyReceived'].includes(o.status) &&
     new Date(o.expectedDeliveryDate) < now,
   );
   lateBCs.forEach((o) => {

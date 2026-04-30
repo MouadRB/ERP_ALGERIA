@@ -200,9 +200,11 @@ const bcToUiStatus = (status) => {
     case 'PendingApproval':
       return 'approval';
     case 'Approved':
+    case 'SentToSupplier':
     case 'PartiallyReceived':
       return 'sent';
-    case 'Received':
+    case 'FullyReceived':
+    case 'Invoiced':
       return 'received';
     default:
       return 'approval';
