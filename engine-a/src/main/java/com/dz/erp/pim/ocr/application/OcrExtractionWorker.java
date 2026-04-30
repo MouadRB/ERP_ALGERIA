@@ -50,8 +50,17 @@ public class OcrExtractionWorker {
 
             List<OcrJobLine> lines = toJobLines(jobId, result.lines());
             job.markExtracted(result.rawJson(), lines);
+            var meta = result.documentMeta();
+            if (meta != null) {
+                job.applyDocumentMeta(meta.bonNumero(), meta.documentDate(), meta.documentTime(),
+                        meta.clientName(), meta.nbrColis(), meta.nbrCondi(),
+                        meta.totalMontant(), meta.rawText());
+            }
             jobRepo.save(job);
-            log.info("OCR job {} extracted {} line(s)", jobId, lines.size());
+            log.info("OCR job {} extracted {} line(s), bonNumero={}, client={}",
+                    jobId, lines.size(),
+                    meta != null ? meta.bonNumero() : null,
+                    meta != null ? meta.clientName() : null);
         } finally {
             TenantContext.clear();
         }
