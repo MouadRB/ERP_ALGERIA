@@ -18,7 +18,11 @@ public class OcrJobMapper {
         return new OcrJobResponse(
                 job.getJobId(), job.getTenantId(), job.getFileName(), job.getMimeType(), job.getFileSizeBytes(),
                 job.getStatus().name(), job.getProgressPercent(), job.getErrorMessage(),
-                job.getCreatedBy(), job.getCreatedAt(), job.getCompletedAt(), avg, lines);
+                job.getCreatedBy(), job.getCreatedAt(), job.getCompletedAt(), avg,
+                job.getBonNumero(), job.getDocumentDate(), job.getDocumentTime(),
+                job.getClientName(), job.getNbrColis(), job.getNbrCondi(),
+                job.getTotalMontant(), job.getRawText(),
+                lines);
     }
 
     private OcrJobLineResponse toLine(OcrJobLine l) {

@@ -38,6 +38,14 @@ public class OcrJobRepositoryAdapter implements OcrJobRepository {
         jobEntity.setCreatedBy(job.getCreatedBy());
         jobEntity.setCreatedAt(job.getCreatedAt());
         jobEntity.setCompletedAt(job.getCompletedAt());
+        jobEntity.setBonNumero(job.getBonNumero());
+        jobEntity.setDocumentDate(job.getDocumentDate());
+        jobEntity.setDocumentTime(job.getDocumentTime());
+        jobEntity.setClientName(job.getClientName());
+        jobEntity.setNbrColis(job.getNbrColis());
+        jobEntity.setNbrCondi(job.getNbrCondi());
+        jobEntity.setTotalMontant(job.getTotalMontant());
+        jobEntity.setRawText(job.getRawText());
         jobJpa.save(jobEntity);
 
         // Replace lines: delete existing, insert current
@@ -77,7 +85,10 @@ public class OcrJobRepositoryAdapter implements OcrJobRepository {
         for (var l : lineJpa.findByJobIdOrderByLineIndex(j.getJobId())) lines.add(toDomainLine(l));
         return new OcrJob(j.getJobId(), j.getTenantId(), j.getFileName(), j.getMimeType(), j.getFileSizeBytes(),
                 j.getStatus(), j.getProgressPercent(), j.getErrorMessage(), j.getRawJson(),
-                j.getCreatedBy(), j.getCreatedAt(), j.getCompletedAt(), lines);
+                j.getCreatedBy(), j.getCreatedAt(), j.getCompletedAt(), lines,
+                j.getBonNumero(), j.getDocumentDate(), j.getDocumentTime(),
+                j.getClientName(), j.getNbrColis(), j.getNbrCondi(),
+                j.getTotalMontant(), j.getRawText());
     }
 
     private OcrJobLine toDomainLine(OcrJobLineJpaEntity l) {

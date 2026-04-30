@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8082
 
 
 spring:
@@ -66,7 +66,7 @@ app:
     base-url: ${OCR_BASE_URL:http://localhost:8085}
     extract-path: ${OCR_EXTRACT_PATH:/extract-delivery-note}
     connect-timeout-ms: ${OCR_CONNECT_TIMEOUT_MS:3000}
-    read-timeout-ms: ${OCR_READ_TIMEOUT_MS:60000}
+    read-timeout-ms: ${OCR_READ_TIMEOUT_MS:180000}
 
   outbox:
     poll-interval-ms: 1000
@@ -183,7 +183,10 @@ management:
         include: health,info,metrics
 
 logging:
+  file:
+    name: logs/engine-a.log
   level:
     com.dz.erp: DEBUG
   pattern:
     console: "%d{ISO8601} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
+    file: "%d{ISO8601} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
