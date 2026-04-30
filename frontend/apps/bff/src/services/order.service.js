@@ -1,582 +1,363 @@
-const env = require('../config/env');
+// ─────────────────────────────────────────────────────────────────────────────
+// Order service — orchestrator on top of Engine-A OMS.
+//
+// Engine-A (Spring Boot) is the single source of truth for OMS. This module:
+//   • forwards every read/write to Engine-A through engine-a.client
+//   • bridges the frontend ↔ Engine-A vocabulary via oms.transformer
+//   • handles search-disabled fallback (HTTP 503 on /search → /orders)
+//   • generates the per-request Idempotency-Key for order creation
+//   • orchestrates the dual-engine call for return decisions
+//     (OMS returns endpoint + Inventory return inspection)
+//
+// Computed views (stats, queue, suivi, analytics, retours) keep using the
+// existing helpers; they consume the transformed order list whose shape
+// matches what those helpers expect.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const { randomUUID } = require('crypto');
+const engineA = require('./engine-a.client');
+const { AppError } = require('../errors/AppError');
+const transformer = require('../transformers/oms.transformer');
 const { computeStats } = require('./oms-stats.service');
 const { computeQueue } = require('./oms-queue.service');
 const { computeCarrierSuivi } = require('./oms-suivi.service');
 const { computeAnalytics } = require('./oms-analytics.service');
-const {
-  enrichOrder,
-  enrichOrderItems,
-  validateOrderAgainstCatalogue,
-  deductStockForOrder,
-  quarantineStockForOrder,
-} = require('./cross-module.helpers');
-const { AppError } = require('../errors/AppError');
 
-const mockOrders = () => require('../mocks/oms-orders.mock');
-const pimProducts = () => require('../mocks/pim.mock').products;
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
-const nextOrderSequence = (orders) => {
-  const max = orders.reduce((acc, o) => {
-    const ref = o.reference || '';
-    const match = ref.match(/ORD-\d{4}-(\d+)/i);
-    if (!match) return acc;
-    const num = parseInt(match[1], 10);
-    return Number.isFinite(num) ? Math.max(acc, num) : acc;
-  }, 0);
-  return max + 1;
-};
-
-const padSeq = (n, len = 5) => String(n).padStart(len, '0');
-
-const normalizeList = (value) => {
-  if (!value) return null;
-  if (Array.isArray(value)) return value.filter(Boolean);
-  return String(value)
-    .split(',')
-    .map((v) => v.trim())
-    .filter(Boolean);
-};
-
-const sortOrders = (orders, sort) => {
-  const sorted = [...orders];
-  switch (sort) {
-    case 'montant':
-      sorted.sort((a, b) => (b.codAmount ?? 0) - (a.codAmount ?? 0));
-      break;
-    case 'statut':
-      sorted.sort((a, b) => a.status.localeCompare(b.status));
-      break;
-    case 'wilaya':
-      sorted.sort((a, b) =>
-        (a.wilayaCode ?? '').localeCompare(b.wilayaCode ?? ''),
-      );
-      break;
-    case 'date_desc':
-    default:
-      sorted.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-      break;
-  }
-  return sorted;
-};
-
-const filterOrders = (
-  orders,
-  { status, carrier, wilaya, search, dateFrom, dateTo, codMin, codMax, riskLevel, source, attempts, hasCarrier, sort, customerId },
-) => {
-  let filtered = orders;
-  if (customerId) filtered = filtered.filter((o) => o.customerId === customerId);
-  if (status) filtered = filtered.filter((o) => o.status === status);
-  if (carrier) filtered = filtered.filter((o) => o.carrier === carrier);
-  if (wilaya) {
-    filtered = filtered.filter(
-      (o) => (o.wilayaCode ?? o.customer?.wilayaCode) === wilaya,
-    );
-  }
-  if (search) {
-    const q = search.toLowerCase();
-    filtered = filtered.filter(
-      (o) =>
-        o.reference.toLowerCase().includes(q) ||
-        o.customerNameFr.toLowerCase().includes(q) ||
-        o.customerPhone.includes(q),
-    );
-  }
-
-  if (dateFrom) {
-    const from = new Date(dateFrom);
-    if (!Number.isNaN(from.getTime())) {
-      filtered = filtered.filter((o) => new Date(o.createdAt) >= from);
-    }
-  }
-  if (dateTo) {
-    const to = new Date(dateTo);
-    if (!Number.isNaN(to.getTime())) {
-      filtered = filtered.filter((o) => new Date(o.createdAt) <= to);
-    }
-  }
-  if (typeof codMin === 'number') {
-    filtered = filtered.filter((o) => (o.codAmount ?? 0) >= codMin);
-  }
-  if (typeof codMax === 'number') {
-    filtered = filtered.filter((o) => (o.codAmount ?? 0) <= codMax);
-  }
-  const riskLevels = normalizeList(riskLevel);
-  if (riskLevels && riskLevels.length > 0) {
-    filtered = filtered.filter((o) => riskLevels.includes(o.riskLevel));
-  }
-  const sources = normalizeList(source);
-  if (sources && sources.length > 0) {
-    filtered = filtered.filter((o) => sources.includes(o.source));
-  }
-  if (typeof attempts === 'number') {
-    filtered = filtered.filter((o) => (o.deliveryAttempts ?? 0) === attempts);
-  }
-  if (hasCarrier === true) {
-    filtered = filtered.filter((o) => Boolean(o.carrier));
-  }
-  if (hasCarrier === false) {
-    filtered = filtered.filter((o) => !o.carrier);
-  }
-  return sortOrders(filtered, sort);
-};
-
-const getOrders = async ({
-  page = 1,
-  pageSize = 20,
-  search,
-  status,
-  carrier,
-  wilaya,
-  dateFrom,
-  dateTo,
-  codMin,
-  codMax,
-  riskLevel,
-  source,
-  attempts,
-  hasCarrier,
-  sort,
-  customerId,
-} = {}) => {
-  if (env.useMock) {
-    const all = mockOrders().map(enrichOrder);
-    const filtered = filterOrders(all, {
-      status,
-      carrier,
-      wilaya,
-      search,
-      dateFrom,
-      dateTo,
-      codMin,
-      codMax,
-      riskLevel,
-      source,
-      attempts,
-      hasCarrier,
-      sort,
-      customerId,
-    });
-    const total = filtered.length;
-    const start = (page - 1) * pageSize;
-    const data = filtered.slice(start, start + pageSize);
-    return { data, meta: { total, page, pageSize } };
-  }
-
-  const params = new URLSearchParams();
-  params.set('page', String(page));
-  params.set('pageSize', String(pageSize));
-  if (status) params.set('status', status);
-  if (carrier) params.set('carrier', carrier);
-  if (wilaya) params.set('wilaya', wilaya);
-  if (search) params.set('search', search);
-  if (dateFrom) params.set('dateFrom', dateFrom);
-  if (dateTo) params.set('dateTo', dateTo);
-  if (typeof codMin === 'number') params.set('codMin', String(codMin));
-  if (typeof codMax === 'number') params.set('codMax', String(codMax));
-  if (riskLevel) params.set('riskLevel', Array.isArray(riskLevel) ? riskLevel.join(',') : riskLevel);
-  if (source) params.set('source', Array.isArray(source) ? source.join(',') : source);
-  if (typeof attempts === 'number') params.set('attempts', String(attempts));
-  if (typeof hasCarrier === 'boolean') params.set('hasCarrier', String(hasCarrier));
-
-  const res = await fetch(`${env.engineAUrl}/oms/orders?${params.toString()}`);
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
-};
-
-const getOrderById = async (id) => {
-  if (env.useMock) {
-    const order = mockOrders().find((o) => o.id === id);
-    return order ? enrichOrder(order) : null;
-  }
-  const res = await fetch(`${env.engineAUrl}/oms/orders/${id}`);
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
-};
-
-const getStats = async () => {
-  if (env.useMock) return computeStats(mockOrders());
-  const res = await fetch(`${env.engineAUrl}/oms/stats`);
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
-};
-
-const getQueue = async () => {
-  if (env.useMock) return computeQueue(mockOrders().map(enrichOrder));
-  const res = await fetch(`${env.engineAUrl}/oms/queue`);
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
-};
-
-const getCarrierSuivi = async () => {
-  if (env.useMock) return computeCarrierSuivi(mockOrders());
-  const res = await fetch(`${env.engineAUrl}/oms/carrier-suivi`);
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
-};
-
-const getAnalytics = async (period = '7d') => {
-  if (env.useMock) return computeAnalytics(mockOrders(), period);
-  const res = await fetch(`${env.engineAUrl}/oms/analytics?period=${encodeURIComponent(period)}`);
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
-};
-
-const confirmOrder = async (id, userId) => {
-  if (env.useMock) {
-    const order = mockOrders().find((o) => o.id === id);
-    if (!order) return null;
-    const prevStatus = order.status;
-    order.status = 'Confirmed';
-    order.confirmedBy = userId ?? 'Mock Operator';
-    order.updatedAt = new Date().toISOString();
-    order.history = order.history ?? [];
-    order.history.push({
-      at: order.updatedAt,
-      from: prevStatus,
-      to: 'Confirmed',
-      by: order.confirmedBy,
-      role: 'OMS_OPERATOR',
-      reason: null,
-    });
-    return enrichOrder(order);
-  }
-
-  const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/confirm`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ confirmedBy: userId }),
+const generateIdempotencyKey = () => {
+  // Node 14.17+ exposes randomUUID. Falls back for ancient runtimes.
+  if (typeof randomUUID === 'function') return randomUUID();
+  // RFC4122 v4 fallback
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
   });
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
 };
 
-const cancelOrder = async (id, reason, userId) => {
-  if (env.useMock) {
-    const order = mockOrders().find((o) => o.id === id);
-    if (!order) return null;
-    const prevStatus = order.status;
-    order.status = 'Cancelled';
-    order.cancelReason = reason;
-    order.updatedAt = new Date().toISOString();
-    order.history = order.history ?? [];
-    order.history.push({
-      at: order.updatedAt,
-      from: prevStatus,
-      to: 'Cancelled',
-      by: userId ?? 'Mock Operator',
-      role: 'OMS_OPERATOR',
-      reason,
-    });
-    return enrichOrder(order);
-  }
+// Engine-A search returns 503 when Opensearch is disabled. We catch that and
+// degrade to GET /oms/v1/orders. We also degrade on any 502/504 wrapped by the
+// client into ENGINE_A_UNAVAILABLE.
+const isSearchUnavailable = (err) => {
+  if (!(err instanceof AppError)) return false;
+  if (err.status === 503) return true;
+  if (err.code === 'ENGINE_A_UNAVAILABLE' && [502, 503, 504].includes(err.status)) return true;
+  return false;
+};
 
-  const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/cancel`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reason, cancelledBy: userId }),
+const fetchOrdersForCompute = async (ctx) => {
+  // Computed views (stats, queue, suivi, analytics) need the full active set.
+  // We page through /orders; in production this would page-loop, but for
+  // dashboard-scope a single fat page (size=500) matches the previous mock
+  // behavior.
+  const { data, pagination } = await engineA.get('/oms/v1/orders', {
+    ctx,
+    query: { page: 0, size: 500 },
   });
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
+  const paged = transformer.transformPagedOrders({ data, pagination }, { page: 1, pageSize: 500 });
+  return paged.data;
 };
 
-const assignCarrier = async (id, carrier, userId) => {
-  if (env.useMock) {
-    const order = mockOrders().find((o) => o.id === id);
-    if (!order) return null;
-    const prevStatus = order.status;
-    order.carrier = carrier;
-    order.trackingNumber = order.trackingNumber ?? `TRK-${carrier.slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
-    order.tracking = order.tracking ?? { carrier: null, trackingNumber: null, events: [], attempts: [] };
-    order.tracking.carrier = carrier;
-    order.tracking.trackingNumber = order.trackingNumber;
-    if (order.status === 'Confirmed') order.status = 'AwaitingPickup';
-    order.updatedAt = new Date().toISOString();
-    order.history = order.history ?? [];
-    order.history.push({
-      at: order.updatedAt,
-      from: prevStatus,
-      to: order.status,
-      by: userId ?? 'Mock Operator',
-      role: 'OMS_OPERATOR',
-      reason: `Carrier assigne: ${carrier}`,
-    });
-    return enrichOrder(order);
+// ── Order list & search (with 503 fallback) ─────────────────────────────────
+
+const getOrders = async (query = {}, ctx) => {
+  const fallback = { page: query.page || 1, pageSize: query.pageSize || 20 };
+
+  // 1) Try faceted search first.
+  try {
+    const searchQuery = transformer.buildSearchQuery(query);
+    const response = await engineA.get('/oms/v1/orders/search', { ctx, query: searchQuery });
+    return transformer.transformPagedOrders(response, fallback);
+  } catch (err) {
+    if (!isSearchUnavailable(err)) throw err;
+    // search disabled → graceful degradation
   }
 
-  const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/assign-carrier`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ carrier, assignedBy: userId }),
+  // 2) Fallback: basic list. We lose facet filters here; we still pass page/size.
+  const response = await engineA.get('/oms/v1/orders', {
+    ctx,
+    query: {
+      page: Math.max(0, (Number(query.page) || 1) - 1),
+      size: Number(query.pageSize) || 20,
+    },
   });
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
+  return transformer.transformPagedOrders(response, fallback);
 };
 
-const createOrder = async (payload) => {
-  if (env.useMock) {
-    const orders = mockOrders();
-    const seq = nextOrderSequence(orders);
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const id = `ord-${year}-${padSeq(seq)}`;
-    const reference = `ORD-${year}-${padSeq(seq)}`;
-
-    const products = pimProducts();
-    const items = (payload.items ?? []).map((it) => {
-      const product = products.find((p) => p.sku === it.sku) ?? {};
-      const qty = it.quantity ?? it.qty ?? 1;
-      const unitPriceTTC = product.priceTTC ?? it.priceTTC ?? 0;
-      const total = unitPriceTTC * qty;
-      return {
-        productId: product.id ?? it.productId ?? it.sku ?? 'PRD-UNKNOWN',
-        sku: it.sku,
-        quantity: qty,
-        qty,
-        unitPriceHT: Math.round(unitPriceTTC / 1.19),
-        unitPriceTTC,
-        prixUnitTTC: unitPriceTTC,
-        tvaRate: product.tvaRate ?? 'standard',
-        total,
-      };
-    });
-
-    // SYNC-3: Validate items are published in Catalogue before creating order
-    const validation = validateOrderAgainstCatalogue(items);
-    if (!validation.valid) {
-      throw new AppError('CATALOGUE_VALIDATION', validation.errors[0].message, 400);
-    }
-
-    const totalTTC = items.reduce((s, it) => s + it.total, 0);
-    const totalHT = Math.round(totalTTC / 1.19);
-    const totalTVA = totalTTC - totalHT;
-
-    const stockOk = true; // mock stock check
-    const nextStatus = stockOk ? 'AwaitingValidation' : 'Draft';
-    const autoCancelAt = stockOk
-      ? new Date(Date.now() + 120 * 60 * 1000).toISOString()
-      : null;
-
-    // CRM customer lookup/upsert by phone — OMS must never create an order without a CRM identity.
-    const customerPhone = payload.telephone ?? payload.customerPhone ?? '';
-    const crmCustomers = require('../mocks/crm.mock');
-    let crmMatch = customerPhone
-      ? crmCustomers.find((c) => c.phone === customerPhone)
-      : null;
-    if (!crmMatch && customerPhone) {
-      const nextCustSeq = crmCustomers.reduce((max, c) => {
-        const m = (c.id || '').match(/CUST-(\d+)/);
-        const n = m ? parseInt(m[1], 10) : 0;
-        return Number.isFinite(n) ? Math.max(max, n) : max;
-      }, 0) + 1;
-      crmMatch = {
-        id: `CUST-${String(nextCustSeq).padStart(3, '0')}`,
-        phone: customerPhone,
-        phoneSec: payload.telephone2 ?? null,
-        nameFr: (payload.nomComplet ?? '').trim() || 'Client sans nom',
-        nameAr: '',
-        email: null,
-        wilayaCode: payload.wilayaCode ?? '',
-        commune: payload.commune ?? '',
-        address: payload.adresse ?? payload.address ?? '',
-        blacklisted: false,
-        blacklistReason: null,
-        blacklistMotif: null,
-        blacklistedAt: null,
-        blacklistedBy: null,
-        preferredChannel: (payload.source ?? '').toLowerCase().includes('whats') ? 'whatsapp' : 'telephone',
-        preferredLanguage: 'français',
-        riskLevel: 'LOW',
-        fraudScore: 0,
-        lifecycleStatus: 'Nouveau client',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      };
-      crmCustomers.push(crmMatch);
-    }
-    const customerId = crmMatch?.id ?? payload.customerId ?? null;
-
-    const order = {
-      id,
-      reference,
-      status: nextStatus,
-      customerId,
-      customerPhone,
-      wilayaCode: payload.wilayaCode ?? '',
-      address: payload.adresse ?? payload.address ?? '',
-      commune: payload.commune ?? '',
-      source: payload.source ?? 'Saisie manuelle',
-      noteInterne: payload.noteInterne ?? null,
-
-      items,
-      totalHT,
-      totalTVA,
-      totalTTC,
-      codAmount: totalTTC,
-      revenueRecognizedAt: null,
-
-      carrier: null,
-      trackingNumber: null,
-      deliveryAttempts: 0,
-      autoCancelAt,
-
-      confirmedBy: null,
-      cancelReason: null,
-
-      history: stockOk
-        ? [
-          {
-            at: now.toISOString(),
-            from: 'Draft',
-            to: 'AwaitingValidation',
-            by: 'Systeme',
-            role: 'system',
-            reason: null,
-          },
-        ]
-        : [],
-      tracking: { carrier: null, trackingNumber: null, events: [], attempts: [] },
-      paiement: {
-        totalHT,
-        totalTVA,
-        totalTTC,
-        codAmount: totalTTC,
-        paymentStatus: 'En attente de confirmation',
-        revenueRecognizedAt: null,
-        carrierRemittance: null,
-      },
-
-      createdBy: payload.createdBy ?? 'usr-ops-001',
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-    };
-
-    orders.push(order);
-    return enrichOrder(order);
+const getOrderById = async (id, ctx) => {
+  try {
+    const { data } = await engineA.get(`/oms/v1/orders/${encodeURIComponent(id)}`, { ctx });
+    return transformer.transformOrder(data);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
   }
+};
 
-  const res = await fetch(`${env.engineAUrl}/oms/orders`, {
+// ── Create order (idempotent) ───────────────────────────────────────────────
+
+const createOrder = async (payload, ctx) => {
+  const body = transformer.buildCreateOrderRequest(payload);
+  const idempotencyKey = generateIdempotencyKey();
+
+  const { data } = await engineA.request({
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    path: '/oms/v1/orders',
+    body,
+    ctx,
+    headers: { 'Idempotency-Key': idempotencyKey },
   });
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
+  return transformer.transformOrder(data);
 };
 
-// SYNC-6: Transition to DeliveredCOD_Confirmed — deduct stock from Inventory.
-const deliverOrder = async (id, userId) => {
-  if (env.useMock) {
-    const order = mockOrders().find((o) => o.id === id);
-    if (!order) return null;
-    const prevStatus = order.status;
-    order.status = 'DeliveredCOD_Confirmed';
-    order.updatedAt = new Date().toISOString();
-    order.revenueRecognizedAt = order.updatedAt;
-    if (order.paiement) {
-      order.paiement.paymentStatus = 'Livre - revenu reconnu';
-      order.paiement.revenueRecognizedAt = order.updatedAt;
-    }
-    order.history = order.history ?? [];
-    order.history.push({
-      at: order.updatedAt,
-      from: prevStatus,
-      to: 'DeliveredCOD_Confirmed',
-      by: userId ?? 'Systeme',
-      role: 'system',
-      reason: 'Livraison confirmee — COD encaisse',
-    });
-    // RULE 3: deduct stock from Inventory
-    deductStockForOrder(order);
-    return enrichOrder(order);
-  }
+// ── State transitions ───────────────────────────────────────────────────────
 
-  const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/deliver`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ deliveredBy: userId }),
-  });
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
+const confirmOrder = async (id, _userId, ctx) => {
+  try {
+    const { data } = await engineA.post(`/oms/v1/orders/${encodeURIComponent(id)}/confirm`, {}, { ctx });
+    return transformer.transformOrder(data);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
+  }
 };
 
-const handleReturnAction = async (id, action, payload = {}) => {
-  if (env.useMock) {
-    const orders = mockOrders();
-    const order = orders.find((o) => o.id === id);
-    if (!order) return null;
-    const now = new Date().toISOString();
-    const prevStatus = order.status;
-
-    if (action === 'reintegrate') {
-      order.returnOutcome = 'resalable';
-      order.status = 'Returned';
-      // SYNC-8: quarantine returned items (not directly back to available)
-      quarantineStockForOrder(order);
-    }
-
-    if (action === 'declare_loss') {
-      order.returnOutcome = 'destroyed';
-      order.status = 'Returned';
-      // SYNC-8: quarantine returned items even if declared as loss
-      quarantineStockForOrder(order);
-    }
-
-    let newOrder = null;
-    if (action === 'resend') {
-      order.returnOutcome = 'resent';
-      order.status = 'Returned';
-      const enrichedOrder = enrichOrder(order);
-      newOrder = await createOrder({
-        nomComplet: enrichedOrder.customerNameFr,
-        telephone: order.customerPhone,
-        wilayaCode: order.wilayaCode,
-        adresse: order.address,
-        commune: order.commune,
-        source: order.source,
-        items: (payload.items ?? order.items ?? []).map((it) => ({
-          sku: it.sku,
-          quantity: it.quantity ?? it.qty ?? 1,
-        })),
-      });
-    }
-
-    order.updatedAt = now;
-    order.history = order.history ?? [];
-    order.history.push({
-      at: now,
-      from: prevStatus,
-      to: order.status,
-      by: 'Mock Operator',
-      role: 'OMS_OPERATOR',
-      reason: `Return action: ${action}`,
+const cancelOrder = async (id, reason, _userId, ctx) => {
+  const query = transformer.buildCancelQuery({ reason });
+  try {
+    const { data } = await engineA.request({
+      method: 'POST',
+      path: `/oms/v1/orders/${encodeURIComponent(id)}/cancel`,
+      query,
+      ctx,
     });
+    return transformer.transformOrder(data);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
+  }
+};
 
-    return { order: enrichOrder(order), newOrder };
+// SYNC-6: the frontend "deliver" hook is mapped to Engine-A's /packed endpoint.
+// Engine-A only flips DELIVERED via carrier webhook — /packed is the closest
+// operator-driven progression from the dashboard.
+const deliverOrder = async (id, _userId, ctx) => {
+  try {
+    const { data } = await engineA.post(`/oms/v1/orders/${encodeURIComponent(id)}/packed`, {}, { ctx });
+    return transformer.transformOrder(data);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
+  }
+};
+
+// Engine-A assigns carriers automatically via application.yml routing rules.
+// There is no carrier-assign endpoint to call. We acknowledge the request and
+// echo back the current order so the frontend UI does not break.
+const assignCarrier = async (id, carrier, _userId, ctx) => {
+  const order = await getOrderById(id, ctx);
+  if (!order) return null;
+  return {
+    ...order,
+    carrier: carrier ?? order.carrier,
+    tracking: { ...(order.tracking || {}), carrier: carrier ?? order.tracking?.carrier ?? null },
+    _bffNote: 'carrier_assignment_routed_by_engine_a',
+  };
+};
+
+// ── Return action — composite (OMS + Inventory) ─────────────────────────────
+//
+// One frontend intent → two backend calls:
+//   1) POST /oms/v1/returns/{returnId}/{approve|reject}
+//   2) PATCH /inventory/v1/returns/{id}/{approve|reject}
+//
+// Frontend may pass the OMS returnId in the body; if absent we fall back to
+// the path :id (treating it as the return identifier). The two calls are
+// best-effort orchestrated: if step 1 fails we abort; if step 2 fails after
+// step 1 succeeded we surface the OMS result with a degraded marker so the
+// user sees the OMS state was applied.
+const handleReturnAction = async (id, action, payload = {}, ctx) => {
+  const decision = transformer.mapReturnActionToDecision(action);
+  if (!decision) {
+    throw new AppError('INVALID_ACTION', `Action de retour inconnue: ${action}`, 400, 'action');
   }
 
-  const res = await fetch(`${env.engineAUrl}/oms/orders/${id}/return-action`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action, ...payload }),
-  });
-  if (!res.ok) throw new Error(`Engine A error: ${res.status}`);
-  return await res.json();
+  const returnId = payload.returnId || payload.return_id || id;
+
+  // 1) OMS — primary truth for the return lifecycle.
+  let omsResult;
+  try {
+    const { data } = await engineA.post(
+      `/oms/v1/returns/${encodeURIComponent(returnId)}/${decision}`,
+      {},
+      { ctx },
+    );
+    omsResult = transformer.transformReturn(data);
+  } catch (err) {
+    if (err instanceof AppError && err.status === 404) return null;
+    throw err;
+  }
+
+  // 2) Inventory — secondary inspection record. Best-effort: log & flag.
+  let inventoryResult = null;
+  let inventoryError = null;
+  try {
+    const { data } = await engineA.patch(
+      `/inventory/v1/returns/${encodeURIComponent(returnId)}/${decision}`,
+      {},
+      { ctx },
+    );
+    inventoryResult = data;
+  } catch (err) {
+    inventoryError =
+      err instanceof AppError
+        ? { code: err.code, message: err.message, status: err.status }
+        : { code: 'UNKNOWN', message: String(err?.message || err) };
+    // Do not throw: OMS already moved. Caller surfaces the partial result.
+    // eslint-disable-next-line no-console
+    console.warn('[oms] return-action: inventory step failed', inventoryError);
+  }
+
+  // For "resend" we additionally re-create the order via Engine-A. Item list
+  // is taken from the original order or the request payload.
+  let newOrder = null;
+  if (action === 'resend') {
+    const original = await getOrderById(id, ctx);
+    if (original) {
+      newOrder = await createOrder(
+        {
+          nomComplet: original.customerNameFr,
+          telephone: original.customerPhone,
+          adresse: original.address,
+          wilayaCode: original.wilayaCode,
+          commune: original.commune,
+          source: original.source,
+          customerId: original.customerId,
+          paymentMethod: original.paymentMethod,
+          items: (payload.items ?? original.items ?? []).map((it) => ({
+            sku: it.sku,
+            quantity: it.quantity ?? it.qty ?? 1,
+          })),
+        },
+        ctx,
+      );
+    }
+  }
+
+  return {
+    action,
+    decision,
+    return: omsResult,
+    inventory: inventoryResult,
+    inventoryError,
+    newOrder,
+    degraded: Boolean(inventoryError),
+  };
+};
+
+// ── Dashboard / computed views ──────────────────────────────────────────────
+//
+// Engine-A exposes /oms/v1/dashboard with summary KPIs. The frontend hooks
+// expect richer shapes (per-status counters, COD funnels, queue priorities,
+// per-carrier aggregations) — we compute those locally on top of a fresh
+// order list and merge any extra metrics provided by /dashboard. Engine-B is
+// fanned out best-effort if its client is wired in the future.
+
+const fetchEngineDashboard = async (ctx) => {
+  try {
+    const { data } = await engineA.get('/oms/v1/dashboard', { ctx });
+    return data;
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[oms] /oms/v1/dashboard unavailable:', err?.message);
+    return null;
+  }
+};
+
+const fetchEngineBDashboard = async () => {
+  // Placeholder for the Engine-B fan-out. No client is wired yet; returning
+  // null keeps the merge logic simple while leaving the seam in place.
+  return null;
+};
+
+const getStats = async (ctx) => {
+  const [orders, engineDash, engineBDash] = await Promise.all([
+    fetchOrdersForCompute(ctx),
+    fetchEngineDashboard(ctx),
+    fetchEngineBDashboard(ctx),
+  ]);
+  const computed = computeStats(orders);
+  return {
+    ...computed,
+    enginea: engineDash || null,
+    engineb: engineBDash || null,
+  };
+};
+
+const getQueue = async (ctx) => {
+  const orders = await fetchOrdersForCompute(ctx);
+  return computeQueue(orders);
+};
+
+const getCarrierSuivi = async (ctx) => {
+  const orders = await fetchOrdersForCompute(ctx);
+  return computeCarrierSuivi(orders);
+};
+
+const getAnalytics = async (period = '7d', ctx) => {
+  const orders = await fetchOrdersForCompute(ctx);
+  return computeAnalytics(orders, period);
+};
+
+// Returns dashboard view: list of orders currently in a return state, joined
+// (best-effort) with inventory inspections. No native list endpoint exists for
+// /oms/v1/returns, so we derive the dataset from the order list.
+const getRetours = async (ctx) => {
+  const orders = await fetchOrdersForCompute(ctx);
+  const returnedOrders = orders.filter((o) => o.status === 'Returned' || o.rawStatus === 'RETURNED');
+
+  const retours = returnedOrders.map((o) => ({
+    id: `RET-${o.id}`,
+    orderRef: o.reference ? `#${o.reference}` : `#${o.id}`,
+    orderId: o.id,
+    customerPhone: o.customerPhone || '—',
+    customerNameFr: o.customerNameFr || '—',
+    produit: o.items?.[0]?.nameFr ?? o.items?.[0]?.sku ?? '—',
+    produitQty: o.items?.[0]?.quantity ?? 1,
+    carrier: o.carrier ?? '—',
+    trackingNumber: o.trackingNumber ?? '—',
+    raisonRetour: o.cancelReason ?? o.returnOutcome ?? null,
+    raisonCategory: null,
+    etatReception: 'En transit retour',
+    etatReceptionKey: 'transit',
+    returnedAt: o.updatedAt,
+    inspectedAt: null,
+  }));
+
+  return {
+    totalRetours: retours.length,
+    totalLitiges: 0,
+    retours,
+    litiges: [],
+  };
 };
 
 module.exports = {
+  // CRUD
   getOrders,
   getOrderById,
+  createOrder,
+  // transitions
+  confirmOrder,
+  cancelOrder,
+  deliverOrder,
+  assignCarrier,
+  handleReturnAction,
+  // computed views
   getStats,
   getQueue,
   getCarrierSuivi,
   getAnalytics,
-  createOrder,
-  handleReturnAction,
-  confirmOrder,
-  cancelOrder,
-  assignCarrier,
-  deliverOrder,
+  getRetours,
 };

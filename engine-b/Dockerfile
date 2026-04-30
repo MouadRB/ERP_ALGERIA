@@ -12,5 +12,9 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "EngineB.dll"]
+
+# `dotnet publish` emits the DLL using the csproj filename (engine-b.dll), not
+# the RootNamespace. Keep this in sync with engine-b.csproj.
+ENTRYPOINT ["dotnet", "engine-b.dll"]

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
 
@@ -55,7 +53,7 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
-      - "8080:8080"
+      - "8180:8080"
     volumes:
       - ../auth/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
     depends_on:
@@ -71,7 +69,7 @@ services:
       dockerfile: Dockerfile
     container_name: erp-mdm-service
     ports:
-      - "8081:8080"
+      - "8081:8081"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
       - SPRING_DATASOURCE_USERNAME=erp_admin
@@ -91,18 +89,21 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
       - SPRING_DATASOURCE_USERNAME=erp_admin
       - SPRING_DATASOURCE_PASSWORD=local_dev_password
-      - MDM_SERVICE_URL=http://mdm-service:8080
-      - ENGINE_B_URL=http://engine-b:8080
+      - MDM_BASE_URL=http://mdm-service:8081
+      - OMS_MDM_BASE_URL=http://mdm-service:8081
       - REDIS_HOST=redis
-      - OPENSEARCH_URIS=http://opensearch:9200
+      - REDIS_PORT=6379
+      - OMS_OPENSEARCH_HOST=opensearch
+      - OMS_OPENSEARCH_PORT=9200
+      - OMS_OPENSEARCH_SCHEME=http
+      - CATALOG_OPENSEARCH_HOST=opensearch
+      - CATALOG_OPENSEARCH_PORT=9200
+      - CATALOG_OPENSEARCH_SCHEME=http
     depends_on:
       postgres:
         condition: service_healthy
       mdm-service:
         condition: service_started
-
-
-
 
 
 volumes:

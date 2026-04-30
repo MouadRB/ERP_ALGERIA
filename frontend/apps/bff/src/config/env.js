@@ -7,8 +7,22 @@ const env = {
     : process.env.USE_MOCK === 'true',
 
   engineAUrl: process.env.ENGINE_A_URL ?? 'http://localhost:8082',
+  engineAServiceToken: process.env.ENGINE_A_SERVICE_TOKEN ?? '',
+  engineATimeoutMs: parseInt(process.env.ENGINE_A_TIMEOUT_MS ?? '15000', 10),
+  engineARetries: parseInt(process.env.ENGINE_A_RETRIES ?? '2', 10),
   mdmUrl: process.env.MDM_URL ?? 'http://localhost:8081',
   engineBUrl: process.env.ENGINE_B_URL ?? 'http://localhost:5220',
+  engineBTimeoutMs: parseInt(process.env.ENGINE_B_TIMEOUT_MS ?? '15000', 10),
+  engineBRetries:   parseInt(process.env.ENGINE_B_RETRIES   ?? '2', 10),
+
+  // Shared HS256 secret used by engine-a / engine-b / mdm-service. The BFF
+  // mints short-lived service tokens with it for upstream calls.
+  erpJwtSecret: process.env.ERP_JWT_SECRET
+    ?? process.env.ENGINE_B_JWT_SECRET
+    ?? 'changeme-in-production-use-256-bit-minimum-key-here-please',
+  engineBIssuer:   process.env.ENGINE_B_JWT_ISSUER   ?? 'engine-b',
+  engineBAudience: process.env.ENGINE_B_JWT_AUDIENCE ?? 'erp-algeria-clients',
+  // Legacy nested shape kept for callers that still read env.engineBAuth.*
   engineBAuth: {
     secret:
       process.env.ERP_JWT_SECRET ??

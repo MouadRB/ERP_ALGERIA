@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # BACKING INFRASTRUCTURE
@@ -12,7 +10,7 @@ services:
       POSTGRES_PASSWORD: local_dev_password
       POSTGRES_DB: erp_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -70,8 +68,10 @@ services:
       context: ../../mdm-service
       dockerfile: Dockerfile
     container_name: erp-mdm-service
+    # mdm-service binds to 8081 internally (server.port in application.yml),
+    # NOT 8080. Mapping must match or the host can't reach it.
     ports:
-      - "8081:8080"
+      - "8081:8081"
     environment:
       - SERVER_PORT=8080
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
@@ -86,20 +86,26 @@ services:
       context: ../../engine-a
       dockerfile: Dockerfile
     container_name: erp-engine-a
+    # engine-a binds to 8082 internally (server.port in application.yml).
     ports:
-      - "8082:8080"
+      - "8082:8082"
     environment:
       - SERVER_PORT=8080
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/erp_db
       - SPRING_DATASOURCE_USERNAME=erp_admin
       - SPRING_DATASOURCE_PASSWORD=local_dev_password
-      - MDM_BASE_URL=http://mdm-service:8080
-      - OMS_MDM_BASE_URL=http://mdm-service:8080
+      # mdm-service listens on 8081 internally. Match it explicitly.
+      - MDM_SERVICE_URL=http://mdm-service:8081
+      - MDM_BASE_URL=http://mdm-service:8081
+      - OMS_MDM_BASE_URL=http://mdm-service:8081
       - PIM_BASE_URL=http://localhost:8080
       - ENGINE_B_URL=http://engine-b:8080
       - REDIS_HOST=redis
       - OPENSEARCH_URIS=http://opensearch:9200
       - OCR_BASE_URL=http://host.docker.internal:8085
+      # Shared JWT secret — must match every service that mints or validates
+      # cross-service tokens (engine-b's ServiceTokenProvider, mdm-service).
+      - JWT_SECRET=${ERP_JWT_SECRET:-changeme-in-production-use-256-bit-minimum-key-here-please}
     depends_on:
       postgres:
         condition: service_healthy
@@ -114,28 +120,35 @@ services:
     ports:
       - "8083:8080"
     environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=erp_db;Username=erp_admin;Password=local_dev_password;
-      - MdmService__BaseUrl=http://mdm-service:8080
-      - EngineA__BaseUrl=http://engine-a:8080
-      - Redis__Configuration=redis:6379
+      # Config keys must match what Program.cs / appsettings.json read:
+      #   builder.Configuration["Integrations:EngineA:BaseUrl"]
+      #   builder.Configuration["Integrations:Mdm:BaseUrl"]
+      # ASP.NET Core maps `__` in env vars onto the `:` config separator.
+      - Integrations__EngineA__BaseUrl=http://engine-a:8082
+      - Integrations__Mdm__BaseUrl=http://mdm-service:8081
+      # Shared JWT secret — ServiceTokenProvider reads ERP_JWT_SECRET (or
+      # Jwt:Key as a fallback). Engine-A and mdm-service must read the same
+      # value so JWTs minted here validate at the receiving end.
+      - ERP_JWT_SECRET=${ERP_JWT_SECRET:-changeme-in-production-use-256-bit-minimum-key-here-please}
+      - Jwt__Key=${ERP_JWT_SECRET:-changeme-in-production-use-256-bit-minimum-key-here-please}
     depends_on:
       postgres:
         condition: service_healthy
       mdm-service:
         condition: service_started
+    healthcheck:
+      # /api/auth/login is AllowAnonymous and returns a 4xx (not 5xx) without
+      # credentials — that's enough to prove the listener is up. Anything in
+      # the 200-499 range is treated as "ready" by curl's exit code check.
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null -w '%{http_code}' http://localhost:8080/api/auth/login -X POST -H 'Content-Type: application/json' -d '{}' | grep -qE '^(2|4)'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
-  frontend:
-    build:
-      context: ../../frontend/apps/bff/
-      dockerfile: Dockerfile
-    container_name: erp-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_BFF_URL=http://localhost:4000
-    depends_on:
-      - engine-a
-      - engine-b
 
 volumes:
   pgdata:

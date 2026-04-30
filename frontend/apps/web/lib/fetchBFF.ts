@@ -52,13 +52,29 @@ interface FetchBFFOptions<B = unknown> {
   method?: Method;
   body?:   B;
   params?: Record<string, ParamValue>;
+  token?:  string;
 }
 
-const getStoredBearerToken = (): string | null => {
+const readCookieValue = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const prefix = `${name}=`;
+  const entry = document.cookie
+    .split(';')
+    .map((chunk) => chunk.trim())
+    .find((chunk) => chunk.startsWith(prefix));
+  if (!entry) return null;
+  return decodeURIComponent(entry.slice(prefix.length));
+};
+
+const resolveSessionToken = (): string | null => {
   if (typeof window === 'undefined') return null;
+
+  const fromCookie = readCookieValue('ferza_session');
+  if (fromCookie) return fromCookie;
 
   return (
     window.localStorage.getItem('ferza.auth.token') ??
+    window.localStorage.getItem('ferza.mock.token') ??
     window.sessionStorage.getItem('ferza.auth.token')
   );
 };
@@ -69,15 +85,15 @@ export const fetchBFF = async <T>(
   path:    string,
   options: FetchBFFOptions = {},
 ): Promise<T> => {
-  const { method = 'GET', body, params } = options;
-  const token = getStoredBearerToken();
+  const { method = 'GET', body, params, token } = options;
+  const sessionToken = token ?? resolveSessionToken();
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (sessionToken) headers.Authorization = `Bearer ${sessionToken}`;
 
   const response = await fetch(buildURL(path, params), {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers,
     cache:   'no-store',
     credentials: 'include',
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
